@@ -27,6 +27,13 @@ app.get('/sparql', function (req, res) {
 
   console.log(parsedQuery);
 
+  var queryType = parsedQuery.queryType;
+  if (parsedQuery.type != "query" || queryType != "SELECT") {
+    console.log("Query type not allowed: " + parsedQuery.type + "(" + queryType + ")");
+    res.status(400).send("Query type not allowed");
+    return;
+  }
+
   var options = {
     uri: backend,
     json: true,
