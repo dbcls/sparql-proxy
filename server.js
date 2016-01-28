@@ -14,8 +14,16 @@ app.get('/', function (req, res) {
 app.get('/sparql', function (req, res) {
   var query = req.query.query;
   var parser = new SparqlParser();
-  var parsedQuery = parser.parse(query);
+  var parsedQuery;
   var format = req.query.format;
+
+  try {
+    parsedQuery = parser.parse(query);
+  } catch(ex) {
+    console.log(ex);
+    res.status(400).send("Query parse failed");
+    return;
+  }
 
   console.log(parsedQuery);
 
