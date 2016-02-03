@@ -37,7 +37,7 @@ app.get('/sparql', function (req, res) {
   var options = {
     uri: backend,
     json: true,
-    form: {query: query, format: "json"},
+    form: {query: query},
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': req.header.Accept || 'application/sparql-results+json',
