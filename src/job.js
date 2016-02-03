@@ -17,7 +17,8 @@ export default class Job {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': this.accept,
-      }
+      },
+      timeout: 5000 // FIXME
     };
 
     return new Promise((resolve, reject) => {
