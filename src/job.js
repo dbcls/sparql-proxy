@@ -24,7 +24,6 @@ export default class Job {
     return new Promise((resolve, reject) => {
       console.log(`${this.id} start`);
       request.post(options, (error, response, body) => {
-        console.log(`${this.id} request done`);
         if (error) {
           reject(error);
         } else if (response.statusCode != 200) {

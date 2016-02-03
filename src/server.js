@@ -40,6 +40,7 @@ app.get('/sparql', function (req, res) {
 
   promise.then((result) => {
     res.send(result);
+    return result;
   }).catch((error) => {
     res.status(500).send("ERROR");
   });
