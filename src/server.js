@@ -1,6 +1,6 @@
 import express from 'express'
-import request from 'request'
 import { Parser as SparqlParser } from 'sparqljs'
+import Job from './job'
 
 var app = express();
 
@@ -10,31 +10,6 @@ var backend = process.env.SPARQL_BACKEND;
 app.get('/', function (req, res) {
   res.send('OK');
 });
-
-var execute = function(rawQuery, accept, callback) {
-  var options = {
-    uri: backend,
-    json: true,
-    form: {query: rawQuery},
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': accept,
-    },
-  };
-
-  request.post(options, function(error, response, body) {
-    if (error) {
-      callback(error);
-      return;
-    }
-    if (response.statusCode != 200) {
-      var error = new Error("unexpected response from backend");
-      callback(error);
-      return;
-    }
-    callback(null, body);
-  });
-}
 
 app.get('/sparql', function (req, res) {
   var query = req.query.query;
@@ -65,7 +40,8 @@ app.get('/sparql', function (req, res) {
     }
     res.send(result);
   };
-  execute(query, accept, callback);
+  let job = new Job(backend, query, accept);
+  job.run(callback);
 });
 
 if (!backend) {
