@@ -6,18 +6,23 @@
   "author": "",
   "dependencies": {
     "babel-cli": "^6.4.5",
+    "babel-loader": "^6.2.1",
     "babel-preset-es2015": "^6.3.13",
+    "babel-preset-react": "^6.3.13",
     "express": "^4.13.3",
     "promise-queue": "^2.2.2",
+    "react": "^0.14.7",
+    "react-dom": "^0.14.7",
     "request": "^2.67.0",
     "socket.io": "^1.4.5",
     "sparqljs": "^1.1.3",
-    "uuid": "^2.0.1"
+    "uuid": "^2.0.1",
+    "webpack": "^1.12.12"
   },
   "devDependencies": {},
   "scripts": {
-    "build": "babel src -d lib",
-    "postinstall": "babel src -d lib",
+    "build": "babel src -d lib && webpack",
+    "postinstall": "npm build",
     "start": "NODE_PATH=lib node lib/server.js"
   }
 }
