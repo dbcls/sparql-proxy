@@ -22,7 +22,7 @@
   "devDependencies": {},
   "scripts": {
     "build": "babel src -d lib && webpack",
-    "postinstall": "npm build",
+    "postinstall": "npm run build",
     "start": "NODE_PATH=lib node lib/server.js"
   }
 }
