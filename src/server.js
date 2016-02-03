@@ -1,11 +1,13 @@
 import express from 'express'
 import { Parser as SparqlParser } from 'sparqljs'
 import Job from './job'
+import Tracker from './tracker'
 
 var app = express();
 
 var port = process.env.PORT || 3000;
 var backend = process.env.SPARQL_BACKEND;
+var tracker = new Tracker();
 
 app.get('/', function (req, res) {
   res.send('OK');
@@ -40,8 +42,8 @@ app.get('/sparql', function (req, res) {
     }
     res.send(result);
   };
-  let job = new Job(backend, query, accept);
-  job.run(callback);
+  let job = new Job(backend, query, accept, callback);
+  tracker.enqueue(job);
 });
 
 if (!backend) {

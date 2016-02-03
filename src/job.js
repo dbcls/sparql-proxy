@@ -2,14 +2,15 @@ import request from 'request'
 import uuid from 'uuid'
 
 export default class Job {
-  constructor(backend, rawQuery, accept) {
+  constructor(backend, rawQuery, accept, callback) {
     this.id = uuid.v4();
     this.backend = backend;
     this.rawQuery = rawQuery;
     this.accept = accept;
+    this.callback = callback;
   }
 
-  run(callback) {
+  run() {
     var options = {
       uri: this.backend,
       json: true,
@@ -20,17 +21,17 @@ export default class Job {
       },
     };
 
-    request.post(options, function(error, response, body) {
+    request.post(options, (error, response, body) => {
       if (error) {
-        callback(error);
+        this.callback(error);
         return;
       }
       if (response.statusCode != 200) {
         var error = new Error("unexpected response from backend");
-        callback(error);
+        this.callback(error);
         return;
       }
-      callback(null, body);
+      this.callback(null, body);
     });
   }
 }
