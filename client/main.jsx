@@ -23,7 +23,7 @@ class MainComponent extends React.Component {
     let st = this.state.state;
     if (st) {
       return <div>
-        <div>Queue length: {st.queueLength}</div>
+        <div># of jobs waiting: {st.queueLength}</div>
         <JobList jobs={st.jobs} />
       </div>;
     } else {
