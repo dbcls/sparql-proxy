@@ -1,8 +1,8 @@
-var express = require('express');
-var request = require('request');
-var app = express();
+import express from 'express'
+import request from 'request'
+import { Parser as SparqlParser } from 'sparqljs'
 
-var SparqlParser = require('sparqljs').Parser;
+var app = express();
 
 var port = process.env.PORT || 3000;
 var backend = process.env.SPARQL_BACKEND;
