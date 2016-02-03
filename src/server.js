@@ -9,9 +9,7 @@ var port = process.env.PORT || 3000;
 var backend = process.env.SPARQL_BACKEND;
 var tracker = new Tracker();
 
-app.get('/', function (req, res) {
-  res.send('OK');
-});
+app.use(express.static('public'));
 
 app.get('/sparql', function (req, res) {
   var query = req.query.query;
