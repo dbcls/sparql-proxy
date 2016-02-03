@@ -2,12 +2,11 @@ import request from 'request'
 import uuid from 'uuid'
 
 export default class Job {
-  constructor(backend, rawQuery, accept, callback) {
+  constructor(backend, rawQuery, accept) {
     this.id = uuid.v4();
     this.backend = backend;
     this.rawQuery = rawQuery;
     this.accept = accept;
-    this.callback = callback;
   }
 
   run() {
@@ -18,20 +17,22 @@ export default class Job {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': this.accept,
-      },
+      }
     };
 
-    request.post(options, (error, response, body) => {
-      if (error) {
-        this.callback(error);
-        return;
-      }
-      if (response.statusCode != 200) {
-        var error = new Error("unexpected response from backend");
-        this.callback(error);
-        return;
-      }
-      this.callback(null, body);
+    return new Promise((resolve, reject) => {
+      console.log(`${this.id} start`);
+      request.post(options, (error, response, body) => {
+        console.log(`${this.id} request done`);
+        if (error) {
+          reject(error);
+        } else if (response.statusCode != 200) {
+          let error = new Error("unexpected response from backend");
+          reject(error);
+        } else {
+          resolve(body);
+        }
+      });
     });
   }
 }

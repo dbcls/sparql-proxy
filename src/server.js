@@ -35,15 +35,14 @@ app.get('/sparql', function (req, res) {
   }
 
   var accept = req.header.accept || 'application/sparql-results+json';
-  var callback = function(err, result) {
-    if (err) {
-      console.log("ERROR", err);
-      res.status(500).send("ERROR");
-    }
+  let job = new Job(backend, query, accept);
+  let promise = tracker.enqueue(job);
+
+  promise.then((result) => {
     res.send(result);
-  };
-  let job = new Job(backend, query, accept, callback);
-  tracker.enqueue(job);
+  }).catch((error) => {
+    res.status(500).send("ERROR");
+  });
 });
 
 if (!backend) {
