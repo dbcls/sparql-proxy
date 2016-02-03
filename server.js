@@ -59,6 +59,11 @@ app.get('/sparql', function (req, res) {
   });
 });
 
+if (!backend) {
+  console.log('you must specify backend');
+  process.exit(1);
+}
+
 console.log('backend is', backend);
 var server = app.listen(port, function () {
   var port = server.address().port;
