@@ -11,6 +11,31 @@ app.get('/', function (req, res) {
   res.send('OK');
 });
 
+var execute = function(rawQuery, accept, callback) {
+  var options = {
+    uri: backend,
+    json: true,
+    form: {query: rawQuery},
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': accept,
+    },
+  };
+
+  request.post(options, function(error, response, body) {
+    if (error) {
+      callback(error);
+      return;
+    }
+    if (response.statusCode != 200) {
+      var error = new Error("unexpected response from backend");
+      callback(error);
+      return;
+    }
+    callback(null, body);
+  });
+}
+
 app.get('/sparql', function (req, res) {
   var query = req.query.query;
   var parser = new SparqlParser();
@@ -25,8 +50,6 @@ app.get('/sparql', function (req, res) {
     return;
   }
 
-  console.log(parsedQuery);
-
   var queryType = parsedQuery.queryType;
   if (parsedQuery.type != "query" || queryType != "SELECT") {
     console.log("Query type not allowed: " + parsedQuery.type + "(" + queryType + ")");
@@ -34,29 +57,15 @@ app.get('/sparql', function (req, res) {
     return;
   }
 
-  var options = {
-    uri: backend,
-    json: true,
-    form: {query: query},
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': req.header.Accept || 'application/sparql-results+json',
-    },
+  var accept = req.header.accept || 'application/sparql-results+json';
+  var callback = function(err, result) {
+    if (err) {
+      console.log("ERROR", err);
+      res.status(500).send("ERROR");
+    }
+    res.send(result);
   };
-
-  request.post(options, function(error, response, body) {
-    if (error) {
-      console.log(error);
-      res.status(500).send("ERROR");
-      return;
-    }
-    if (response.statusCode != 200) {
-      console.log(body);
-      res.status(500).send("ERROR");
-      return;
-    }
-    res.send(body);
-  });
+  execute(query, accept, callback);
 });
 
 if (!backend) {
