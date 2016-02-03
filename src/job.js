@@ -7,6 +7,8 @@ export default class Job {
     this.backend = backend;
     this.rawQuery = rawQuery;
     this.accept = accept;
+    this.state = 'queued';
+    this.createdAt = new Date();
   }
 
   run() {
@@ -22,14 +24,20 @@ export default class Job {
     };
 
     return new Promise((resolve, reject) => {
+      this.state = 'running';
+      this.startedAt = new Date();
       console.log(`${this.id} start`);
       request.post(options, (error, response, body) => {
+        this.doneAt = new Date();
         if (error) {
+          this.state = 'error';
           reject(error);
         } else if (response.statusCode != 200) {
+          this.state = 'error';
           let error = new Error("unexpected response from backend");
           reject(error);
         } else {
+          this.state = 'success';
           resolve(body);
         }
       });

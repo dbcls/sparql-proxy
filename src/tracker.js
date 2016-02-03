@@ -14,6 +14,9 @@ export default class Tracker extends EventEmitter {
     for (let id in this.jobs) {
       jobList.push(this.jobs[id]);
     }
+    jobList.sort((a, b) => {
+      return b.createdAt - a.createdAt;
+    });
 
     return {
       queueLength: this.queue.getQueueLength(),
@@ -27,20 +30,17 @@ export default class Tracker extends EventEmitter {
 
   enqueue(job) {
     console.log(`${job.id} queued`);
-    this.jobs[job.id] = {id: job.id, state: "queued"};
+    this.jobs[job.id] = job;
     this.publishState();
 
     return this.queue.add(() => {
-      this.jobs[job.id].state = "running";
       let promise = job.run();
       this.publishState();
       return promise.then((result) => {
-        this.jobs[job.id].state = "done";
         this.publishState();
         console.log(`${job.id} done`);
         return result;
       }).catch((error) => {
-        this.jobs[job.id].state = "error";
         this.publishState();
         console.log(`${job.id} error: ${error}`);
         throw error;
