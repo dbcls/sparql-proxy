@@ -16,6 +16,7 @@
   },
   "scripts": {
     "build": "babel src -d lib",
+    "postinstall": "babel src -d lib",
     "start": "NODE_PATH=lib node lib/server.js"
   }
 }
