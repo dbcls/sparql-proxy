@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import 'bootstrap/scss/bootstrap.scss'
 import './app.scss'
+import moment from 'moment'
 
 class JobStateLabel extends React.Component {
   render() {
@@ -24,18 +25,25 @@ class JobStateLabel extends React.Component {
 class JobList extends React.Component {
   render() {
     let jobs = this.props.jobs.map((job) => {
+      let runtime;
+      if (job.doneAt) {
+        runtime = moment(job.doneAt).diff(job.startedAt) + "ms";
+      }
+      let age = moment(job.createdAt).from(this.props.now);
       return <tr key={job.id}>
-      <td>{job.createdAt}</td>
-      <td>{job.id}</td>
       <td><JobStateLabel state={job.state} /></td>
+      <td>{job.id}</td>
+      <td>{age}</td>
+      <td>{runtime}</td>
       </tr>
     });
     return <table className="table">
       <thead>
         <tr>
-          <th>created</th>
-          <th>ID</th>
           <th>status</th>
+          <th>ID</th>
+          <th>created</th>
+          <th>runtime</th>
         </tr>
       </thead>
       <tbody>
@@ -57,7 +65,7 @@ class MainComponent extends React.Component {
       return <div>
         <Navbar waiting={st.queueLength}/>
         <div className="container">
-          <JobList jobs={st.jobs} />
+          <JobList jobs={st.jobs} now={st.now}/>
         </div>
       </div>;
     } else {
@@ -71,6 +79,9 @@ class MainComponent extends React.Component {
       console.log('state received', state);
       this.setState({state: state});
     });
+    setInterval(() => {
+      this.setState({now: moment()});
+    }, 5000);
   }
 }
 
