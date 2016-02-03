@@ -1,9 +1,13 @@
 import express from 'express'
 import { Parser as SparqlParser } from 'sparqljs'
 import Job from './job'
+import SocketIo from 'socket.io'
 import Tracker from './tracker'
+import http from 'http'
 
 var app = express();
+var server = http.Server(app);
+var io = SocketIo(server);
 
 var port = process.env.PORT || 3000;
 var backend = process.env.SPARQL_BACKEND;
@@ -50,7 +54,21 @@ if (!backend) {
 }
 
 console.log('backend is', backend);
-var server = app.listen(port, function () {
+
+io.on('connection', (socket) => {
+  console.log(`${socket.id} connected`);
+  socket.emit('state', tracker.state());
+
+  socket.on('disconnect', () => {
+    console.log(`${socket.id} disconnected`);
+  });
+});
+
+tracker.on('state', (state) => {
+  io.emit('state', state);
+});
+
+server.listen(port, function () {
   var port = server.address().port;
   console.log('sparql-proxy listening at', port);
 });

@@ -1,8 +1,16 @@
 <html>
   <head>
     <title>sparql-proxy</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      socket.on('state', function(state) {
+        var e = document.getElementById('status');
+        e.innerHTML = state.queueLength;
+      });
+    </script>
   </head>
   <body>
-    <p>OK</p>
+    <p id="status">OK</p>
   </body>
 </html>
