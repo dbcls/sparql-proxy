@@ -29,19 +29,16 @@ export default class Tracker extends EventEmitter {
   }
 
   enqueue(job) {
+    job.on('update', this.publishState.bind(this));
     console.log(`${job.id} queued`);
     this.jobs[job.id] = job;
-    this.publishState();
 
     return this.queue.add(() => {
       let promise = job.run();
-      this.publishState();
       return promise.then((result) => {
-        this.publishState();
         console.log(`${job.id} done`);
         return result;
       }).catch((error) => {
-        this.publishState();
         console.log(`${job.id} error: ${error}`);
         throw error;
       });
