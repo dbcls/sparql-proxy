@@ -24,7 +24,7 @@ export default class Tracker extends EventEmitter {
     };
   }
 
-  publishState(){
+  publishState() {
     this.emit('state', this.state());
   }
 
