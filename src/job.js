@@ -38,7 +38,11 @@ export default class Job extends EventEmitter {
       request.post(options, (error, response, body) => {
         this.doneAt = new Date();
         if (error) {
-          this.setState('error');
+          if (error.code == 'ETIMEDOUT') {
+            this.setState('timeout');
+          } else {
+            this.setState('error');
+          }
           reject(error);
         } else if (response.statusCode != 200) {
           this.setState('error');

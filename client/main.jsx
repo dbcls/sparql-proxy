@@ -15,6 +15,8 @@ class JobStateLabel extends React.Component {
         c = "success"; break;
       case "running":
         c = "primary"; break;
+      case "timeout":
+        c = "warning"; break;
       case "error":
         c = "danger"; break;
     }
