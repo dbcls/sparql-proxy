@@ -63,7 +63,7 @@ class MainComponent extends React.Component {
     let st = this.state.state;
     if (st) {
       return <div>
-        <Navbar waiting={st.queueLength}/>
+        <Navbar waiting={st.numWaiting} running={st.numRunning}/>
         <div className="container">
           <JobList jobs={st.jobs} now={st.now}/>
         </div>
@@ -90,7 +90,7 @@ class Navbar extends React.Component {
     return <nav className="navbar navbar-fixed-top navbar-dark bg-inverse">
       <a className="navbar-brand" href="#">SPARQL Proxy</a>
       <div className="navbar-text pull-xs-right">
-        {this.props.waiting} job(s) waiting
+        {this.props.running} running, {this.props.waiting} waiting
       </div>
     </nav>;
   }

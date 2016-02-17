@@ -2,7 +2,7 @@ import express from 'express';
 import { Parser as SparqlParser } from 'sparqljs';
 import Job from './job';
 import SocketIo from 'socket.io';
-import Tracker from './tracker';
+import Queue from './queue';
 import http from 'http';
 
 const app = express();
@@ -11,7 +11,7 @@ const io = SocketIo(server);
 
 const port = process.env.PORT || 3000;
 const backend = process.env.SPARQL_BACKEND;
-const tracker = new Tracker();
+const queue = new Queue();
 
 app.use(express.static('public'));
 
@@ -38,12 +38,13 @@ app.get('/sparql', (req, res) => {
 
   const accept = req.header.accept || 'application/sparql-results+json';
   const job = new Job(backend, query, accept);
-  const promise = tracker.enqueue(job);
+  const promise = queue.enqueue(job);
 
   promise.then((result) => {
     res.send(result);
     return result;
   }).catch((error) => {
+    console.log("ERROR", error);
     res.status(500).send('ERROR');
   });
 });
@@ -57,14 +58,14 @@ console.log('backend is', backend);
 
 io.on('connection', (socket) => {
   console.log(`${socket.id} connected`);
-  socket.emit('state', tracker.state());
+  socket.emit('state', queue.state());
 
   socket.on('disconnect', () => {
     console.log(`${socket.id} disconnected`);
   });
 });
 
-tracker.on('state', (state) => {
+queue.on('state', (state) => {
   io.emit('state', state);
 });
 
