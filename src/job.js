@@ -19,6 +19,10 @@ export default class Job extends EventEmitter {
     this.emit('update');
   }
 
+  canceled() {
+    this.setState('canceled');
+  }
+
   run() {
     var options = {
       uri: this.backend,

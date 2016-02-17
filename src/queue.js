@@ -85,4 +85,24 @@ export default class Queue extends EventEmitter {
     }
     return true;
   }
+
+  cancel(job) {
+    let n = -1;
+
+    for (let i in this.queue) {
+      if (this.queue[i].job == job) {
+        n = i;
+        break;
+      }
+    }
+
+    if (n > 0) {
+      const job = this.queue[n].job;
+      this.queue.splice(n, 1);
+      job.canceled(); // TODO callback to the web client
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
