@@ -63,6 +63,11 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`${socket.id} disconnected`);
   });
+
+  socket.on('cancel_job', (data) => {
+    const r = queue.cancel(data.id);
+    console.log(`${data.id} cancel request; success=${r}`);
+  });
 });
 
 queue.on('state', (state) => {

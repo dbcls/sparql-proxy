@@ -9,7 +9,7 @@ class JobStateLabel extends React.Component {
     let state = this.props.state;
     let c = "default";
     switch (state) {
-      case "queued":
+      case "waiting":
         c = "default"; break;
       case "success":
         c = "success"; break;
@@ -24,6 +24,12 @@ class JobStateLabel extends React.Component {
   }
 }
 
+class CancelButton extends React.Component {
+  render() {
+    return <button className="btn btn-danger" onClick={this.props.onClick}>Cancel</button>;
+  }
+}
+
 class JobList extends React.Component {
   render() {
     let jobs = this.props.jobs.map((job) => {
@@ -32,11 +38,17 @@ class JobList extends React.Component {
         runtime = moment(job.doneAt).diff(job.startedAt) + "ms";
       }
       let age = moment(job.createdAt).from(this.props.now);
+      let cancelButtonColumn = <td></td>;
+      if (job.state == "waiting") {
+        let cancel = this.props.onCancel.bind(null, job);
+        cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
+      }
       return <tr key={job.id}>
       <td><JobStateLabel state={job.state} /></td>
       <td>{job.id}</td>
       <td>{age}</td>
       <td>{runtime}</td>
+      {cancelButtonColumn}
       </tr>
     });
     return <table className="table">
@@ -46,6 +58,7 @@ class JobList extends React.Component {
           <th>ID</th>
           <th>created</th>
           <th>runtime</th>
+          <th>control</th>
         </tr>
       </thead>
       <tbody>
@@ -67,7 +80,7 @@ class MainComponent extends React.Component {
       return <div>
         <Navbar waiting={st.numWaiting} running={st.numRunning}/>
         <div className="container">
-          <JobList jobs={st.jobs} now={st.now}/>
+          <JobList jobs={st.jobs} now={st.now} onCancel={this.cancelJob.bind(this)}/>
         </div>
       </div>;
     } else {
@@ -75,8 +88,13 @@ class MainComponent extends React.Component {
     }
   }
 
+  cancelJob(job) {
+    this.socket.emit('cancel_job', {id: job.id});
+  }
+
   componentDidMount() {
     var socket = io();
+    this.socket = socket;
     socket.on('state', (state) => {
       console.log('state received', state);
       this.setState({state: state});

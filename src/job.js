@@ -10,7 +10,7 @@ export default class Job extends EventEmitter {
     this.backend = backend;
     this.rawQuery = rawQuery;
     this.accept = accept;
-    this.setState('queued');
+    this.setState('waiting');
     this.createdAt = new Date();
   }
 

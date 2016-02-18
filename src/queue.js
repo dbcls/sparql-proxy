@@ -35,9 +35,10 @@ export default class Queue extends EventEmitter {
     job.on('update', this.publishState.bind(this));
     this.jobs[job.id] = job;
     console.log(`${job.id} queued`);
+    this.publishState();
 
     return new Promise((resolve, reject) => {
-      if (this.queue.length >=  this.maxWaiting) {
+      if (this.queue.length >= this.maxWaiting) {
         reject(new Error('Queue limit reached'));
         return;
       }
@@ -86,20 +87,21 @@ export default class Queue extends EventEmitter {
     return true;
   }
 
-  cancel(job) {
+  cancel(jobId) {
     let n = -1;
 
     for (let i in this.queue) {
-      if (this.queue[i].job == job) {
+      if (this.queue[i].job.id == jobId) {
         n = i;
         break;
       }
     }
 
-    if (n > 0) {
+    if (n >= 0) {
       const job = this.queue[n].job;
       this.queue.splice(n, 1);
       job.canceled(); // TODO callback to the web client
+      this.publishState();
       return true;
     } else {
       return false;
