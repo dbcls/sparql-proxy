@@ -42,7 +42,7 @@ export default class Job extends EventEmitter {
       request.post(options, (error, response, body) => {
         this.doneAt = new Date();
         if (error) {
-          if (error.code == 'ETIMEDOUT') {
+          if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
             this.setState('timeout');
           } else {
             this.setState('error');
