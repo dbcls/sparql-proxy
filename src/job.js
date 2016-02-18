@@ -14,9 +14,11 @@ export default class Job extends EventEmitter {
     this.createdAt = new Date();
   }
 
-  setState(state) {
+  setState(state, emit) {
     this.state = state;
-    this.emit('update');
+    if (emit) {
+      this.emit('update');
+    }
   }
 
   canceled() {
@@ -36,7 +38,7 @@ export default class Job extends EventEmitter {
     };
 
     return new Promise((resolve, reject) => {
-      this.setState('running');
+      this.setState('running', true);
       this.startedAt = new Date();
       console.log(`${this.id} start`);
       request.post(options, (error, response, body) => {
