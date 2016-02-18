@@ -6,7 +6,7 @@ import moment from 'moment'
 
 class JobStateLabel extends React.Component {
   render() {
-    let state = this.props.state;
+    const state = this.props.state;
     let c = "default";
     switch (state) {
       case "waiting":
@@ -32,15 +32,15 @@ class CancelButton extends React.Component {
 
 class JobList extends React.Component {
   render() {
-    let jobs = this.props.jobs.map((job) => {
+    const jobs = this.props.jobs.map((job) => {
       let runtime;
       if (job.doneAt) {
         runtime = moment(job.doneAt).diff(job.startedAt) + "ms";
       }
-      let age = moment(job.createdAt).from(this.props.now);
+      const age = moment(job.createdAt).from(this.props.now);
       let cancelButtonColumn = <td></td>;
       if (job.state == "waiting") {
-        let cancel = this.props.onCancel.bind(null, job);
+        const cancel = this.props.onCancel.bind(null, job);
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }
       return <tr key={job.id}>
@@ -75,7 +75,7 @@ class MainComponent extends React.Component {
   }
 
   render() {
-    let st = this.state.state;
+    const st = this.state.state;
     if (st) {
       return <div>
         <Navbar waiting={st.numWaiting} running={st.numRunning}/>
@@ -93,7 +93,7 @@ class MainComponent extends React.Component {
   }
 
   componentDidMount() {
-    var socket = io();
+    const socket = io();
     this.socket = socket;
     socket.on('state', (state) => {
       console.log('state received', state);

@@ -58,7 +58,7 @@ export default class Queue extends EventEmitter {
       return false;
     }
 
-    var item = this.queue.shift();
+    const item = this.queue.shift();
     if (!item) {
       return false;
     }

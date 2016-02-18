@@ -26,7 +26,7 @@ export default class Job extends EventEmitter {
   }
 
   run() {
-    var options = {
+    const options = {
       uri: this.backend,
       json: true,
       form: {query: this.rawQuery},
@@ -52,7 +52,7 @@ export default class Job extends EventEmitter {
           reject(error);
         } else if (response.statusCode != 200) {
           this.setState('error');
-          let error = new Error("unexpected response from backend");
+          const error = new Error("unexpected response from backend");
           reject(error);
         } else {
           this.setState('success');
