@@ -1,7 +1,10 @@
 module.exports = {
-  entry: './client/main.jsx',
+  entry: {
+    app:   './client/app.jsx',
+    admin: './client/admin.jsx'
+  },
   output: {
-    filename: 'app.js',
+    filename: '[name].js',
     path: 'public/assets',
   },
   module: {
