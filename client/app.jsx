@@ -56,7 +56,7 @@ class QueryBox extends React.Component {
     this.setState({response: '', error: '', running: true});
     const result = fetch('/sparql?query=' + encodeURIComponent(this.state.query));
     result.then((response) => {
-      if (response.status == 200) {
+      if (response.status >= 200 && response.status < 300) {
         response.text().then((text) => {
           this.setState({response: text, error: '', running: false});
         });
