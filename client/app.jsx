@@ -15,7 +15,7 @@ class Navbar extends React.Component {
 class ResponseBox extends React.Component {
   render() {
     return <div className="card card-block">
-      <h4 className="card-title">Response</h4>
+      <h4 className="card-title">Response <span className="label label-default">{this.props.response.statusText}</span></h4>
       {this.error()}
       <textarea className="form-control" rows="10" value={this.props.response.data} readOnly/>
     </div>;
@@ -86,13 +86,14 @@ class QueryBox extends React.Component {
     this.setState({response: null, running: true});
     const result = fetch('/sparql?query=' + encodeURIComponent(query));
     result.then((response) => {
+      const st = `${response.status} ${response.statusText}`;
       if (response.status >= 200 && response.status < 300) {
         response.text().then((text) => {
-          this.setState({response: {data: text}, running: false});
+          this.setState({response: {statusText: st, data: text}, running: false});
         });
       } else {
         response.text().then((text) => {
-          this.setState({response: {error: text}, running: false});
+          this.setState({response: {statusText: st, error: text}, running: false});
         });
       }
     }).catch((err) => {
