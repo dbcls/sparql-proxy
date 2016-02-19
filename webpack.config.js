@@ -7,7 +7,7 @@ module.exports = {
   },
   output: {
     filename: '[name].js',
-    path: 'public/assets',
+    path: 'public',
   },
   module: {
     loaders: [
