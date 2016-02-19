@@ -12,45 +12,39 @@ class Navbar extends React.Component {
   }
 }
 
-class QueryBox extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {query: "", response: "", error: "", running: false};
+class ResponseBox extends React.Component {
+  render() {
+    return <div className="card card-block">
+      <h4 className="card-title">Response</h4>
+      {this.error()}
+      <textarea className="form-control" rows="10" value={this.props.response} readOnly/>
+    </div>;
   }
 
   error() {
-    if (this.state.error) {
-      return <div className="alert alert-danger">{this.state.error}</div>
+    if (this.props.error) {
+      return <div className="alert alert-danger">{this.props.error}</div>
     }
     return "";
   }
+}
 
-  spinner() {
-    if (this.state.running) {
-      return <span className="running-icon fa fa-refresh fa-spin"></span>
-    }
-    return "";
+class RequestBox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {query: ""};
   }
 
   render() {
-
-    return <div className="container-fluid">
-      <div className="card card-block">
-        <h4 className="card-title">Query</h4>
-        <form onSubmit={this.handleSubmit.bind(this)}>
-          <div className="form-group">
-            <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
-          </div>
-          <button type="submit" className="btn btn-default" disabled={this.state.running}>Submit</button>
-          {this.spinner()}
-        </form>
-      </div>
-
-      <div className="card card-block">
-        <h4 className="card-title">Response</h4>
-        {this.error()}
-        <textarea className="form-control" rows="10" value={this.state.response} readOnly/>
-      </div>
+    return <div className="card card-block">
+      <h4 className="card-title">Query</h4>
+      <form onSubmit={this.handleSubmit.bind(this)}>
+        <div className="form-group">
+          <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
+        </div>
+        <button type="submit" className="btn btn-default" disabled={this.props.running}>Submit</button>
+        {this.spinner()}
+      </form>
     </div>;
   }
 
@@ -60,8 +54,33 @@ class QueryBox extends React.Component {
 
   handleSubmit(e) {
     e.preventDefault();
+    this.props.onSubmit(this.state.query);
+  }
+
+  spinner() {
+    if (this.props.running) {
+      return <span className="running-icon fa fa-refresh fa-spin"></span>;
+    }
+    return "";
+  }
+}
+
+class QueryBox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {response: "", error: "", running: false};
+  }
+
+  render() {
+    return <div className="container-fluid">
+      <RequestBox onSubmit={this.handleSubmit.bind(this)} running={this.state.running}/>
+      <ResponseBox response={this.state.response} error={this.state.error} />
+    </div>;
+  }
+
+  handleSubmit(query) {
     this.setState({response: '', error: '', running: true});
-    const result = fetch('/sparql?query=' + encodeURIComponent(this.state.query));
+    const result = fetch('/sparql?query=' + encodeURIComponent(query));
     result.then((response) => {
       if (response.status >= 200 && response.status < 300) {
         response.text().then((text) => {
