@@ -11,7 +11,8 @@ const io = SocketIo(server);
 
 const port = process.env.PORT || 3000;
 const backend = process.env.SPARQL_BACKEND;
-const queue = new Queue();
+const maxConcurrency = process.env.MAX_CONCURRENCY || 1;
+const queue = new Queue(Infinity, maxConcurrency);
 
 app.use(express.static('public'));
 

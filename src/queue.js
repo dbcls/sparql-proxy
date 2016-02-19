@@ -1,13 +1,13 @@
 import { EventEmitter } from 'events'
 
 export default class Queue extends EventEmitter {
-  constructor() {
+  constructor(maxWaiting, maxConcurrency) {
     super();
 
     this.jobs = {}; // TODO cleanup old jobs
     this.queue = [];
-    this.maxWaiting = Infinity;
-    this.maxConcurrency = 1;
+    this.maxWaiting = maxWaiting;
+    this.maxConcurrency = maxConcurrency;
     this.numRunning = 0;
   }
 
