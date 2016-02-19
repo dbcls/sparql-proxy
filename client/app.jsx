@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import 'bootstrap/scss/bootstrap.scss'
 import './app.scss'
+import 'font-awesome/css/font-awesome.css'
 
 class Navbar extends React.Component {
   render() {
@@ -14,13 +15,17 @@ class Navbar extends React.Component {
 class QueryBox extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {query: "", response: ""};
+    this.state = {query: "", response: "", running: false};
   }
 
   render() {
     let error = "";
     if (this.state.error) {
       error = <div className="alert alert-danger">{this.state.error}</div>
+    }
+    let running = "";
+    if (this.state.running) {
+      running = <span className="running-icon fa fa-refresh fa-spin"></span>
     }
     return <div className="container-fluid">
       <div className="card card-block">
@@ -29,7 +34,8 @@ class QueryBox extends React.Component {
           <div className="form-group">
             <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
           </div>
-          <button type="submit" className="btn btn-default">Submit</button>
+          <button type="submit" className="btn btn-default" disabled={this.state.running}>Submit</button>
+          {running}
         </form>
       </div>
 
@@ -47,19 +53,21 @@ class QueryBox extends React.Component {
 
   handleSubmit(e) {
     e.preventDefault();
+    this.setState({response: '', error: '', running: true});
     const result = fetch('/sparql?query=' + encodeURIComponent(this.state.query));
     result.then((response) => {
       if (response.status == 200) {
         response.text().then((text) => {
-          this.setState({response: text, error: ''});
+          this.setState({response: text, error: '', running: false});
         });
       } else {
         response.text().then((text) => {
-          this.setState({response: '', error: text});
+          this.setState({response: '', error: text, running: false});
         });
       }
     }).catch((err) => {
       console.log('failed', err);
+      this.setState({response: '', error: 'failed', running: false});
     });
   }
 }
