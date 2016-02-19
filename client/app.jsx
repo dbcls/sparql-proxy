@@ -18,6 +18,10 @@ class QueryBox extends React.Component {
   }
 
   render() {
+    let error = "";
+    if (this.state.error) {
+      error = <div className="alert alert-danger">{this.state.error}</div>
+    }
     return <div className="container-fluid">
       <div className="card card-block">
         <h4 className="card-title">Query</h4>
@@ -31,6 +35,7 @@ class QueryBox extends React.Component {
 
       <div className="card card-block">
         <h4 className="card-title">Response</h4>
+        {error}
         <textarea className="form-control" rows="10" value={this.state.response} readonly/>
       </div>
     </div>;
@@ -42,13 +47,17 @@ class QueryBox extends React.Component {
 
   handleSubmit(e) {
     e.preventDefault();
-    console.log(this.state.query);
     const result = fetch('/sparql?query=' + encodeURIComponent(this.state.query));
-    console.log(result);
     result.then((response) => {
-      response.text().then((text) => {
-        this.setState({response: text});
-      });
+      if (response.status == 200) {
+        response.text().then((text) => {
+          this.setState({response: text, error: ''});
+        });
+      } else {
+        response.text().then((text) => {
+          this.setState({response: '', error: text});
+        });
+      }
     }).catch((err) => {
       console.log('failed', err);
     });
