@@ -36,7 +36,7 @@ class QueryBox extends React.Component {
       <div className="card card-block">
         <h4 className="card-title">Response</h4>
         {error}
-        <textarea className="form-control" rows="10" value={this.state.response} readonly/>
+        <textarea className="form-control" rows="10" value={this.state.response} readOnly/>
       </div>
     </div>;
   }
