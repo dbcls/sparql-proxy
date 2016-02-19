@@ -17,13 +17,13 @@ class ResponseBox extends React.Component {
     return <div className="card card-block">
       <h4 className="card-title">Response</h4>
       {this.error()}
-      <textarea className="form-control" rows="10" value={this.props.response} readOnly/>
+      <textarea className="form-control" rows="10" value={this.props.response.data} readOnly/>
     </div>;
   }
 
   error() {
-    if (this.props.error) {
-      return <div className="alert alert-danger">{this.props.error}</div>
+    if (this.props.response.error) {
+      return <div className="alert alert-danger">{this.props.response.error}</div>
     }
     return "";
   }
@@ -68,32 +68,36 @@ class RequestBox extends React.Component {
 class QueryBox extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {response: "", error: "", running: false};
+    this.state = {
+      response: null,
+      running: false
+    };
   }
 
   render() {
+    const res = this.state.response ? <ResponseBox response={this.state.response} /> : "";
     return <div className="container-fluid">
       <RequestBox onSubmit={this.handleSubmit.bind(this)} running={this.state.running}/>
-      <ResponseBox response={this.state.response} error={this.state.error} />
+      {res}
     </div>;
   }
 
   handleSubmit(query) {
-    this.setState({response: '', error: '', running: true});
+    this.setState({response: null, running: true});
     const result = fetch('/sparql?query=' + encodeURIComponent(query));
     result.then((response) => {
       if (response.status >= 200 && response.status < 300) {
         response.text().then((text) => {
-          this.setState({response: text, error: '', running: false});
+          this.setState({response: {data: text}, running: false});
         });
       } else {
         response.text().then((text) => {
-          this.setState({response: '', error: text, running: false});
+          this.setState({response: {error: text}, running: false});
         });
       }
     }).catch((err) => {
       console.log('failed', err);
-      this.setState({response: '', error: 'failed', running: false});
+      this.setState({response: {error: 'failed'}, running: false});
     });
   }
 }
