@@ -1,3 +1,5 @@
+var webpack = require('webpack');
+
 module.exports = {
   entry: {
     app:   './client/app.jsx',
@@ -17,5 +19,10 @@ module.exports = {
       { test: /\.eot(?:\?.*)?$/, loader: 'file-loader' },
       { test: /\.svg(?:\?.*)?$/, loader: 'file-loader' }
     ]
-  }
+  },
+  plugins: [
+    new webpack.ProvidePlugin({
+      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
+    })
+  ]
 }
