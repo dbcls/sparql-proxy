@@ -44,8 +44,12 @@ app.get('/sparql', (req, res) => {
     res.send(result);
     return result;
   }).catch((error) => {
-    console.log("ERROR", error);
-    res.status(500).send('ERROR');
+    console.log(`${job.id} ERROR: ${error}`);
+    if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
+      res.status(408).send('Request Timeout');
+    } else {
+      res.status(500).send('ERROR');
+    }
   });
 });
 
