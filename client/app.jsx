@@ -15,18 +15,25 @@ class Navbar extends React.Component {
 class QueryBox extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {query: "", response: "", running: false};
+    this.state = {query: "", response: "", error: "", running: false};
+  }
+
+  error() {
+    if (this.state.error) {
+      return <div className="alert alert-danger">{this.state.error}</div>
+    }
+    return "";
+  }
+
+  spinner() {
+    if (this.state.running) {
+      return <span className="running-icon fa fa-refresh fa-spin"></span>
+    }
+    return "";
   }
 
   render() {
-    let error = "";
-    if (this.state.error) {
-      error = <div className="alert alert-danger">{this.state.error}</div>
-    }
-    let running = "";
-    if (this.state.running) {
-      running = <span className="running-icon fa fa-refresh fa-spin"></span>
-    }
+
     return <div className="container-fluid">
       <div className="card card-block">
         <h4 className="card-title">Query</h4>
@@ -35,13 +42,13 @@ class QueryBox extends React.Component {
             <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
           </div>
           <button type="submit" className="btn btn-default" disabled={this.state.running}>Submit</button>
-          {running}
+          {this.spinner()}
         </form>
       </div>
 
       <div className="card card-block">
         <h4 className="card-title">Response</h4>
-        {error}
+        {this.error()}
         <textarea className="form-control" rows="10" value={this.state.response} readOnly/>
       </div>
     </div>;
