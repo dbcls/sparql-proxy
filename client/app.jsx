@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 import 'bootstrap/scss/bootstrap.scss'
 import './app.scss'
 import 'font-awesome/css/font-awesome.css'
+import uuid from 'uuid'
 
 class Navbar extends React.Component {
   render() {
@@ -84,7 +85,8 @@ class QueryBox extends React.Component {
 
   handleSubmit(query) {
     this.setState({response: null, running: true});
-    const result = fetch('/sparql?query=' + encodeURIComponent(query));
+    const token = uuid.v4();
+    const result = fetch('/sparql?token=' + token + '&query=' + encodeURIComponent(query));
     result.then((response) => {
       const st = `${response.status} ${response.statusText}`;
       if (response.status >= 200 && response.status < 300) {
