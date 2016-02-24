@@ -44,7 +44,7 @@ class RequestBox extends React.Component {
           <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
         </div>
         <button type="submit" className="btn btn-default" disabled={this.props.running}>Submit</button>
-        {this.spinner()}
+        {this.spinner()} {this.props.state}
       </form>
     </div>;
   }
@@ -71,36 +71,62 @@ class QueryBox extends React.Component {
     super(props);
     this.state = {
       response: null,
-      running: false
+      running: false,
+      jobState: null,
     };
   }
 
   render() {
     const res = this.state.response ? <ResponseBox response={this.state.response} /> : "";
     return <div className="container-fluid">
-      <RequestBox onSubmit={this.handleSubmit.bind(this)} running={this.state.running}/>
+      <RequestBox onSubmit={this.handleSubmit.bind(this)} running={this.state.running} state={this.state.jobState}/>
       {res}
     </div>;
   }
 
+  checkStatus(response) {
+    if (response.status >= 200 && response.status < 300) {
+      return response;
+    } else {
+      var error = new Error(response.statusText);
+      throw error;
+    };
+  }
+
   handleSubmit(query) {
-    this.setState({response: null, running: true});
+    this.setState({response: null, running: true, jobState: null});
     const token = uuid.v4();
     const result = fetch('/sparql?token=' + token + '&query=' + encodeURIComponent(query));
+    const timerId = setInterval(() => {
+      const r = fetch('/jobs/' + token);
+      r.then(this.checkStatus)
+       .then((response) => (response.json()))
+       .then((data) => {
+         this.setState({jobState: data.state});
+         if (data.done) {
+           clearInterval(timerId);
+         }
+      }).catch((err) => {
+        clearInterval(timerId);
+      });
+    }, 1000);
+
     result.then((response) => {
       const st = `${response.status} ${response.statusText}`;
       if (response.status >= 200 && response.status < 300) {
         response.text().then((text) => {
-          this.setState({response: {statusText: st, data: text}, running: false});
+          this.setState({response: {statusText: st, data: text}, running: false, jobState: null});
         });
       } else {
+        clearInterval(timerId);
         response.text().then((text) => {
-          this.setState({response: {statusText: st, error: text}, running: false});
+          this.setState({response: {statusText: st, error: text}, running: false, jobState: null});
         });
       }
     }).catch((err) => {
+      clearInterval(timerId);
       console.log('failed', err);
-      this.setState({response: {error: 'failed'}, running: false});
+      this.setState({response: {error: 'failed'}, running: false, jobState: null});
     });
   }
 }

@@ -3,13 +3,14 @@ import uuid from 'uuid'
 import { EventEmitter } from 'events'
 
 export default class Job extends EventEmitter {
-  constructor(backend, rawQuery, accept) {
+  constructor(backend, rawQuery, accept, token) {
     super();
 
     this.id = uuid.v4();
     this.backend = backend;
     this.rawQuery = rawQuery;
     this.accept = accept;
+    this.token = token;
     this.setState('waiting');
     this.createdAt = new Date();
   }

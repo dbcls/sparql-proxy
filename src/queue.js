@@ -34,7 +34,7 @@ export default class Queue extends EventEmitter {
   enqueue(job) {
     job.on('update', this.publishState.bind(this));
     this.jobs[job.id] = job;
-    console.log(`${job.id} queued`);
+    console.log(`${job.id} queued; token=${job.token}`);
     this.publishState();
 
     return new Promise((resolve, reject) => {
@@ -106,5 +106,21 @@ export default class Queue extends EventEmitter {
     } else {
       return false;
     }
+  }
+
+  jobStatus(token) {
+    let job;
+    for (let id in this.jobs) {
+      const j = this.jobs[id];
+      if (j.token && j.token == token) {
+        job = j;
+        break;
+      }
+    }
+    if (!job) {
+      return null;
+    }
+    const done = ['success', 'error', 'timeout'].indexOf(job.state) >= 0;
+    return {state: job.state, done: done};
   }
 }

@@ -38,7 +38,8 @@ app.get('/sparql', (req, res) => {
   }
 
   const accept = req.header.accept || 'application/sparql-results+json';
-  const job = new Job(backend, query, accept);
+  const token = req.query.token;
+  const job = new Job(backend, query, accept, token);
   const promise = queue.enqueue(job);
 
   promise.then((result) => {
@@ -47,11 +48,20 @@ app.get('/sparql', (req, res) => {
   }).catch((error) => {
     console.log(`${job.id} ERROR: ${error}`);
     if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
-      res.status(408).send('Request Timeout');
+      res.status(503).send('Request Timeout');
     } else {
       res.status(500).send('ERROR');
     }
   });
+});
+
+app.get('/jobs/:token', (req, res) => {
+  const js = queue.jobStatus(req.params.token);
+  if (!js) {
+    res.status(404).send('Job not found');
+    return;
+  }
+  res.send(js);
 });
 
 if (!backend) {
