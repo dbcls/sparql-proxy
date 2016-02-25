@@ -53,7 +53,7 @@ export default class Job extends EventEmitter {
           reject(error);
         } else if (response.statusCode != 200) {
           this.setState('error');
-          const error = new Error("unexpected response from backend");
+          const error = new Error(`unexpected response from backend: ${response.stausCode}`);
           reject(error);
         } else {
           this.setState('success');
