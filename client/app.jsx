@@ -37,14 +37,22 @@ class RequestBox extends React.Component {
   }
 
   render() {
+    const isRunning = !!this.props.request;
+    let requestStatus = "";
+    if (isRunning) {
+      requestStatus = <span>
+        <span className="running-icon fa fa-refresh fa-spin"></span>
+        <span>{this.props.request.jobState}</span>
+      </span>;
+    }
     return <div className="card card-block">
       <h4 className="card-title">Query</h4>
       <form onSubmit={this.handleSubmit.bind(this)}>
         <div className="form-group">
           <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
         </div>
-        <button type="submit" className="btn btn-default" disabled={this.props.running}>Submit</button>
-        {this.spinner()} {this.props.state}
+        <button type="submit" className="btn btn-default" disabled={isRunning}>Submit</button>
+        {requestStatus}
       </form>
     </div>;
   }
@@ -57,29 +65,18 @@ class RequestBox extends React.Component {
     e.preventDefault();
     this.props.onSubmit(this.state.query);
   }
-
-  spinner() {
-    if (this.props.running) {
-      return <span className="running-icon fa fa-refresh fa-spin"></span>;
-    }
-    return "";
-  }
 }
 
 class QueryBox extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      response: null,
-      running: false,
-      jobState: null,
-    };
+    this.state = {response: null, request: null};
   }
 
   render() {
     const res = this.state.response ? <ResponseBox response={this.state.response} /> : "";
     return <div className="container-fluid">
-      <RequestBox onSubmit={this.handleSubmit.bind(this)} running={this.state.running} state={this.state.jobState}/>
+      <RequestBox onSubmit={this.handleSubmit.bind(this)} request={this.state.request}/>
       {res}
     </div>;
   }
@@ -94,7 +91,7 @@ class QueryBox extends React.Component {
   }
 
   handleSubmit(query) {
-    this.setState({response: null, running: true, jobState: null});
+    this.setState({response: null, request: {jobState: null}});
     const token = uuid.v4();
     const result = fetch('/sparql?token=' + token + '&query=' + encodeURIComponent(query));
     const timerId = setInterval(() => {
@@ -102,7 +99,7 @@ class QueryBox extends React.Component {
       r.then(this.checkStatus)
        .then((response) => (response.json()))
        .then((data) => {
-         this.setState({jobState: data.state});
+         this.setState({request: {jobState: data.state}});
          if (data.done) {
            clearInterval(timerId);
          }
@@ -113,21 +110,22 @@ class QueryBox extends React.Component {
 
     result.then((response) => {
       const st = `${response.status} ${response.statusText}`;
+      this.setState({request: null});
       if (response.status >= 200 && response.status < 300) {
         response.text().then((text) => {
           clearInterval(timerId);
-          this.setState({response: {statusText: st, data: text}, running: false, jobState: null});
+          this.setState({response: {statusText: st, data: text}});
         });
       } else {
         clearInterval(timerId);
         response.text().then((text) => {
-          this.setState({response: {statusText: st, error: text}, running: false, jobState: null});
+          this.setState({response: {statusText: st, error: text}});
         });
       }
     }).catch((err) => {
       clearInterval(timerId);
       console.log('failed', err);
-      this.setState({response: {error: 'failed'}, running: false, jobState: null});
+      this.setState({response: {error: 'failed'}, request: null});
     });
   }
 }
