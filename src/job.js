@@ -41,7 +41,6 @@ export default class Job extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.setState('running', true);
       this.startedAt = new Date();
-      console.log(`${this.id} start`);
       request.post(options, (error, response, body) => {
         this.doneAt = new Date();
         if (error) {

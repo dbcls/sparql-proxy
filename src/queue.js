@@ -66,6 +66,7 @@ export default class Queue extends EventEmitter {
     try {
       this.numRunning++;
 
+      console.log(`${item.job.id} start`);
       item.job.run()
         .then((value) => {
           this.numRunning--;
