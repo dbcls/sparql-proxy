@@ -109,15 +109,14 @@ class QueryBox extends React.Component {
     }, 1000);
 
     result.then((response) => {
+      clearInterval(timerId);
       const st = `${response.status} ${response.statusText}`;
       this.setState({request: null});
       if (response.status >= 200 && response.status < 300) {
         response.text().then((text) => {
-          clearInterval(timerId);
           this.setState({response: {statusText: st, data: text}});
-        });
+        })
       } else {
-        clearInterval(timerId);
         response.text().then((text) => {
           this.setState({response: {statusText: st, error: text}});
         });
