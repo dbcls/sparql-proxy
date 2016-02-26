@@ -37,9 +37,8 @@ class RequestBox extends React.Component {
   }
 
   render() {
-    const isRunning = !!this.props.request;
     let requestStatus = "";
-    if (isRunning) {
+    if (this.props.running) {
       requestStatus = <span>
         <span className="running-icon fa fa-refresh fa-spin"></span>
         <span>{this.props.request.jobState}</span>
@@ -51,7 +50,7 @@ class RequestBox extends React.Component {
         <div className="form-group">
           <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
         </div>
-        <button type="submit" className="btn btn-default" disabled={isRunning}>Submit</button>
+        <button type="submit" className="btn btn-default" disabled={this.props.running}>Submit</button>
         {requestStatus}
       </form>
     </div>;
@@ -76,7 +75,7 @@ class QueryBox extends React.Component {
   render() {
     const res = this.state.response ? <ResponseBox response={this.state.response} /> : "";
     return <div className="container-fluid">
-      <RequestBox onSubmit={this.handleSubmit.bind(this)} request={this.state.request}/>
+      <RequestBox onSubmit={this.handleSubmit.bind(this)} request={this.state.request} running={this.state.running} />
       {res}
     </div>;
   }
@@ -91,7 +90,7 @@ class QueryBox extends React.Component {
   }
 
   handleSubmit(query) {
-    this.setState({response: null, request: {jobState: null}});
+    this.setState({response: null, request: {jobState: null}, running: true});
     const token = uuid.v4();
     const result = fetch('/sparql?token=' + token + '&query=' + encodeURIComponent(query));
     const timerId = setInterval(() => {
@@ -111,7 +110,7 @@ class QueryBox extends React.Component {
     result.then((response) => {
       clearInterval(timerId);
       const st = `${response.status} ${response.statusText}`;
-      this.setState({request: null});
+      this.setState({request: null, running: false});
       if (response.status >= 200 && response.status < 300) {
         response.text().then((text) => {
           this.setState({response: {statusText: st, data: text}});
