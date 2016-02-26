@@ -14,6 +14,6 @@
 
     $ PORT=3000 SPARQL_BACKEND=http://example.com/sparql npm start
 
-Open http://localhost:3000/ on your browser.
+Open `http://localhost:3000/` on your browser.
 
-Dashboard for administrators is at http://localhost:3000/admin .
+Dashboard for administrators is at `http://localhost:3000/admin` .
