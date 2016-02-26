@@ -12,4 +12,4 @@
 
 ## Run
 
-    $ SPARQL_BACKEND=http://example.com/sparql npm start
+    $ PORT=3000 SPARQL_BACKEND=http://example.com/sparql npm start
