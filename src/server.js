@@ -4,6 +4,7 @@ import { Parser as SparqlParser } from 'sparqljs';
 import Job from './job';
 import SocketIo from 'socket.io';
 import Queue from './queue';
+import Cache from './cache';
 import http from 'http';
 import crypto from 'crypto';
 import basicAuth from 'basic-auth-connect';
@@ -22,6 +23,7 @@ const secret          = crypto.createHash('sha512').update(adminUser + ":" + adm
 const cookieKey       = 'sparql-proxy-token';
 
 const queue = new Queue(Infinity, maxConcurrency);
+const cache = new Cache();
 
 app.get('/sparql', (req, res) => {
   const query = req.query.query;
@@ -44,20 +46,34 @@ app.get('/sparql', (req, res) => {
   }
 
   const accept = req.header.accept || 'application/sparql-results+json';
-  const token = req.query.token;
-  const job = new Job(backend, query, accept, token);
-  const promise = queue.enqueue(job);
+  const hash = crypto.createHash('sha512');
+  const querySignature = hash.update(query).update("\0").update(accept).digest('hex');
 
-  promise.then((result) => {
-    res.send(result);
-    return result;
-  }).catch((error) => {
-    console.log(`${job.id} ERROR: ${error}`);
-    if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
-      res.status(503).send('Request Timeout');
+  cache.get(querySignature).then((data) => {
+    if (data) {
+      console.log(`cache hit`);
+      res.header('X-Cache', 'hit');
+      res.send(data);
     } else {
-      res.status(500).send('ERROR');
+      const token = req.query.token;
+      const job = new Job(backend, query, accept, token);
+      const promise = queue.enqueue(job);
+
+      promise.then((result) => {
+        res.send(result);
+        cache.put(querySignature, result);
+      }).catch((error) => {
+        console.log(`${job.id} ERROR: ${error}`);
+        if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
+          res.status(503).send('Request Timeout');
+        } else {
+          res.status(500).send('ERROR');
+        }
+      });
     }
+  }).catch((error) => {
+    console.log(`${job.id} ERROR: in cache: ${error}`);
+    res.status(500).send('ERROR');
   });
 });
 
