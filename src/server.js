@@ -91,7 +91,7 @@ io.use((socket, next) => {
   if (secretProvided == secret) {
     next();
   } else {
-    console.log('socket.io authentication failed');
+    console.log(`${socket.id} socket.io authentication failed`);
     next(new Error('Authentication error'));
   }
 });
