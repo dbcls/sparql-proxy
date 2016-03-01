@@ -12,7 +12,7 @@
 
 ## Run
 
-    $ PORT=3000 SPARQL_BACKEND=http://example.com/sparql npm start
+    $ PORT=3000 SPARQL_BACKEND=http://example.com/sparql ADMIN_USER=admin ADMIN_PASSWORD=password npm start
 
 Open `http://localhost:3000/` on your browser.
 

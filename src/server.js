@@ -1,20 +1,27 @@
 import express from 'express';
+import cookie from 'cookie';
 import { Parser as SparqlParser } from 'sparqljs';
 import Job from './job';
 import SocketIo from 'socket.io';
 import Queue from './queue';
 import http from 'http';
+import crypto from 'crypto';
+import basicAuth from 'basic-auth-connect';
 
 const app = express();
 const server = http.Server(app);
 const io = SocketIo(server);
 
-const port = process.env.PORT || 3000;
-const backend = process.env.SPARQL_BACKEND;
-const maxConcurrency = process.env.MAX_CONCURRENCY || 1;
-const queue = new Queue(Infinity, maxConcurrency);
+const port            = process.env.PORT || 3000;
+const backend         = process.env.SPARQL_BACKEND;
+const maxConcurrency  = process.env.MAX_CONCURRENCY || 1;
+const adminUser       = process.env.ADMIN_USER || 'admin';
+const adminPassword   = process.env.ADMIN_PASSWORD || 'password';
 
-app.use(express.static('public'));
+const secret          = crypto.createHash('sha512').update(adminUser + ":" + adminPassword).digest('hex');
+const cookieKey       = 'sparql-proxy-token';
+
+const queue = new Queue(Infinity, maxConcurrency);
 
 app.get('/sparql', (req, res) => {
   const query = req.query.query;
@@ -64,12 +71,30 @@ app.get('/jobs/:token', (req, res) => {
   res.send(js);
 });
 
+app.get('/admin', basicAuth(adminUser, adminPassword), (req, res, next) => {
+  res.cookie(cookieKey, secret);
+  next();
+});
+
+app.use(express.static('public'));
+
 if (!backend) {
   console.log('you must specify backend');
   process.exit(1);
 }
 
 console.log('backend is', backend);
+
+io.use((socket, next) => {
+  const cookies = cookie.parse(socket.request.headers.cookie);
+  const secretProvided = cookies[cookieKey];
+  if (secretProvided == secret) {
+    next();
+  } else {
+    console.log('socket.io authentication failed');
+    next(new Error('Authentication error'));
+  }
+});
 
 io.on('connection', (socket) => {
   console.log(`${socket.id} connected`);
