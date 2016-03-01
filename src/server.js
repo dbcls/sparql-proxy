@@ -27,7 +27,6 @@ app.get('/sparql', (req, res) => {
   const query = req.query.query;
   const parser = new SparqlParser();
   let parsedQuery;
-  const format = req.query.format;
 
   try {
     parsedQuery = parser.parse(query);
