@@ -32,7 +32,9 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build": "babel src -d lib && webpack",
+    "build": "npm run babel && npm run webpack",
+    "babel": "babel src -d lib",
+    "webpack": "webpack",
     "postinstall": "npm run build",
     "start": "NODE_PATH=lib node lib/server.js"
   }
