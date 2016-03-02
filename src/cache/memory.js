@@ -2,7 +2,7 @@ import Cache from "../cache"
 
 export default class Memory extends Cache {
   constructor() {
-    super()
+    super();
 
     this.data = {};
   }
