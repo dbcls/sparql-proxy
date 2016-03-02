@@ -1,9 +1,5 @@
-import Cache from "../cache"
-
-export default class Memory extends Cache {
+export default class MemoryCache {
   constructor() {
-    super();
-
     this.data = {};
   }
 

@@ -1,13 +1,16 @@
-export default class Cache {
-  get(key) {
-    return new Promise((resolve, reject) => {
-      resolve(null);
-    });
-  }
+import NullCache from './cache/null';
+import MemoryCache from './cache/memory';
 
-  put(key, value) {
-    return new Promise((resolve, reject) => {
-      resolve(null);
-    });
+const strategies = {
+  "memory": MemoryCache,
+  "null": NullCache
+};
+
+export default (strategy, options) => {
+  const c = strategies[strategy];
+
+  if (!c) {
+    throw new Error(`unsupported cache strategy ${strategy}`);
   }
+  return new c(options);
 }

@@ -4,10 +4,10 @@ import { Parser as SparqlParser } from 'sparqljs';
 import Job from './job';
 import SocketIo from 'socket.io';
 import Queue from './queue';
-import MemoryCache from './cache/memory';
 import http from 'http';
 import crypto from 'crypto';
 import basicAuth from 'basic-auth-connect';
+import Cache from './cache';
 
 const app = express();
 const server = http.Server(app);
@@ -18,12 +18,15 @@ const backend         = process.env.SPARQL_BACKEND;
 const maxConcurrency  = process.env.MAX_CONCURRENCY || 1;
 const adminUser       = process.env.ADMIN_USER || 'admin';
 const adminPassword   = process.env.ADMIN_PASSWORD || 'password';
+const cacheStrategy   = process.env.CACHE_STRATEGY || 'null';
 
 const secret          = crypto.createHash('sha512').update(adminUser + ":" + adminPassword).digest('hex');
 const cookieKey       = 'sparql-proxy-token';
 
 const queue = new Queue(Infinity, maxConcurrency);
-const cache = new MemoryCache();
+
+const cache = new Cache(cacheStrategy);
+console.log(`cache strategy: ${cacheStrategy}`);
 
 app.get('/sparql', (req, res) => {
   const query = req.query.query;
