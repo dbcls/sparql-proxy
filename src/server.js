@@ -4,7 +4,7 @@ import { Parser as SparqlParser } from 'sparqljs';
 import Job from './job';
 import SocketIo from 'socket.io';
 import Queue from './queue';
-import Cache from './cache';
+import MemoryCache from './cache/memory';
 import http from 'http';
 import crypto from 'crypto';
 import basicAuth from 'basic-auth-connect';
@@ -23,7 +23,7 @@ const secret          = crypto.createHash('sha512').update(adminUser + ":" + adm
 const cookieKey       = 'sparql-proxy-token';
 
 const queue = new Queue(Infinity, maxConcurrency);
-const cache = new Cache();
+const cache = new MemoryCache();
 
 app.get('/sparql', (req, res) => {
   const query = req.query.query;
