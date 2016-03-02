@@ -1,9 +1,11 @@
 import NullCache from './cache/null';
 import MemoryCache from './cache/memory';
+import RedisCache from './cache/redis';
 
 const strategies = {
   "memory": MemoryCache,
-  "null": NullCache
+  "null": NullCache,
+  "redis": RedisCache
 };
 
 export default (strategy, options) => {

@@ -29,7 +29,6 @@ export default class Job extends EventEmitter {
   run() {
     const options = {
       uri: this.backend,
-      json: true,
       form: {query: this.rawQuery},
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
