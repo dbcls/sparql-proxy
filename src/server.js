@@ -8,6 +8,7 @@ import http from 'http';
 import crypto from 'crypto';
 import basicAuth from 'basic-auth-connect';
 import Cache from './cache';
+import bodyParser from 'body-parser';
 
 const app = express();
 const server = http.Server(app);
@@ -28,11 +29,25 @@ const queue = new Queue(Infinity, maxConcurrency);
 const cache = new Cache(cacheStrategy);
 console.log(`cache strategy: ${cacheStrategy}`);
 
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.text({type: 'application/sparql-query'}));
+
 app.all('/sparql', (req, res) => {
   let query;
   switch (req.method) {
     case "GET":
       query = req.query.query;
+      break;
+    case "POST":
+      if (req.body && req.body.query) {
+        query = req.body.query;
+        break;
+      }
+      if (req.is('application/sparql-query')) {
+        query = req.body;
+        break;
+      }
+      res.status(400);
       break;
     default:
       res.status(405).send('Method Not Allowed');
