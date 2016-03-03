@@ -28,8 +28,16 @@ const queue = new Queue(Infinity, maxConcurrency);
 const cache = new Cache(cacheStrategy);
 console.log(`cache strategy: ${cacheStrategy}`);
 
-app.get('/sparql', (req, res) => {
-  const query = req.query.query;
+app.all('/sparql', (req, res) => {
+  let query;
+  switch (req.method) {
+    case "GET":
+      query = req.query.query;
+      break;
+    default:
+      res.status(405).send('Method Not Allowed');
+      return;
+  }
   const parser = new SparqlParser();
   let parsedQuery;
 
