@@ -21,6 +21,7 @@ const maxWaiting      = process.env.MAX_WAITING || Infinity;
 const adminUser       = process.env.ADMIN_USER || 'admin';
 const adminPassword   = process.env.ADMIN_PASSWORD || 'password';
 const cacheStrategy   = process.env.CACHE_STRATEGY || 'null';
+const jobTimeout      = process.env.JOB_TIMEOUT || 5 * 60 * 1000;
 
 const secret          = adminUser + ":" + adminPassword;
 const cookieKey       = 'sparql-proxy-token';
@@ -83,7 +84,7 @@ app.all('/sparql', (req, res) => {
       res.send(data);
     } else {
       const token = req.query.token;
-      const job = new Job(backend, query, accept, token);
+      const job = new Job(backend, query, accept, token, jobTimeout);
       job.on('cancel', () => {
         console.log(`${job.id} job canceled`);
         res.status(503).send('Job Canceled');

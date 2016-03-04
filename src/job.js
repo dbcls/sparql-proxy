@@ -3,7 +3,7 @@ import uuid from 'uuid'
 import { EventEmitter } from 'events'
 
 export default class Job extends EventEmitter {
-  constructor(backend, rawQuery, accept, token) {
+  constructor(backend, rawQuery, accept, token, timeout) {
     super();
 
     this.id = uuid.v4();
@@ -13,6 +13,7 @@ export default class Job extends EventEmitter {
     this.token = token;
     this.setState('waiting');
     this.createdAt = new Date();
+    this.timeout = timeout;
   }
 
   setState(state, emit) {
@@ -35,7 +36,7 @@ export default class Job extends EventEmitter {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': this.accept,
       },
-      timeout: 5000 // FIXME
+      timeout: this.timeout
     };
 
     return new Promise((resolve, reject) => {
