@@ -45,6 +45,8 @@ export default class Job extends EventEmitter {
         if (error) {
           if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
             this.setState('timeout');
+            error.statusCode = 503;
+            error.data = 'Request Timeout';
           } else {
             this.setState('error');
           }

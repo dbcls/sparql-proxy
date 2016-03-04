@@ -90,16 +90,14 @@ app.all('/sparql', (req, res) => {
         cache.put(querySignature, result);
       }).catch((error) => {
         console.log(`${job.id} ERROR: ${error}`);
-        if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
-          res.status(503).send('Request Timeout');
-        } else {
-          res.status(500).send('ERROR');
-        }
+        res.status(error.statusCode || 500);
+        res.send(error.data || 'ERROR');
       });
     }
   }).catch((error) => {
     console.log(`${job.id} ERROR: in cache: ${error}`);
-    res.status(500).send('ERROR');
+    res.status(error.statusCode || 500);
+    res.send(error.data || 'ERROR');
   });
 });
 
