@@ -32,16 +32,19 @@ export default class Queue extends EventEmitter {
   }
 
   enqueue(job) {
-    job.on('update', this.publishState.bind(this));
-    this.jobs[job.id] = job;
-    console.log(`${job.id} queued; token=${job.token}`);
-    this.publishState();
-
     return new Promise((resolve, reject) => {
       if (this.queue.length >= this.maxWaiting) {
-        reject(new Error('Queue limit reached'));
+        const err = new Error('Too many waiting jobs');
+        err.statusCode = 503;
+        err.data = 'Too many waiting jobs';
+        reject(err);
         return;
       }
+
+      job.on('update', this.publishState.bind(this));
+      this.jobs[job.id] = job;
+      console.log(`${job.id} queued; token=${job.token}`);
+      this.publishState();
 
       this.queue.push({
         job: job,
