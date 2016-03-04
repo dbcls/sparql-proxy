@@ -34,8 +34,14 @@ class JobList extends React.Component {
   render() {
     const jobs = this.props.jobs.map((job) => {
       let runtime;
-      if (job.doneAt) {
-        runtime = moment(job.doneAt).diff(job.startedAt) + "ms";
+      if (job.startedAt) {
+        const end = moment(job.doneAt || this.props.now);
+        if (end) {
+          const elapsed = end.diff(job.startedAt);
+          if (elapsed > 0) {
+            runtime = elapsed + "ms";
+          }
+        }
       }
       const age = moment(job.createdAt).from(this.props.now);
       let cancelButtonColumn = <td></td>;
@@ -80,7 +86,7 @@ class MainComponent extends React.Component {
       return <div>
         <Navbar waiting={st.numWaiting} running={st.numRunning}/>
         <div className="container">
-          <JobList jobs={st.jobs} now={st.now} onCancel={this.cancelJob.bind(this)}/>
+          <JobList jobs={st.jobs} now={this.state.now} onCancel={this.cancelJob.bind(this)}/>
         </div>
       </div>;
     } else {
@@ -101,7 +107,7 @@ class MainComponent extends React.Component {
     });
     setInterval(() => {
       this.setState({now: moment()});
-    }, 5000);
+    }, 1000);
   }
 }
 
