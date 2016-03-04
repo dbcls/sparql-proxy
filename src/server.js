@@ -83,6 +83,12 @@ app.all('/sparql', (req, res) => {
     } else {
       const token = req.query.token;
       const job = new Job(backend, query, accept, token);
+      job.on('cancel', () => {
+        console.log(`${job.id} job canceled`);
+        res.status(503).send('Job Canceled');
+        return;
+      });
+
       const promise = queue.enqueue(job);
 
       promise.then((result) => {
