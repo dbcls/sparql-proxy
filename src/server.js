@@ -62,7 +62,7 @@ app.all('/sparql', (req, res) => {
     parsedQuery = parser.parse(query);
   } catch (ex) {
     console.log(ex);
-    res.status(400).send('Query parse failed');
+    res.status(400).send({message: 'Query parse failed', data: ex.message});
     return;
   }
 

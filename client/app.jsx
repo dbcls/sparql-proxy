@@ -116,8 +116,12 @@ class QueryBox extends React.Component {
           this.setState({response: {statusText: st, data: text}});
         })
       } else {
-        response.text().then((text) => {
-          this.setState({response: {statusText: st, error: text}});
+        response.json().then((obj) => {
+            this.setState({response: {statusText: st, error: obj.message, data: obj.data}});
+        }).catch((ex) => {
+          response.text().then((text) => {
+            this.setState({response: {statusText: st, error: text}});
+          });
         });
       }
     }).catch((err) => {
