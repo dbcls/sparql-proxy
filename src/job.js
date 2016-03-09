@@ -14,6 +14,7 @@ export default class Job extends EventEmitter {
     this.setState('waiting');
     this.createdAt = new Date();
     this.timeout = timeout;
+    this.request = null;
   }
 
   setState(state, emit) {
@@ -43,7 +44,7 @@ export default class Job extends EventEmitter {
     return new Promise((resolve, reject) => {
       this.startedAt = new Date();
       this.setState('running', true);
-      request.post(options, (error, response, body) => {
+      const r = request.post(options, (error, response, body) => {
         this.doneAt = new Date();
         if (error) {
           if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
@@ -62,6 +63,10 @@ export default class Job extends EventEmitter {
           this.setState('success');
           resolve(body);
         }
+      });
+      this.on('cancel', () => {
+        r.abort();
+        reject(new Error('aborted'));
       });
     });
   }

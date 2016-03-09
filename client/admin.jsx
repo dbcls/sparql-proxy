@@ -35,7 +35,7 @@ class JobList extends React.Component {
     const jobs = this.props.jobs.map((job) => {
       let runtime;
       if (job.startedAt) {
-        const end = moment(job.doneAt || this.props.now);
+        const end = moment(job.doneAt || job.canceledAt || this.props.now);
         if (end) {
           const elapsed = end.diff(job.startedAt);
           if (elapsed > 0) {
@@ -45,7 +45,7 @@ class JobList extends React.Component {
       }
       const age = moment(job.createdAt).from(this.props.now);
       let cancelButtonColumn = <td></td>;
-      if (job.state == "waiting") {
+      if (job.state == "waiting" || job.state == "running") {
         const cancel = this.props.onCancel.bind(null, job);
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }

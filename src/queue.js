@@ -114,7 +114,15 @@ export default class Queue extends EventEmitter {
       this.publishState();
       return true;
     } else {
-      return false;
+      // job is running
+      const job = this.jobs[jobId];
+      if (job) {
+        job.canceled();
+        this.publishState();
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 
