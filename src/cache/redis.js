@@ -1,8 +1,12 @@
 import redis from 'redis'
 
 export default class MemoryCache {
-  constructor() {
-    this.client = redis.createClient();
+  constructor(env) {
+    const redisUrl = env.REDIS_URL;
+    if (redisUrl) {
+      console.log(`redis is ${redisUrl}`);
+    }
+    this.client = redis.createClient(redisUrl);
 
     this.client.on('error', (err) => {
       console.log(`redis ERROR: ${err}`);

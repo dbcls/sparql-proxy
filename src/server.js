@@ -29,7 +29,7 @@ const cookieKey       = 'sparql-proxy-token';
 
 const queue = new Queue(maxWaiting, maxConcurrency, durationToKeepOldJobs);
 
-const cache = new Cache(cacheStrategy);
+const cache = new Cache(cacheStrategy, process.env);
 console.log(`cache strategy: ${cacheStrategy}`);
 
 app.use(bodyParser.urlencoded({extended: false}));

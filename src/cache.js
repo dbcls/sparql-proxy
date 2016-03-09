@@ -8,11 +8,11 @@ const strategies = {
   "redis": RedisCache
 };
 
-export default (strategy, options) => {
+export default (strategy, env) => {
   const c = strategies[strategy];
 
   if (!c) {
     throw new Error(`unsupported cache strategy ${strategy}`);
   }
-  return new c(options);
+  return new c(env);
 }
