@@ -127,7 +127,7 @@ class QueryBox extends React.Component {
     }).catch((err) => {
       clearInterval(timerId);
       console.log('failed', err);
-      this.setState({response: {error: err}, request: null});
+      this.setState({response: {error: err.message}, request: {jobState: null}, running: false});
     });
   }
 }
