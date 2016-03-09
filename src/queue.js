@@ -110,7 +110,7 @@ export default class Queue extends EventEmitter {
     if (n >= 0) {
       const job = this.queue[n].job;
       this.queue.splice(n, 1);
-      job.canceled(); // TODO callback to the web client
+      job.canceled();
       this.publishState();
       return true;
     } else {
