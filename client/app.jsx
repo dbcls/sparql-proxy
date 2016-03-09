@@ -116,13 +116,15 @@ class QueryBox extends React.Component {
           this.setState({response: {statusText: st, data: text}});
         })
       } else {
-        response.json().then((obj) => {
+        if (response.headers.get('content-type') == 'application/json') {
+          response.json().then((obj) => {
             this.setState({response: {statusText: st, error: obj.message, data: obj.data}});
-        }).catch((ex) => {
+          });
+        } else {
           response.text().then((text) => {
             this.setState({response: {statusText: st, error: text}});
           });
-        });
+        }
       }
     }).catch((err) => {
       clearInterval(timerId);
