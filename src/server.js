@@ -14,19 +14,20 @@ const app = express();
 const server = http.Server(app);
 const io = SocketIo(server);
 
-const port            = process.env.PORT || 3000;
-const backend         = process.env.SPARQL_BACKEND;
-const maxConcurrency  = process.env.MAX_CONCURRENCY || 1;
-const maxWaiting      = process.env.MAX_WAITING || Infinity;
-const adminUser       = process.env.ADMIN_USER || 'admin';
-const adminPassword   = process.env.ADMIN_PASSWORD || 'password';
-const cacheStrategy   = process.env.CACHE_STRATEGY || 'null';
-const jobTimeout      = process.env.JOB_TIMEOUT || 5 * 60 * 1000;
+const port                  = process.env.PORT || 3000;
+const backend               = process.env.SPARQL_BACKEND;
+const maxConcurrency        = process.env.MAX_CONCURRENCY || 1;
+const maxWaiting            = process.env.MAX_WAITING || Infinity;
+const adminUser             = process.env.ADMIN_USER || 'admin';
+const adminPassword         = process.env.ADMIN_PASSWORD || 'password';
+const cacheStrategy         = process.env.CACHE_STRATEGY || 'null';
+const jobTimeout            = process.env.JOB_TIMEOUT || 5 * 60 * 1000;
+const durationToKeepOldJobs = process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000;
 
 const secret          = adminUser + ":" + adminPassword;
 const cookieKey       = 'sparql-proxy-token';
 
-const queue = new Queue(maxWaiting, maxConcurrency);
+const queue = new Queue(maxWaiting, maxConcurrency, durationToKeepOldJobs);
 
 const cache = new Cache(cacheStrategy);
 console.log(`cache strategy: ${cacheStrategy}`);

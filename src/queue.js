@@ -1,14 +1,20 @@
 import { EventEmitter } from 'events'
 
 export default class Queue extends EventEmitter {
-  constructor(maxWaiting, maxConcurrency) {
+  constructor(maxWaiting, maxConcurrency, durationToKeepOldJobs) {
     super();
 
-    this.jobs = {}; // TODO cleanup old jobs
+    this.jobs = {};
     this.queue = [];
     this.maxWaiting = maxWaiting;
     this.maxConcurrency = maxConcurrency;
+    this.durationToKeepOldJobs = durationToKeepOldJobs;
     this.numRunning = 0;
+
+    setInterval(() => {
+      const now = new Date();
+      this.sweepOldJobs(now - this.durationToKeepOldJobs);
+    }, 5 * 1000);
   }
 
   state() {
@@ -126,5 +132,19 @@ export default class Queue extends EventEmitter {
     }
     const done = ['success', 'error', 'timeout'].indexOf(job.state) >= 0;
     return {state: job.state, done: done};
+  }
+
+  sweepOldJobs(threshold) {
+    let deleted = false;
+    for (let id in this.jobs) {
+      const job = this.jobs[id];
+      if (job.doneAt && job.doneAt < threshold) {
+        delete this.jobs[id];
+        deleted = true;
+      }
+    }
+    if (deleted) {
+      this.publishState();
+    }
   }
 }
