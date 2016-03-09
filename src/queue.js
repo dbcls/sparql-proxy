@@ -138,7 +138,8 @@ export default class Queue extends EventEmitter {
     let deleted = false;
     for (let id in this.jobs) {
       const job = this.jobs[id];
-      if (job.doneAt && job.doneAt < threshold) {
+      if ((job.doneAt && job.doneAt < threshold)
+          || (job.canceledAt && job.canceledAt < threshold)) {
         delete this.jobs[id];
         deleted = true;
       }
