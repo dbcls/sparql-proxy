@@ -116,7 +116,7 @@ class QueryBox extends React.Component {
           this.setState({response: {statusText: st, data: text}});
         })
       } else {
-        if (response.headers.get('content-type') == 'application/json') {
+        if (/^application\/json\b/.test(response.headers.get('content-type'))) {
           response.json().then((obj) => {
             this.setState({response: {statusText: st, error: obj.message, data: obj.data}});
           });
