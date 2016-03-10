@@ -44,11 +44,11 @@ User name for the sparql-proxy administrator.
 
 Password for the sparql-proxy administrator.
 
-### `CACHE_STRATEGY`
+### `CACHE_STORE`
 
 (default: `null`)
 
-Cache strategy. Specify one of the followings:
+Cache store. Specify one of the followings:
 
 * `null`: disable caching mechanism.
 * `memory`: cache in the proxy process.
@@ -57,19 +57,19 @@ Cache strategy. Specify one of the followings:
 
 ### `MEMORY_MAX_ENTRIES`
 
-(only applicable to `CACHE_STRATEGY=memory` case)
+(only applicable to `CACHE_STORE=memory` case)
 
 Maximum number of the entries to keep in the cache.
 
 ### `REDIS_URL`
 
-(only applicable to `CACHE_STRATEGY=redis` case)
+(only applicable to `CACHE_STORE=redis` case)
 
 Specify URL to the redis server.
 
 ## `MEMCACHE_SERVERS`
 
-(only applicable to `CACHE_STRATEGY=memcache` case)
+(only applicable to `CACHE_STORE=memcache` case)
 (default: `localhost:11211`)
 
 Specify server locations to the memcache servers (comma-separated).

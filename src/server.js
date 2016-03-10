@@ -20,7 +20,7 @@ const maxConcurrency        = process.env.MAX_CONCURRENCY || 1;
 const maxWaiting            = process.env.MAX_WAITING || Infinity;
 const adminUser             = process.env.ADMIN_USER || 'admin';
 const adminPassword         = process.env.ADMIN_PASSWORD || 'password';
-const cacheStrategy         = process.env.CACHE_STRATEGY || 'null';
+const cacheStore            = process.env.CACHE_STORE || 'null';
 const jobTimeout            = process.env.JOB_TIMEOUT || 5 * 60 * 1000;
 const durationToKeepOldJobs = process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000;
 
@@ -29,8 +29,8 @@ const cookieKey       = 'sparql-proxy-token';
 
 const queue = new Queue(maxWaiting, maxConcurrency, durationToKeepOldJobs);
 
-const cache = new Cache(cacheStrategy, process.env);
-console.log(`cache strategy: ${cacheStrategy}`);
+const cache = new Cache(cacheStore, process.env);
+console.log(`cache store: ${cacheStore}`);
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));

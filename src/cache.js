@@ -1,5 +1,5 @@
-export default function(strategy, env) {
-  const c = require(`./cache/${strategy}`).default;
+export default function(store, env) {
+  const c = require(`./cache/${store}`).default;
 
   return new c(env);
 }
