@@ -53,6 +53,13 @@ Cache strategy. Specify one of the followings:
 * `null`: disable caching mechanism.
 * `memory`: cache in the proxy process.
 * `redis`: use redis.
+* `memcache`: use memcached.
+
+### `MEMORY_MAX_ENTRIES`
+
+(only applicable to `CACHE_STRATEGY=memory` case)
+
+Maximum number of the entries to keep in the cache.
 
 ### `REDIS_URL`
 
@@ -60,11 +67,12 @@ Cache strategy. Specify one of the followings:
 
 Specify URL to the redis server.
 
-### `MEMORY_MAX_ENTRIES`
+## `MEMCACHE_SERVERS`
 
-(only applicable to `CACHE_STRATEGY=memory` case)
+(only applicable to `CACHE_STRATEGY=memcache` case)
+(default: `localhost:11211`)
 
-Maximum number of the entries to keep in the cache.
+Specify server locations to the memcache servers (comma-separated).
 
 ### `JOB_TIMEOUT`
 
