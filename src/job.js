@@ -66,7 +66,10 @@ export default class Job extends EventEmitter {
       });
       this.on('cancel', () => {
         r.abort();
-        reject(new Error('aborted'));
+        const error = new Error('aborted');
+        error.StatusCode = 503;
+        error.data = 'Job Canceled (running)';
+        reject(error);
       });
     });
   }
