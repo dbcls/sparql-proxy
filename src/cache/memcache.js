@@ -12,7 +12,6 @@ export default class MemcacheStore {
   get(key) {
     return new Promise((resolve, reject) => {
       this.client.get(key, (err, data) => {
-        console.log(data);
         err ? reject(err) : resolve(data);
       });
     });
