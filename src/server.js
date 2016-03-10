@@ -85,7 +85,7 @@ app.all('/sparql', (req, res) => {
       res.send(data);
     } else {
       const token = req.query.token;
-      const job = new Job(backend, query, accept, token, jobTimeout);
+      const job = new Job(backend, query, accept, token, jobTimeout, req.ip);
       job.on('cancel', () => {
         console.log(`${job.id} job canceled`);
         if (!res.headerSent) {

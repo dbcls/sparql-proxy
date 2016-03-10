@@ -3,7 +3,7 @@ import uuid from 'uuid'
 import { EventEmitter } from 'events'
 
 export default class Job extends EventEmitter {
-  constructor(backend, rawQuery, accept, token, timeout) {
+  constructor(backend, rawQuery, accept, token, timeout, ip) {
     super();
 
     this.id = uuid.v4();
@@ -15,6 +15,7 @@ export default class Job extends EventEmitter {
     this.createdAt = new Date();
     this.timeout = timeout;
     this.request = null;
+    this.ip = ip;
   }
 
   setState(state, emit) {

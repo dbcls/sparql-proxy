@@ -51,6 +51,7 @@ class JobList extends React.Component {
       }
       return <tr key={job.id}>
       <td><JobStateLabel state={job.state} /></td>
+      <td>{job.ip}</td>
       <td>{job.id}</td>
       <td>{age}</td>
       <td>{runtime}</td>
@@ -61,6 +62,7 @@ class JobList extends React.Component {
       <thead>
         <tr>
           <th>status</th>
+          <th>requester</th>
           <th>ID</th>
           <th>created</th>
           <th>runtime</th>
