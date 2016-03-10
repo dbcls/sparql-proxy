@@ -12,6 +12,7 @@
     "basic-auth-connect": "^1.0.0",
     "body-parser": "^1.15.0",
     "bootstrap": "^4.0.0-alpha.2",
+    "cookie": "^0.2.3",
     "css-loader": "^0.23.1",
     "exports-loader": "^0.6.3",
     "express": "^4.13.3",
