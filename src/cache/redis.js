@@ -1,6 +1,6 @@
 import redis from 'redis';
 
-export default class MemoryCache {
+export default class RedisStore {
   constructor(env) {
     const redisUrl = env.REDIS_URL;
     if (redisUrl) {
