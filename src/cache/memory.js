@@ -1,4 +1,4 @@
-export default class MemoryCache {
+export default class MemoryStore {
   constructor(env) {
     this.data = {};
     this.keys = [];

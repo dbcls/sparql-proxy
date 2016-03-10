@@ -1,4 +1,4 @@
-import redis from 'redis'
+import redis from 'redis';
 
 export default class MemoryCache {
   constructor(env) {
@@ -16,11 +16,7 @@ export default class MemoryCache {
   get(key) {
     return new Promise((resolve, reject) => {
       this.client.get(key, (err, res) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(res);
+        err ? reject(err) : resolve(res);
       });
     });
   }
@@ -28,12 +24,8 @@ export default class MemoryCache {
   put(key, value) {
     return new Promise((resolve, reject) => {
       this.client.set(key, value, (err, res) => {
-        if (err) {
-          reject(err);
-          return;
-        }
+        err ? reject(err) : resolve(res);
       });
-      resolve(value);
     });
   }
 }

@@ -1,4 +1,4 @@
-export default class NullCache {
+export default class NullStore {
   get(key) {
     return new Promise((resolve, reject) => {
       resolve(null);
