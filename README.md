@@ -60,6 +60,12 @@ Cache strategy. Specify one of the followings:
 
 Specify URL to the redis server.
 
+### `MEMORY_MAX_ENTRIES`
+
+(only applicable to `CACHE_STRATEGY=memory` case)
+
+Maximum number of the entries to keep in the cache.
+
 ### `JOB_TIMEOUT`
 
 (default: `300000`)
