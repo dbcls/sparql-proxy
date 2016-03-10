@@ -40,7 +40,7 @@ User name for the sparql-proxy administrator.
 
 ### `ADMIN_PASSWORD`
 
-(default: `admin`)
+(default: `password`)
 
 Password for the sparql-proxy administrator.
 
