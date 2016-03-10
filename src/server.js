@@ -75,7 +75,7 @@ app.all('/sparql', (req, res) => {
   }
 
   const accept = req.header.accept || 'application/sparql-results+json';
-  const hash = crypto.createHash('sha512');
+  const hash = crypto.createHash('md5');
   const querySignature = hash.update(query).update("\0").update(accept).digest('hex');
 
   cache.get(querySignature).then((data) => {
