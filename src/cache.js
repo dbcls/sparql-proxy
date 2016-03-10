@@ -8,7 +8,7 @@ const strategies = {
   "redis": RedisCache
 };
 
-export default (strategy, env) => {
+export default function(strategy, env) {
   const c = strategies[strategy];
 
   if (!c) {
