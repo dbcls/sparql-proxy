@@ -25,6 +25,9 @@ export default class Job extends EventEmitter {
   }
 
   canceled() {
+    if (this.state == 'canceled') {
+      return;
+    }
     this.canceledAt = new Date();
     this.setState('canceled');
     this.emit('cancel');
