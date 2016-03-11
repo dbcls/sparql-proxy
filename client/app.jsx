@@ -8,9 +8,11 @@ import queryString from 'query-string';
 
 class Navbar extends React.Component {
   render() {
-    return <nav className="navbar navbar-fixed-top navbar-dark bg-inverse">
-      <a className="navbar-brand" href="#">SPARQL Proxy</a>
-    </nav>;
+    return (
+      <nav className="navbar navbar-fixed-top navbar-dark bg-inverse">
+        <a className="navbar-brand" href="#">SPARQL Proxy</a>
+      </nav>
+    );
   }
 }
 
@@ -25,9 +27,12 @@ class ResponseBox extends React.Component {
 
   error() {
     if (this.props.response.error) {
-      return <div className="alert alert-danger">{this.props.response.error}</div>
+      return (
+        <div className="alert alert-danger">{this.props.response.error}</div>
+      );
+    } else {
+      return '';
     }
-    return "";
   }
 }
 
@@ -40,21 +45,25 @@ class RequestBox extends React.Component {
   render() {
     let requestStatus = "";
     if (this.props.running) {
-      requestStatus = <span>
-        <span className="running-icon fa fa-refresh fa-spin"></span>
-        <span>{this.props.request.jobState}</span>
-      </span>;
+      requestStatus = (
+        <span>
+          <span className="running-icon fa fa-refresh fa-spin"></span>
+          <span>{this.props.request.jobState}</span>
+        </span>
+      );
     }
-    return <div className="card card-block">
-      <h4 className="card-title">Query</h4>
-      <form onSubmit={this.handleSubmit.bind(this)}>
-        <div className="form-group">
-          <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
-        </div>
-        <button type="submit" className="btn btn-default" disabled={this.props.running}>Submit</button>
-        {requestStatus}
-      </form>
-    </div>;
+    return (
+      <div className="card card-block">
+        <h4 className="card-title">Query</h4>
+        <form onSubmit={this.handleSubmit.bind(this)}>
+          <div className="form-group">
+            <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
+          </div>
+          <button type="submit" className="btn btn-default" disabled={this.props.running}>Submit</button>
+          {requestStatus}
+        </form>
+      </div>
+    );
   }
 
   handleQueryChange(e) {
@@ -75,10 +84,12 @@ class QueryBox extends React.Component {
 
   render() {
     const res = this.state.response ? <ResponseBox response={this.state.response} /> : "";
-    return <div className="container-fluid">
-      <RequestBox query={this.props.query} onSubmit={this.handleSubmit.bind(this)} request={this.state.request} running={this.state.running} />
-      {res}
-    </div>;
+    return (
+      <div className="container-fluid">
+        <RequestBox query={this.props.query} onSubmit={this.handleSubmit.bind(this)} request={this.state.request} running={this.state.running} />
+        {res}
+      </div>
+    );
   }
 
   checkStatus(response) {
@@ -142,10 +153,12 @@ class MainComponent extends React.Component {
   }
 
   render() {
-    return <div>
-      <Navbar />
-      <QueryBox query={this.query} />
-    </div>;
+    return (
+      <div>
+        <Navbar />
+        <QueryBox query={this.query} />
+      </div>
+    );
   }
 }
 

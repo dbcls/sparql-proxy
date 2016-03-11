@@ -20,13 +20,17 @@ class JobStateLabel extends React.Component {
     const label = (state == 'done') ? reason : state;
     const c = jobLabelMapping[label] || 'default';
 
-    return <span className={"label label-" + c}>{label}</span>;
+    return (
+      <span className={"label label-" + c}>{label}</span>
+    );
   }
 }
 
 class CancelButton extends React.Component {
   render() {
-    return <button className="btn btn-danger" onClick={this.props.onClick}>Cancel</button>;
+    return (
+      <button className="btn btn-danger" onClick={this.props.onClick}>Cancel</button>
+    );
   }
 }
 
@@ -49,53 +53,61 @@ class JobList extends React.Component {
         const cancel = this.props.onCancel.bind(null, job);
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }
-      return <tr key={job.id}>
-      <td><JobStateLabel state={job.state} reason={job.data.reason}/></td>
-      <td>{job.ip}</td>
-      <td>{job.id}</td>
-      <td>{age}</td>
-      <td>{runtime}</td>
-      {cancelButtonColumn}
-      </tr>
-    });
-    return <table className="table">
-      <thead>
-        <tr>
-          <th>status</th>
-          <th>requester</th>
-          <th>ID</th>
-          <th>created</th>
-          <th>runtime</th>
-          <th>control</th>
+      return (
+        <tr key={job.id}>
+          <td><JobStateLabel state={job.state} reason={job.data.reason}/></td>
+          <td>{job.ip}</td>
+          <td>{job.id}</td>
+          <td>{age}</td>
+          <td>{runtime}</td>
+          {cancelButtonColumn}
         </tr>
-      </thead>
-      <tbody>
-      {jobs}
-      </tbody>
-    </table>;
+      );
+    });
+    return (
+      <table className="table">
+        <thead>
+          <tr>
+            <th>status</th>
+            <th>requester</th>
+            <th>ID</th>
+            <th>created</th>
+            <th>runtime</th>
+            <th>control</th>
+          </tr>
+        </thead>
+        <tbody>
+        {jobs}
+        </tbody>
+      </table>
+    );
   }
 }
 
 class MainComponent extends React.Component {
-  constructor(props) {
-    super(props);
+  constructor() {
+    super(...arguments);
     this.state = {state: null};
   }
 
   render() {
     const st = this.state.state;
     if (st) {
-      return <div>
-        <Navbar waiting={st.numWaiting} running={st.numRunning}/>
-        <div className="container">
-          <div className="text-xs-right m-b-1">
-            <button className="btn btn-danger" onClick={this.purgeCache.bind(this)}>Purge cache</button>
+      return (
+        <div>
+          <Navbar waiting={st.numWaiting} running={st.numRunning}/>
+          <div className="container">
+            <div className="text-xs-right m-b-1">
+              <button className="btn btn-danger" onClick={this.purgeCache.bind(this)}>Purge cache</button>
+            </div>
+            <JobList jobs={st.jobs} now={this.state.now} onCancel={this.cancelJob.bind(this)}/>
           </div>
-          <JobList jobs={st.jobs} now={this.state.now} onCancel={this.cancelJob.bind(this)}/>
         </div>
-      </div>;
+      );
     } else {
-      return <div />
+      return (
+        <div />
+      );
     }
   }
 
@@ -122,12 +134,14 @@ class MainComponent extends React.Component {
 
 class Navbar extends React.Component {
   render() {
-    return <nav className="navbar navbar-fixed-top navbar-dark bg-inverse">
-      <a className="navbar-brand" href="#">SPARQL Proxy</a>
-      <div className="navbar-text pull-xs-right">
-        {this.props.running} running, {this.props.waiting} waiting
-      </div>
-    </nav>;
+    return (
+      <nav className="navbar navbar-fixed-top navbar-dark bg-inverse">
+        <a className="navbar-brand" href="#">SPARQL Proxy</a>
+        <div className="navbar-text pull-xs-right">
+          {this.props.running} running, {this.props.waiting} waiting
+        </div>
+      </nav>
+    );
   }
 }
 
