@@ -98,7 +98,10 @@ app.all('/sparql', (req, res) => {
 
       promise.then((result) => {
         res.send(result);
-        cache.put(querySignature, result);
+
+        cache.put(querySignature, result).catch((err) => {
+          console.log(`ERROR: in cache put: ${err}`);
+        });
       }).catch((error) => {
         console.log(`${job.id} ERROR: ${error}`);
         res.status(error.statusCode || 500);
@@ -106,7 +109,7 @@ app.all('/sparql', (req, res) => {
       });
     }
   }).catch((error) => {
-    console.log(`${job.id} ERROR: in cache: ${error}`);
+    console.log(`ERROR: in cache get: ${error}`);
     res.status(error.statusCode || 500);
     res.send(error.data || 'ERROR');
   });
