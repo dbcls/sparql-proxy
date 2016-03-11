@@ -158,6 +158,10 @@ io.on('connection', (socket) => {
     const r = queue.cancel(data.id);
     console.log(`${data.id} cancel request; success=${r}`);
   });
+
+  socket.on('error', (error) => {
+    console.log(`socket error: ${error}`);
+  });
 });
 
 queue.on('state', (state) => {
