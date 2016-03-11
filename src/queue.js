@@ -28,7 +28,7 @@ export default class extends EventEmitter {
   state() {
     let jobList = [];
     for (let id in this.jobs) {
-      jobList.push(this.jobs[id]);
+      jobList.push(this.jobs[id].job);
     }
     jobList.sort((a, b) => {
       return b.createdAt - a.createdAt;
@@ -56,12 +56,12 @@ export default class extends EventEmitter {
       }
 
       job.on('update', this.publishState.bind(this));
-      this.jobs[job.id] = job;
-      console.log(`${job.id} queued; token=${job.token}`);
-      this.publishState();
 
       const jw = new JobWrapper(resolve, reject, job);
       this.queue.push(jw);
+      this.jobs[job.id] = jw;
+      console.log(`${job.id} queued; token=${job.token}`);
+      this.publishState();
 
       this._dequeue();
     });
@@ -120,7 +120,8 @@ export default class extends EventEmitter {
       return true;
     } else {
       // job is running
-      const job = this.jobs[jobId];
+      const jw = this.jobs[jobId];
+      const job = jw.job;
       if (job) {
         job.canceled();
         this.publishState();
@@ -134,7 +135,8 @@ export default class extends EventEmitter {
   jobStatus(token) {
     let job;
     for (let id in this.jobs) {
-      const j = this.jobs[id];
+      const jw = this.jobs[id];
+      const j = jw.job;
       if (j.token && j.token == token) {
         job = j;
         break;
@@ -150,7 +152,8 @@ export default class extends EventEmitter {
   sweepOldJobs(threshold) {
     let deleted = false;
     for (let id in this.jobs) {
-      const job = this.jobs[id];
+      const jw = this.jobs[id];
+      const job = jw.job;
       if ((job.doneAt && job.doneAt < threshold)
           || (job.canceledAt && job.canceledAt < threshold)) {
         delete this.jobs[id];
