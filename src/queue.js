@@ -1,5 +1,13 @@
 import { EventEmitter } from 'events'
 
+class JobWrapper {
+  constructor(resolve, reject, job) {
+    this.resolve = resolve;
+    this.reject  = reject;
+    this.job     = job;
+  }
+}
+
 export default class extends EventEmitter {
   constructor(maxWaiting, maxConcurrency, durationToKeepOldJobs) {
     super();
@@ -52,11 +60,8 @@ export default class extends EventEmitter {
       console.log(`${job.id} queued; token=${job.token}`);
       this.publishState();
 
-      this.queue.push({
-        job: job,
-        resolve: resolve,
-        reject: reject
-      });
+      const jw = new JobWrapper(resolve, reject, job);
+      this.queue.push(jw);
 
       this._dequeue();
     });
