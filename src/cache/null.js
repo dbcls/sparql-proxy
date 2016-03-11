@@ -3,7 +3,7 @@ export default class {
     return Promise.resolve(null);
   }
 
-  put(key, value) {
+  put(key, obj) {
     return Promise.resolve();
   }
 }

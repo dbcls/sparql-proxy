@@ -78,11 +78,12 @@ app.all('/sparql', (req, res) => {
   const hash = crypto.createHash('md5');
   const querySignature = hash.update(query).update("\0").update(accept).digest('hex');
 
-  cache.get(querySignature).then((data) => {
-   if (data) {
-      console.log(`cache hit`);
+  cache.get(querySignature).then((entry) => {
+    if (entry) {
+      console.log('cache hit');
+      res.header('Content-Type', entry.contentType);
       res.header('X-Cache', 'hit');
-      res.send(data);
+      res.send(entry.body);
     } else {
       const token = req.query.token;
       const job = new Job(backend, query, accept, jobTimeout, req.ip);
@@ -95,7 +96,8 @@ app.all('/sparql', (req, res) => {
       const promise = queue.enqueue(job, token);
 
       promise.then((result) => {
-        res.send(result);
+        res.header('Conten-Type', result.contentType);
+        res.send(result.body);
 
         cache.put(querySignature, result).catch((err) => {
           console.log(`ERROR: in cache put: ${err}`);

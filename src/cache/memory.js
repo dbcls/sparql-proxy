@@ -9,13 +9,13 @@ export default class {
     return Promise.resolve(this.data[key]);
   }
 
-  put(key, value) {
+  put(key, obj) {
     if (this.keys.indexOf(key) < 0) {
       this.keys.push(key);
     }
 
     this.sweepOld();
-    this.data[key] = value;
+    this.data[key] = obj;
 
     return Promise.resolve();
   }

@@ -15,14 +15,14 @@ export default class {
   }
 
   get(key) {
-    return denodeify(fs.readFile)(this.getPath(key)).catch(() => null);
+    return denodeify(fs.readFile)(this.getPath(key)).then(JSON.parse).catch(() => null);
   }
 
-  put(key, value) {
+  put(key, obj) {
     const _path = this.getPath(key);
 
     return denodeify(mkdirp)(path.dirname(_path)).then(() => {
-      return denodeify(fs.writeFile)(_path, value);
+      return denodeify(fs.writeFile)(_path, JSON.stringify(obj));
     });
   }
 

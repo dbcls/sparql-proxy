@@ -46,7 +46,7 @@ export default class extends EventEmitter {
           reject(error);
         } else {
           this.emit('update', {reason: 'success'});
-          resolve(body);
+          resolve({contentType: response.headers['content-type'], body});
         }
       });
       this.on('cancel', () => {

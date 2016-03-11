@@ -15,10 +15,10 @@ export default class {
   }
 
   get(key) {
-    return denodeify(this.client.get.bind(this.client))(key);
+    return denodeify(this.client.get.bind(this.client))(key).then(JSON.parse).catch(() => null);
   }
 
-  put(key, value) {
-    return denodeify(this.client.set.bind(this.client))(key, value);
+  put(key, obj) {
+    return denodeify(this.client.set.bind(this.client))(key, JSON.stringify(obj));
   }
 }
