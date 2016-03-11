@@ -1,5 +1,5 @@
-export default function(store, env) {
-  const c = require(`./${store}`).default;
+export function createCacheStore(name, env) {
+  const klass = require(`./${name}`).default;
 
-  return new c(env);
+  return new klass(env);
 }

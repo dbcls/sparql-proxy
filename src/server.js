@@ -7,7 +7,7 @@ import Queue from './queue';
 import http from 'http';
 import crypto from 'crypto';
 import basicAuth from 'basic-auth-connect';
-import Cache from './cache';
+import { createCacheStore } from './cache';
 import bodyParser from 'body-parser';
 
 const app    = express();
@@ -31,7 +31,7 @@ const cookieKey = 'sparql-proxy-token';
 
 const queue = new Queue(config.maxWaiting, config.maxConcurrency, config.durationToKeepOldJobs);
 
-const cache = new Cache(config.cacheStore, process.env);
+const cache = createCacheStore(config.cacheStore, process.env);
 console.log(`cache store: ${config.cacheStore}`);
 
 app.use(bodyParser.urlencoded({extended: false}));
