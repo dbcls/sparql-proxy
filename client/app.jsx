@@ -19,11 +19,13 @@ class Navbar extends React.Component {
 
 class ResponseBox extends React.Component {
   render() {
-    return <div className="card card-block">
-      <h4 className="card-title">Response <span className="label label-default">{this.props.response.statusText}</span></h4>
-      {this.error()}
-      <textarea className="form-control" rows="10" value={this.props.response.data} readOnly/>
-    </div>;
+    return (
+      <div className="card card-block">
+        <h4 className="card-title">Response <span className="label label-default">{this.props.response.statusText}</span></h4>
+        {this.error()}
+        <textarea className="form-control" rows="10" value={this.props.response.data} readOnly/>
+      </div>
+    );
   }
 
   error() {
