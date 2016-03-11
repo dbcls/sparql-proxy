@@ -90,7 +90,6 @@ app.all('/sparql', (req, res) => {
         if (!res.headerSent) {
           res.status(503).send('Job Canceled');
         }
-        return;
       });
 
       const promise = queue.enqueue(job, token);
