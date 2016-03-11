@@ -44,18 +44,22 @@ app.all('/sparql', (req, res) => {
       query = req.query.query;
       break;
     case "POST":
-      if (req.body && req.body.query) {
-        query = req.body.query;
-      } else if (req.is('application/sparql-query')) {
+      if (req.is('application/sparql-query')) {
         query = req.body;
       } else {
-        res.status(400);
+        query = req.body.query;
       }
       break;
     default:
       res.status(405).send('Method Not Allowed');
       return;
   }
+
+  if (!query) {
+    res.status(400).send({message: 'Query is required'});
+    return;
+  }
+
   const parser = new SparqlParser();
   let parsedQuery;
 
