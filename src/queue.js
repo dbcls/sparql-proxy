@@ -38,7 +38,7 @@ export default class extends EventEmitter {
     super();
 
     this.jobs = {};
-    this.queue = [];
+    this.waiting = [];
     this.maxWaiting = maxWaiting;
     this.maxConcurrency = maxConcurrency;
     this.durationToKeepOldJobs = durationToKeepOldJobs;
@@ -60,7 +60,7 @@ export default class extends EventEmitter {
     });
 
     return {
-      numWaiting: this.queue.length,
+      numWaiting: this.waiting.length,
       numRunning: this.numRunning,
       jobs: jobList
     };
@@ -72,7 +72,7 @@ export default class extends EventEmitter {
 
   enqueue(job, token) {
     return new Promise((resolve, reject) => {
-      if (this.queue.length >= this.maxWaiting) {
+      if (this.waiting.length >= this.maxWaiting) {
         const err = new Error('Too many waiting jobs');
         err.statusCode = 503;
         err.data = 'Too many waiting jobs';
@@ -83,7 +83,7 @@ export default class extends EventEmitter {
       job.on('update', this.publishState.bind(this));
 
       const jw = new JobWrapper(resolve, reject, job, token);
-      this.queue.push(jw);
+      this.waiting.push(jw);
       this.jobs[jw.id] = jw;
       console.log(`${jw.id} queued; token=${jw.token}`);
       this.publishState();
@@ -97,7 +97,7 @@ export default class extends EventEmitter {
       return false;
     }
 
-    const item = this.queue.shift();
+    const item = this.waiting.shift();
     if (!item) {
       return false;
     }
@@ -134,16 +134,16 @@ export default class extends EventEmitter {
   cancel(jobId) {
     let n = -1;
 
-    for (let i in this.queue) {
-      if (this.queue[i].id == jobId) {
+    for (let i in this.waiting) {
+      if (this.waiting[i].id == jobId) {
         n = i;
         break;
       }
     }
 
     if (n >= 0) {
-      const job = this.queue[n].job;
-      this.queue.splice(n, 1);
+      const job = this.waiting[n].job;
+      this.waiting.splice(n, 1);
       job.canceled();
       this.publishState();
       return true;
