@@ -56,6 +56,15 @@ Cache store. Specify one of the followings:
 * `redis`: use redis.
 * `memcache`: use memcached.
 
+### `COMPRESSOR`
+
+(default: `raw`)
+
+Cache compression algorithm. Specify one of the followings:
+
+* `raw`: disable compression.
+* `snappy`: use snappy.
+
 ### `CACHE_STORE_PATH`
 
 (only applicable to `CACHE_STORE=file` case)
@@ -71,6 +80,7 @@ Maximum number of the entries to keep in the cache.
 ### `REDIS_URL`
 
 (only applicable to `CACHE_STORE=redis` case)
+(default: `localhost:6379`)
 
 Specify URL to the redis server.
 

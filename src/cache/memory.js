@@ -1,5 +1,5 @@
 export default class {
-  constructor(env) {
+  constructor(compressor, env) {
     this.maxEntries = env.MEMORY_MAX_ENTRIES || 100;
     this.reset();
   }

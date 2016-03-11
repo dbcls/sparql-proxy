@@ -1,5 +1,5 @@
-export function createCacheStore(name, env) {
+export function createCacheStore(name, compressor, env) {
   const klass = require(`./${name}`).default;
 
-  return new klass(env);
+  return new klass(compressor, env);
 }

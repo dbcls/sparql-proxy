@@ -8,6 +8,7 @@ import http from 'http';
 import crypto from 'crypto';
 import basicAuth from 'basic-auth-connect';
 import { createCacheStore } from './cache';
+import { createCompressor } from './compressor';
 import bodyParser from 'body-parser';
 
 const app    = express();
@@ -22,6 +23,7 @@ const config = Object.freeze({
   adminUser:             process.env.ADMIN_USER || 'admin',
   adminPassword:         process.env.ADMIN_PASSWORD || 'password',
   cacheStore:            process.env.CACHE_STORE || 'null',
+  compressor:            process.env.COMPRESSOR || 'raw',
   jobTimeout:            process.env.JOB_TIMEOUT || 5 * 60 * 1000,
   durationToKeepOldJobs: process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000,
 });
@@ -31,8 +33,9 @@ const cookieKey = 'sparql-proxy-token';
 
 const queue = new Queue(config.maxWaiting, config.maxConcurrency, config.durationToKeepOldJobs);
 
-const cache = createCacheStore(config.cacheStore, process.env);
-console.log(`cache store: ${config.cacheStore}`);
+console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
+const compressor = createCompressor(config.compressor);
+const cache      = createCacheStore(config.cacheStore, compressor, process.env);
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));
@@ -78,11 +81,11 @@ app.all('/sparql', (req, res) => {
     return;
   }
 
-  const accept = req.header.accept || 'application/sparql-results+json';
-  const hash = crypto.createHash('md5');
-  const querySignature = hash.update(query).update("\0").update(accept).digest('hex');
+  const accept   = req.header.accept || 'application/sparql-results+json';
+  const digest   = crypto.createHash('md5').update(query).update("\0").update(accept).digest('hex');
+  const cacheKey = `${digest}.${config.compressor}`;
 
-  cache.get(querySignature).then((entry) => {
+  cache.get(cacheKey).then((entry) => {
     if (entry) {
       console.log('cache hit');
       res.header('Content-Type', entry.contentType);
@@ -103,7 +106,7 @@ app.all('/sparql', (req, res) => {
         res.header('Conten-Type', result.contentType);
         res.send(result.body);
 
-        cache.put(querySignature, result).catch((err) => {
+        cache.put(cacheKey, result).catch((err) => {
           console.log(`ERROR: in cache put: ${err}`);
         });
       }).catch((error) => {

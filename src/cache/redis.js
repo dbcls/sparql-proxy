@@ -1,13 +1,14 @@
 import redis from 'redis';
 import denodeify from 'denodeify';
+import Base from './base';
 
-export default class {
-  constructor(env) {
-    const redisUrl = env.REDIS_URL;
-    if (redisUrl) {
-      console.log(`redis is ${redisUrl}`);
-    }
-    this.client = redis.createClient(redisUrl);
+export default class extends Base {
+  constructor(compressor, env) {
+    super(compressor);
+
+    this.client = redis.createClient({url: env.REDIS_URL, return_buffers: true});
+
+    console.log(`redis is ${this.client.address}`);
 
     this.client.on('error', (err) => {
       console.log(`redis ERROR: ${err}`);
@@ -15,11 +16,13 @@ export default class {
   }
 
   get(key) {
-    return denodeify(this.client.get.bind(this.client))(key).then(JSON.parse).catch(() => null);
+    return denodeify(this.client.get.bind(this.client))(key).then(this.deserialize.bind(this));
   }
 
   put(key, obj) {
-    return denodeify(this.client.set.bind(this.client))(key, JSON.stringify(obj));
+    return this.serialize(obj).then((data) => (
+      denodeify(this.client.set.bind(this.client))(key, data)
+    ));
   }
 
   purge() {

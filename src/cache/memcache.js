@@ -1,8 +1,11 @@
 import Memcached from 'memcached';
 import denodeify from 'denodeify';
+import Base from './base';
 
-export default class {
-  constructor(env) {
+export default class extends Base {
+  constructor(compressor, env) {
+    super(compressor);
+
     const servers = env.MEMCACHE_SERVERS ? env.MEMCACHE_SERVERS.split(',') : undefined;
 
     this.client = new Memcached(servers);
@@ -11,11 +14,13 @@ export default class {
   }
 
   get(key) {
-    return denodeify(this.client.get.bind(this.client))(key).then(JSON.parse).catch(() => null);
+    return denodeify(this.client.get.bind(this.client))(key).then(this.deserialize.bind(this));
   }
 
   put(key, obj) {
-    return denodeify(this.client.set.bind(this.client))(key, JSON.stringify(obj), 0);
+    return this.serialize(obj).then((data) => (
+      denodeify(this.client.set.bind(this.client))(key, data, 0)
+    ));
   }
 
   purge() {
