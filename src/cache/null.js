@@ -1,4 +1,4 @@
-export default class NullStore {
+export default class {
   get(key) {
     return new Promise((resolve, reject) => {
       resolve(null);

@@ -1,6 +1,6 @@
 import redis from 'redis';
 
-export default class RedisStore {
+export default class {
   constructor(env) {
     const redisUrl = env.REDIS_URL;
     if (redisUrl) {

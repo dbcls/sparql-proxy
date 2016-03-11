@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 
-export default class Queue extends EventEmitter {
+export default class extends EventEmitter {
   constructor(maxWaiting, maxConcurrency, durationToKeepOldJobs) {
     super();
 

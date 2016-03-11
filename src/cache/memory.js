@@ -1,4 +1,4 @@
-export default class MemoryStore {
+export default class {
   constructor(env) {
     this.data = {};
     this.keys = [];

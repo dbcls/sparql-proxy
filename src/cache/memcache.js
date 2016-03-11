@@ -1,6 +1,6 @@
 import Memcached from 'memcached';
 
-export default class MemcacheStore {
+export default class {
   constructor(env) {
     const servers = env.MEMCACHE_SERVERS ? env.MEMCACHE_SERVERS.split(',') : undefined;
 

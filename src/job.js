@@ -2,7 +2,7 @@ import request from 'request'
 import uuid from 'uuid'
 import { EventEmitter } from 'events'
 
-export default class Job extends EventEmitter {
+export default class extends EventEmitter {
   constructor(backend, rawQuery, accept, token, timeout, ip) {
     super();
 
