@@ -5,6 +5,7 @@ import './app.scss';
 import 'font-awesome/css/font-awesome.css';
 import uuid from 'uuid';
 import queryString from 'query-string';
+import 'babel-polyfill';
 
 class Navbar extends React.Component {
   render() {
@@ -92,57 +93,40 @@ class QueryBox extends React.Component {
     );
   }
 
-  checkStatus(response) {
-    if (response.status >= 200 && response.status < 300) {
-      return response;
-    } else {
-      var error = new Error(response.statusText);
-      throw error;
-    };
-  }
-
-  handleSubmit(query) {
+  async handleSubmit(query) {
     this.setState({response: null, request: {jobState: null}, running: true});
     const token = uuid.v4();
-    const result = fetch('/sparql?token=' + token + '&query=' + encodeURIComponent(query));
-    const timerId = setInterval(() => {
-      const r = fetch('/jobs/' + token);
-      r.then(this.checkStatus)
-       .then((response) => (response.json()))
-       .then((data) => {
-         this.setState({request: {jobState: data.state}});
-         if (data.done) {
-           clearInterval(timerId);
-         }
-      }).catch((err) => {
-        clearInterval(timerId);
-      });
+
+    const timerId = setInterval(async () => {
+      const job     = await fetch(`/jobs/${token}`);
+      const {state} = await job.json();
+      this.setState({request: {jobState: state}});
     }, 1000);
 
-    result.then((response) => {
-      clearInterval(timerId);
-      const st = `${response.status} ${response.statusText}`;
+    try {
+      const params     = queryString.stringify({query, token});
+      const response   = await fetch(`/sparql?${params}`);
+      const statusText = `${response.status} ${response.statusText}`;
       this.setState({request: null, running: false});
-      if (response.status >= 200 && response.status < 300) {
-        response.text().then((text) => {
-          this.setState({response: {statusText: st, data: text}});
-        })
+
+      if (response.ok) {
+        const data = await response.text();
+        this.setState({response: {statusText, data}});
       } else {
-        if (/^application\/json\b/.test(response.headers.get('content-type'))) {
-          response.json().then((obj) => {
-            this.setState({response: {statusText: st, error: obj.message, data: obj.data}});
-          });
-        } else {
-          response.text().then((text) => {
-            this.setState({response: {statusText: st, error: text}});
-          });
+        try {
+          const {message, data} = await response.json();
+          this.setState({response: {statusText, error: message, data}});
+        } catch (err) {
+          const error = await response.text();
+          this.setState({response: {statusText, error}});
         }
       }
-    }).catch((err) => {
-      clearInterval(timerId);
+    } catch (err) {
       console.log('failed', err);
       this.setState({response: {error: err.message}, request: {jobState: null}, running: false});
-    });
+    } finally {
+      clearInterval(timerId);
+    }
   }
 }
 
