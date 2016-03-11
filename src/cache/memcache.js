@@ -1,4 +1,5 @@
 import Memcached from 'memcached';
+import denodeify from 'denodeify';
 
 export default class {
   constructor(env) {
@@ -10,18 +11,10 @@ export default class {
   }
 
   get(key) {
-    return new Promise((resolve, reject) => {
-      this.client.get(key, (err, data) => {
-        err ? reject(err) : resolve(data);
-      });
-    });
+    return denodeify(this.client.get.bind(this.client))(key);
   }
 
   put(key, value) {
-    return new Promise((resolve, reject) => {
-      this.client.set(key, value, 0, (err) => {
-        err ? reject(err) : resolve(value);
-      });
-    });
+    return denodeify(this.client.set.bind(this.client))(key, value, 0);
   }
 }

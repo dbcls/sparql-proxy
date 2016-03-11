@@ -1,4 +1,5 @@
 import redis from 'redis';
+import denodeify from 'denodeify';
 
 export default class {
   constructor(env) {
@@ -14,18 +15,10 @@ export default class {
   }
 
   get(key) {
-    return new Promise((resolve, reject) => {
-      this.client.get(key, (err, res) => {
-        err ? reject(err) : resolve(res);
-      });
-    });
+    return denodeify(this.client.get.bind(this.client))(key);
   }
 
   put(key, value) {
-    return new Promise((resolve, reject) => {
-      this.client.set(key, value, (err, res) => {
-        err ? reject(err) : resolve(res);
-      });
-    });
+    return denodeify(this.client.set.bind(this.client))(key, value);
   }
 }

@@ -6,27 +6,25 @@ export default class {
   }
 
   get(key) {
-    return new Promise((resolve, reject) => {
-      resolve(this.data[key]);
-    });
+    return Promise.resolve(this.data[key]);
   }
 
   put(key, value) {
-    return new Promise((resolve, reject) => {
-      if (this.keys.indexOf(key) < 0) {
-        this.keys.push(key);
-      }
-      this.sweepOld();
-      this.data[key] = value;
-      resolve(value);
-    });
+    if (this.keys.indexOf(key) < 0) {
+      this.keys.push(key);
+    }
+
+    this.sweepOld();
+    this.data[key] = value;
+
+    return Promise.resolve();
   }
 
   sweepOld() {
-    if (this.keys.length > this.maxEntries) {
-      const key = this.keys.shift();
-      console.log(`expire key ${key}`);
-      delete this.data[key];
-    }
+    if (this.keys.length <= this.maxEntries) { return; }
+
+    const key = this.keys.shift();
+    console.log(`expire key ${key}`);
+    delete this.data[key];
   }
 }

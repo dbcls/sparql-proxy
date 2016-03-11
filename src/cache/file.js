@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import mkdirp from 'mkdirp';
+import denodeify from 'denodeify';
 
 export default class {
   constructor(env) {
@@ -14,30 +15,14 @@ export default class {
   }
 
   get(key) {
-    return new Promise((resolve, reject) => {
-      fs.readFile(this.getPath(key), (err, data) => {
-        err ? resolve(null) : resolve(data);
-      });
-    });
+    return denodeify(fs.readFile)(this.getPath(key)).catch(() => null);
   }
 
   put(key, value) {
-    return new Promise((resolve, reject) => {
-      const _path = this.getPath(key);
+    const _path = this.getPath(key);
 
-      mkdirp(path.dirname(_path), (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          fs.writeFile(_path, value, (err) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(value);
-            }
-          });
-        }
-      });
+    return denodeify(mkdirp)(path.dirname(_path)).then(() => {
+      return denodeify(fs.writeFile)(_path, value);
     });
   }
 
