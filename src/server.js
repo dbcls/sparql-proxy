@@ -10,27 +10,29 @@ import basicAuth from 'basic-auth-connect';
 import Cache from './cache';
 import bodyParser from 'body-parser';
 
-const app = express();
+const app    = express();
 const server = http.Server(app);
-const io = SocketIo(server);
+const io     = SocketIo(server);
 
-const port                  = process.env.PORT || 3000;
-const backend               = process.env.SPARQL_BACKEND;
-const maxConcurrency        = process.env.MAX_CONCURRENCY || 1;
-const maxWaiting            = process.env.MAX_WAITING || Infinity;
-const adminUser             = process.env.ADMIN_USER || 'admin';
-const adminPassword         = process.env.ADMIN_PASSWORD || 'password';
-const cacheStore            = process.env.CACHE_STORE || 'null';
-const jobTimeout            = process.env.JOB_TIMEOUT || 5 * 60 * 1000;
-const durationToKeepOldJobs = process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000;
+const config = Object.freeze({
+  port:                  process.env.PORT || 3000,
+  backend:               process.env.SPARQL_BACKEND,
+  maxConcurrency:        process.env.MAX_CONCURRENCY || 1,
+  maxWaiting:            process.env.MAX_WAITING || Infinity,
+  adminUser:             process.env.ADMIN_USER || 'admin',
+  adminPassword:         process.env.ADMIN_PASSWORD || 'password',
+  cacheStore:            process.env.CACHE_STORE || 'null',
+  jobTimeout:            process.env.JOB_TIMEOUT || 5 * 60 * 1000,
+  durationToKeepOldJobs: process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000,
+});
 
-const secret          = adminUser + ":" + adminPassword;
-const cookieKey       = 'sparql-proxy-token';
+const secret    = config.adminUser + ":" + config.adminPassword;
+const cookieKey = 'sparql-proxy-token';
 
-const queue = new Queue(maxWaiting, maxConcurrency, durationToKeepOldJobs);
+const queue = new Queue(config.maxWaiting, config.maxConcurrency, config.durationToKeepOldJobs);
 
-const cache = new Cache(cacheStore, process.env);
-console.log(`cache store: ${cacheStore}`);
+const cache = new Cache(config.cacheStore, process.env);
+console.log(`cache store: ${config.cacheStore}`);
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));
@@ -86,7 +88,7 @@ app.all('/sparql', (req, res) => {
       res.send(entry.body);
     } else {
       const token = req.query.token;
-      const job = new Job(backend, query, accept, jobTimeout, req.ip);
+      const job = new Job(config.backend, query, accept, config.jobTimeout, req.ip);
       job.on('cancel', () => {
         if (!res.headerSent) {
           res.status(503).send('Job Canceled');
@@ -124,19 +126,19 @@ app.get('/jobs/:token', (req, res) => {
   res.send(js);
 });
 
-app.get('/admin', basicAuth(adminUser, adminPassword), (req, res, next) => {
+app.get('/admin', basicAuth(config.adminUser, config.adminPassword), (req, res, next) => {
   res.cookie(cookieKey, secret);
   next();
 });
 
 app.use(express.static('public'));
 
-if (!backend) {
+if (!config.backend) {
   console.log('you must specify backend');
   process.exit(1);
 }
 
-console.log('backend is', backend);
+console.log('backend is', config.backend);
 
 io.use((socket, next) => {
   const cookies = cookie.parse(socket.request.headers.cookie);
@@ -177,7 +179,7 @@ queue.on('state', (state) => {
   io.emit('state', state);
 });
 
-server.listen(port, () => {
+server.listen(config.port, () => {
   const port = server.address().port;
   console.log('sparql-proxy listening at', port);
 });
