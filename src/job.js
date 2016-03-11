@@ -33,19 +33,19 @@ export default class extends EventEmitter {
       const r = request.post(options, (error, response, body) => {
         if (error) {
           if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
-            this.emit('update', {result: 'timeout'});
+            this.emit('update', {reason: 'timeout'});
             error.statusCode = 503;
             error.data = 'Request Timeout';
           } else {
-            this.emit('update', {result: 'error'});
+            this.emit('update', {reason: 'error'});
           }
           reject(error);
         } else if (response.statusCode != 200) {
-          this.emit('update', {result: 'error'});
+          this.emit('update', {reason: 'error'});
           const error = new Error(`unexpected response from backend: ${response.stausCode}`);
           reject(error);
         } else {
-          this.emit('update', {result: 'success'});
+          this.emit('update', {reason: 'success'});
           resolve(body);
         }
       });
@@ -54,7 +54,7 @@ export default class extends EventEmitter {
         const error = new Error('aborted');
         error.StatusCode = 503;
         error.data = 'Job Canceled (running)';
-        this.emit('update', {result: 'canceled'});
+        this.emit('update', {reason: 'canceled'});
         reject(error);
       });
     });

@@ -16,8 +16,8 @@ const jobLabelMapping = {
 class JobStateLabel extends React.Component {
   render() {
     const state = this.props.state;
-    const result = this.props.result;
-    const label = (state == 'done') ? result : state;
+    const reason = this.props.reason;
+    const label = (state == 'done') ? reason : state;
     const c = jobLabelMapping[label] || 'default';
 
     return <span className={"label label-" + c}>{label}</span>;
@@ -50,7 +50,7 @@ class JobList extends React.Component {
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }
       return <tr key={job.id}>
-      <td><JobStateLabel state={job.state} result={job.data.result}/></td>
+      <td><JobStateLabel state={job.state} reason={job.data.reason}/></td>
       <td>{job.ip}</td>
       <td>{job.id}</td>
       <td>{age}</td>
