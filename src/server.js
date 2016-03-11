@@ -87,13 +87,13 @@ app.all('/sparql', async (req, res) => {
   const cacheKey = `${digest}.${config.compressor}`;
 
   try {
-    const entry = await cache.get(cacheKey);
+    const cached = await cache.get(cacheKey);
 
-    if (entry) {
+    if (cached) {
       console.log('cache hit');
-      res.header('Content-Type', entry.contentType);
+      res.header('Content-Type', cached.contentType);
       res.header('X-Cache', 'hit');
-      res.send(entry.body);
+      res.send(cached.body);
       return;
     }
   } catch (error) {
