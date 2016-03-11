@@ -20,9 +20,18 @@ export default class extends Base {
 
   async get(key) {
     const _path = this.getPath(key);
-    const data  = await denodeify(fs.readFile)(_path);
 
-    return await this.deserialize(data);
+    try {
+      const data = await denodeify(fs.readFile)(_path);
+
+      return await this.deserialize(data);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        // do nothing
+      } else {
+        throw error;
+      }
+    }
   }
 
   async put(key, obj) {
