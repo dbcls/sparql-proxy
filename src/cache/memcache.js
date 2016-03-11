@@ -13,17 +13,19 @@ export default class extends Base {
     console.log(`memcached is ${this.client.servers.join(', ')}`);
   }
 
-  get(key) {
-    return denodeify(this.client.get.bind(this.client))(key).then(this.deserialize.bind(this));
+  async get(key) {
+    const data = await denodeify(this.client.get.bind(this.client))(key);
+
+    return await this.deserialize(data);
   }
 
-  put(key, obj) {
-    return this.serialize(obj).then((data) => (
-      denodeify(this.client.set.bind(this.client))(key, data, 0)
-    ));
+  async put(key, obj) {
+    const data = await this.serialize(obj);
+
+    await denodeify(this.client.set.bind(this.client))(key, data, 0);
   }
 
-  purge() {
-    return denodeify(this.client.flush.bind(this.client))();
+  async purge() {
+    await denodeify(this.client.flush.bind(this.client))();
   }
 }

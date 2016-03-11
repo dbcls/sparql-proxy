@@ -1,13 +1,13 @@
 export default class {
-  get(key) {
-    return Promise.resolve(null);
+  async get(key) {
+    return null;
   }
 
-  put(key, obj) {
-    return Promise.resolve();
+  async put(key, obj) {
+    // do nothing
   }
 
-  purge() {
-    return Promise.resolve();
+  async purge() {
+    // do nothing
   }
 }

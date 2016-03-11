@@ -4,25 +4,21 @@ export default class {
     this.reset();
   }
 
-  get(key) {
-    return Promise.resolve(this.data[key]);
+  async get(key) {
+    return this.data[key];
   }
 
-  put(key, obj) {
+  async put(key, obj) {
     if (this.keys.indexOf(key) < 0) {
       this.keys.push(key);
     }
 
     this.sweepOld();
     this.data[key] = obj;
-
-    return Promise.resolve();
   }
 
-  purge() {
+  async purge() {
     this.reset();
-
-    return Promise.resolve();
   }
 
   reset() {

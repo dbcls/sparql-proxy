@@ -3,13 +3,17 @@ export default class {
     this.compressor = compressor;
   }
 
-  serialize(obj) {
-    return this.compressor.compress(JSON.stringify(obj));
+  async serialize(obj) {
+    const json = JSON.stringify(obj);
+
+    return await this.compressor.compress(json);
   }
 
-  deserialize(data) {
-    if (!data) { return Promise.resolve(null); }
+  async deserialize(data) {
+    if (!data) { return null; }
 
-    return this.compressor.uncompress(data).then(JSON.parse).catch(() => null);
+    const json = await this.compressor.uncompress(data);
+
+    return JSON.parse(json);
   }
 }

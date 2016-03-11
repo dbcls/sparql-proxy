@@ -10,6 +10,7 @@ import basicAuth from 'basic-auth-connect';
 import { createCacheStore } from './cache';
 import { createCompressor } from './compressor';
 import bodyParser from 'body-parser';
+import 'babel-polyfill';
 
 const app    = express();
 const server = http.Server(app);
@@ -164,10 +165,9 @@ io.on('connection', (socket) => {
     console.log(`${socket.id} disconnected`);
   });
 
-  socket.on('purge_cache', () => {
-    cache.purge().then(() => {
-      console.log('purged');
-    });
+  socket.on('purge_cache', async () => {
+    await cache.purge();
+    console.log('purged');
   });
 
   socket.on('cancel_job', (data) => {

@@ -1,9 +1,9 @@
 export default class {
-  compress(data) {
-    return Promise.resolve(data);
+  async compress(data) {
+    return data;
   }
 
-  uncompress(data) {
-    return Promise.resolve(data);
+  async uncompress(data) {
+    return data;
   }
 }

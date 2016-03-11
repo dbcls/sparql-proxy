@@ -18,22 +18,23 @@ export default class extends Base {
     }
   }
 
-  get(key) {
-    return denodeify(fs.readFile)(this.getPath(key)).catch(() => null).then(this.deserialize.bind(this));
-  }
-
-  put(key, obj) {
+  async get(key) {
     const _path = this.getPath(key);
+    const data  = await denodeify(fs.readFile)(_path).catch(() => null);
 
-    return denodeify(mkdirp)(path.dirname(_path)).then(() => (
-      this.serialize(obj)
-    )).then((data) => (
-      denodeify(fs.writeFile)(_path, data)
-    ));
+    return await this.deserialize(data);
   }
 
-  purge() {
-    return denodeify(rimraf)(this.rootDir);
+  async put(key, obj) {
+    const _path = this.getPath(key);
+    const data  = await this.serialize(obj);
+
+    await denodeify(mkdirp)(path.dirname(_path));
+    await denodeify(fs.writeFile)(_path, data);
+  }
+
+  async purge() {
+    await denodeify(rimraf)(this.rootDir);
   }
 
   getPath(key) {
