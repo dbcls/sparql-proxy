@@ -173,20 +173,13 @@ export default class extends EventEmitter {
   }
 
   jobStatus(token) {
-    let job;
     for (let id in this.jobs) {
       const jw = this.jobs[id];
-      const j = jw.job;
       if (jw.token && jw.token == token) {
-        job = j;
-        break;
+        return jw.data();
       }
     }
-    if (!job) {
-      return null;
-    }
-    const done = ['success', 'error', 'timeout'].indexOf(job.state) >= 0;
-    return {state: job.state, done: done};
+    return null;
   }
 
   sweepOldJobs(threshold) {
