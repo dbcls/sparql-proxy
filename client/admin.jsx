@@ -4,23 +4,23 @@ import 'bootstrap/scss/bootstrap.scss'
 import './app.scss'
 import moment from 'moment'
 
+const jobLabelMapping = {
+  waiting:  'default',
+  success:  'success',
+  running:  'primary',
+  timeout:  'danger',
+  error:    'danger',
+  canceled: 'warning'
+};
+
 class JobStateLabel extends React.Component {
   render() {
     const state = this.props.state;
-    let c = "default";
-    switch (state) {
-      case "waiting":
-        c = "default"; break;
-      case "success":
-        c = "success"; break;
-      case "running":
-        c = "primary"; break;
-      case "timeout":
-        c = "warning"; break;
-      case "error":
-        c = "danger"; break;
-    }
-    return <span className={"label label-" + c}>{this.props.state}</span>;
+    const result = this.props.result;
+    const label = (state == 'done') ? result : state;
+    const c = jobLabelMapping[label] || 'default';
+
+    return <span className={"label label-" + c}>{label}</span>;
   }
 }
 
@@ -35,7 +35,7 @@ class JobList extends React.Component {
     const jobs = this.props.jobs.map((job) => {
       let runtime;
       if (job.startedAt) {
-        const end = moment(job.doneAt || job.canceledAt || this.props.now);
+        const end = moment(job.doneAt || this.props.now);
         if (end) {
           const elapsed = end.diff(job.startedAt);
           if (elapsed > 0) {
@@ -45,12 +45,12 @@ class JobList extends React.Component {
       }
       const age = moment(job.createdAt).from(this.props.now);
       let cancelButtonColumn = <td></td>;
-      if (job.state == "waiting" || job.state == "running") {
+      if (job.state != "done") {
         const cancel = this.props.onCancel.bind(null, job);
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }
       return <tr key={job.id}>
-      <td><JobStateLabel state={job.state} /></td>
+      <td><JobStateLabel state={job.state} result={job.data.result}/></td>
       <td>{job.ip}</td>
       <td>{job.id}</td>
       <td>{age}</td>

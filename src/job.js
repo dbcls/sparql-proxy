@@ -14,10 +14,6 @@ export default class extends EventEmitter {
   }
 
   canceled() {
-    if (this.state == 'canceled') {
-      return;
-    }
-    this.canceledAt = new Date();
     // STATE: canceled
     this.emit('cancel');
   }
@@ -37,19 +33,19 @@ export default class extends EventEmitter {
       const r = request.post(options, (error, response, body) => {
         if (error) {
           if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
-            // STATE: timeout
+            this.emit('update', {result: 'timeout'});
             error.statusCode = 503;
             error.data = 'Request Timeout';
           } else {
-            // STATE: error
+            this.emit('update', {result: 'error'});
           }
           reject(error);
         } else if (response.statusCode != 200) {
-          // STATE: error
+          this.emit('update', {result: 'error'});
           const error = new Error(`unexpected response from backend: ${response.stausCode}`);
           reject(error);
         } else {
-          // STATE: success
+          this.emit('update', {result: 'success'});
           resolve(body);
         }
       });
@@ -58,6 +54,7 @@ export default class extends EventEmitter {
         const error = new Error('aborted');
         error.StatusCode = 503;
         error.data = 'Job Canceled (running)';
+        this.emit('update', {result: 'canceled'});
         reject(error);
       });
     });

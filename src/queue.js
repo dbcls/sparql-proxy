@@ -1,8 +1,10 @@
 import uuid from 'uuid'
 import { EventEmitter } from 'events'
 
-class JobWrapper {
+class JobWrapper extends EventEmitter {
   constructor(resolve, reject, job, token) {
+    super();
+
     this.resolve   = resolve;
     this.reject    = reject;
     this.job       = job;
@@ -10,6 +12,12 @@ class JobWrapper {
     this.id        = uuid.v4();
     this.state     = 'waiting';
     this.token     = token;
+    this.userData  = {};
+
+    job.on('update', (data) => {
+      this.userData = data;
+      this.emit('update');
+    });
   }
 
   data() {
@@ -18,7 +26,8 @@ class JobWrapper {
       state:     this.state,
       createdAt: this.createdAt,
       startedAt: this.startedAt,
-      doneAt:    this.doneAt
+      doneAt:    this.doneAt,
+      data:      this.userData
     };
   }
 
@@ -80,9 +89,10 @@ export default class extends EventEmitter {
         return;
       }
 
-      job.on('update', this.publishState.bind(this));
 
       const jw = new JobWrapper(resolve, reject, job, token);
+      jw.on('update', this.publishState.bind(this));
+
       this.waiting.push(jw);
       this.jobs[jw.id] = jw;
       console.log(`${jw.id} queued; token=${jw.token}`);
@@ -107,6 +117,7 @@ export default class extends EventEmitter {
 
       console.log(`${item.id} start`);
       item.start();
+      this.publishState();
       item.job.run()
         .then((value) => {
           this.numRunning--;
@@ -182,9 +193,7 @@ export default class extends EventEmitter {
     let deleted = false;
     for (let id in this.jobs) {
       const jw = this.jobs[id];
-      const job = jw.job;
-      if ((job.doneAt && job.doneAt < threshold)
-          || (job.canceledAt && job.canceledAt < threshold)) {
+      if (jw.doneAt && jw.doneAt < threshold) {
         delete this.jobs[id];
         deleted = true;
       }
