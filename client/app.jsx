@@ -1,9 +1,10 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import 'bootstrap/scss/bootstrap.scss'
-import './app.scss'
-import 'font-awesome/css/font-awesome.css'
-import uuid from 'uuid'
+import React from 'react';
+import ReactDOM from 'react-dom';
+import 'bootstrap/scss/bootstrap.scss';
+import './app.scss';
+import 'font-awesome/css/font-awesome.css';
+import uuid from 'uuid';
+import queryString from 'query-string';
 
 class Navbar extends React.Component {
   render() {
@@ -31,9 +32,9 @@ class ResponseBox extends React.Component {
 }
 
 class RequestBox extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {query: ""};
+  constructor() {
+    super(...arguments);
+    this.state = {query: this.props.query};
   }
 
   render() {
@@ -67,15 +68,15 @@ class RequestBox extends React.Component {
 }
 
 class QueryBox extends React.Component {
-  constructor(props) {
-    super(props);
+  constructor() {
+    super(...arguments);
     this.state = {response: null, request: null};
   }
 
   render() {
     const res = this.state.response ? <ResponseBox response={this.state.response} /> : "";
     return <div className="container-fluid">
-      <RequestBox onSubmit={this.handleSubmit.bind(this)} request={this.state.request} running={this.state.running} />
+      <RequestBox query={this.props.query} onSubmit={this.handleSubmit.bind(this)} request={this.state.request} running={this.state.running} />
       {res}
     </div>;
   }
@@ -135,10 +136,15 @@ class QueryBox extends React.Component {
 }
 
 class MainComponent extends React.Component {
+  constructor() {
+    super(...arguments);
+    this.query = queryString.parse(window.location.search).query || '';
+  }
+
   render() {
     return <div>
       <Navbar />
-      <QueryBox />
+      <QueryBox query={this.query} />
     </div>;
   }
 }
