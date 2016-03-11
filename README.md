@@ -51,9 +51,16 @@ Password for the sparql-proxy administrator.
 Cache store. Specify one of the followings:
 
 * `null`: disable caching mechanism.
+* `file`: cache in the local files.
 * `memory`: cache in the proxy process.
 * `redis`: use redis.
 * `memcache`: use memcached.
+
+### `CACHE_STORE_PATH`
+
+(only applicable to `CACHE_STORE=file` case)
+
+Root directory of the cache store.
 
 ### `MEMORY_MAX_ENTRIES`
 
