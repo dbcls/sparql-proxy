@@ -79,22 +79,21 @@ app.all('/sparql', (req, res) => {
   const querySignature = hash.update(query).update("\0").update(accept).digest('hex');
 
   cache.get(querySignature).then((data) => {
-    if (data) {
+   if (data) {
       console.log(`cache hit`);
       res.header('X-Cache', 'hit');
       res.send(data);
     } else {
       const token = req.query.token;
-      const job = new Job(backend, query, accept, token, jobTimeout, req.ip);
+      const job = new Job(backend, query, accept, jobTimeout, req.ip);
       job.on('cancel', () => {
-        console.log(`${job.id} job canceled`);
         if (!res.headerSent) {
           res.status(503).send('Job Canceled');
         }
         return;
       });
 
-      const promise = queue.enqueue(job);
+      const promise = queue.enqueue(job, token);
 
       promise.then((result) => {
         res.send(result);
@@ -103,7 +102,7 @@ app.all('/sparql', (req, res) => {
           console.log(`ERROR: in cache put: ${err}`);
         });
       }).catch((error) => {
-        console.log(`${job.id} ERROR: ${error}`);
+        console.log(`ERROR: ${error}`);
         res.status(error.statusCode || 500);
         res.send(error.data || 'ERROR');
       });

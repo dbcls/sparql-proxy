@@ -3,26 +3,14 @@ import uuid from 'uuid'
 import { EventEmitter } from 'events'
 
 export default class extends EventEmitter {
-  constructor(backend, rawQuery, accept, token, timeout, ip) {
+  constructor(backend, rawQuery, accept, timeout, ip) {
     super();
 
-    this.id = uuid.v4();
     this.backend = backend;
     this.rawQuery = rawQuery;
     this.accept = accept;
-    this.token = token;
-    this.setState('waiting');
-    this.createdAt = new Date();
     this.timeout = timeout;
-    this.request = null;
     this.ip = ip;
-  }
-
-  setState(state, emit) {
-    this.state = state;
-    if (emit) {
-      this.emit('update');
-    }
   }
 
   canceled() {
@@ -30,7 +18,7 @@ export default class extends EventEmitter {
       return;
     }
     this.canceledAt = new Date();
-    this.setState('canceled');
+    // STATE: canceled
     this.emit('cancel');
   }
 
@@ -46,25 +34,22 @@ export default class extends EventEmitter {
     };
 
     return new Promise((resolve, reject) => {
-      this.startedAt = new Date();
-      this.setState('running', true);
       const r = request.post(options, (error, response, body) => {
-        this.doneAt = new Date();
         if (error) {
           if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
-            this.setState('timeout');
+            // STATE: timeout
             error.statusCode = 503;
             error.data = 'Request Timeout';
           } else {
-            this.setState('error');
+            // STATE: error
           }
           reject(error);
         } else if (response.statusCode != 200) {
-          this.setState('error');
+          // STATE: error
           const error = new Error(`unexpected response from backend: ${response.stausCode}`);
           reject(error);
         } else {
-          this.setState('success');
+          // STATE: success
           resolve(body);
         }
       });

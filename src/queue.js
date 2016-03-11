@@ -1,10 +1,35 @@
+import uuid from 'uuid'
 import { EventEmitter } from 'events'
 
 class JobWrapper {
-  constructor(resolve, reject, job) {
-    this.resolve = resolve;
-    this.reject  = reject;
-    this.job     = job;
+  constructor(resolve, reject, job, token) {
+    this.resolve   = resolve;
+    this.reject    = reject;
+    this.job       = job;
+    this.createdAt = new Date();
+    this.id        = uuid.v4();
+    this.state     = 'waiting';
+    this.token     = token;
+  }
+
+  data() {
+    return {
+      id:        this.id,
+      state:     this.state,
+      createdAt: this.createdAt,
+      startedAt: this.startedAt,
+      doneAt:    this.doneAt
+    };
+  }
+
+  start() {
+    this.state     = 'running';
+    this.startedAt = new Date();
+  }
+
+  done() {
+    this.state  = 'done';
+    this.doneAt = new Date();
   }
 }
 
@@ -28,7 +53,7 @@ export default class extends EventEmitter {
   state() {
     let jobList = [];
     for (let id in this.jobs) {
-      jobList.push(this.jobs[id].job);
+      jobList.push(this.jobs[id].data());
     }
     jobList.sort((a, b) => {
       return b.createdAt - a.createdAt;
@@ -45,7 +70,7 @@ export default class extends EventEmitter {
     this.emit('state', this.state());
   }
 
-  enqueue(job) {
+  enqueue(job, token) {
     return new Promise((resolve, reject) => {
       if (this.queue.length >= this.maxWaiting) {
         const err = new Error('Too many waiting jobs');
@@ -57,10 +82,10 @@ export default class extends EventEmitter {
 
       job.on('update', this.publishState.bind(this));
 
-      const jw = new JobWrapper(resolve, reject, job);
+      const jw = new JobWrapper(resolve, reject, job, token);
       this.queue.push(jw);
-      this.jobs[job.id] = jw;
-      console.log(`${job.id} queued; token=${job.token}`);
+      this.jobs[jw.id] = jw;
+      console.log(`${jw.id} queued; token=${jw.token}`);
       this.publishState();
 
       this._dequeue();
@@ -80,21 +105,25 @@ export default class extends EventEmitter {
     try {
       this.numRunning++;
 
-      console.log(`${item.job.id} start`);
+      console.log(`${item.id} start`);
+      item.start();
       item.job.run()
         .then((value) => {
           this.numRunning--;
+          item.done();
           this.publishState();
           item.resolve(value);
           this._dequeue();
         }, (err) => {
           this.numRunning--;
+          item.done();
           this.publishState();
           item.reject(err);
           this._dequeue();
         });
     } catch (err) {
       this.numRunning--;
+      item.done();
       this.publishState();
       item.reject(err);
       this._dequeue();
@@ -106,7 +135,7 @@ export default class extends EventEmitter {
     let n = -1;
 
     for (let i in this.queue) {
-      if (this.queue[i].job.id == jobId) {
+      if (this.queue[i].id == jobId) {
         n = i;
         break;
       }
@@ -137,7 +166,7 @@ export default class extends EventEmitter {
     for (let id in this.jobs) {
       const jw = this.jobs[id];
       const j = jw.job;
-      if (j.token && j.token == token) {
+      if (jw.token && jw.token == token) {
         job = j;
         break;
       }
