@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import mkdirp from 'mkdirp';
+import rimraf from 'rimraf';
 import denodeify from 'denodeify';
 
 export default class {
@@ -24,6 +25,10 @@ export default class {
     return denodeify(mkdirp)(path.dirname(_path)).then(() => {
       return denodeify(fs.writeFile)(_path, JSON.stringify(obj));
     });
+  }
+
+  purge() {
+    return denodeify(rimraf)(this.rootDir);
   }
 
   getPath(key) {

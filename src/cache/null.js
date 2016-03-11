@@ -6,4 +6,8 @@ export default class {
   put(key, obj) {
     return Promise.resolve();
   }
+
+  purge() {
+    return Promise.resolve();
+  }
 }

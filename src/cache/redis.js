@@ -21,4 +21,8 @@ export default class {
   put(key, obj) {
     return denodeify(this.client.set.bind(this.client))(key, JSON.stringify(obj));
   }
+
+  purge() {
+    return denodeify(this.client.flushdb.bind(this.client))();
+  }
 }

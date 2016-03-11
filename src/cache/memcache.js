@@ -17,4 +17,8 @@ export default class {
   put(key, obj) {
     return denodeify(this.client.set.bind(this.client))(key, JSON.stringify(obj), 0);
   }
+
+  purge() {
+    return denodeify(this.client.flush.bind(this.client))();
+  }
 }

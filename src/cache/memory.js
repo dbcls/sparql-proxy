@@ -1,8 +1,7 @@
 export default class {
   constructor(env) {
-    this.data = {};
-    this.keys = [];
     this.maxEntries = env.MEMORY_MAX_ENTRIES || 100;
+    this.reset();
   }
 
   get(key) {
@@ -18,6 +17,17 @@ export default class {
     this.data[key] = obj;
 
     return Promise.resolve();
+  }
+
+  purge() {
+    this.reset();
+
+    return Promise.resolve();
+  }
+
+  reset() {
+    this.data = {};
+    this.keys = [];
   }
 
   sweepOld() {

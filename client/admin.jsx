@@ -88,12 +88,19 @@ class MainComponent extends React.Component {
       return <div>
         <Navbar waiting={st.numWaiting} running={st.numRunning}/>
         <div className="container">
+          <div className="text-xs-right m-b-1">
+            <button className="btn btn-danger" onClick={this.purgeCache.bind(this)}>Purge cache</button>
+          </div>
           <JobList jobs={st.jobs} now={this.state.now} onCancel={this.cancelJob.bind(this)}/>
         </div>
       </div>;
     } else {
       return <div />
     }
+  }
+
+  purgeCache() {
+    this.socket.emit('purge_cache');
   }
 
   cancelJob(job) {

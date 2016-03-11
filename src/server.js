@@ -157,6 +157,12 @@ io.on('connection', (socket) => {
     console.log(`${socket.id} disconnected`);
   });
 
+  socket.on('purge_cache', () => {
+    cache.purge().then(() => {
+      console.log('purged');
+    });
+  });
+
   socket.on('cancel_job', (data) => {
     const r = queue.cancel(data.id);
     console.log(`${data.id} cancel request; success=${r}`);
