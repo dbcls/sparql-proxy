@@ -118,7 +118,7 @@ app.all('/sparql', async (req, res) => {
     try {
       await cache.put(cacheKey, result);
     } catch (error) {
-      console.log(`ERROR: in cache put: ${err}`);
+      console.log(`ERROR: in cache put: ${error}`);
     }
   } catch (error) {
     console.log(`ERROR: ${error}`);
