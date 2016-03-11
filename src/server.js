@@ -41,7 +41,7 @@ const cache      = createCacheStore(config.cacheStore, compressor, process.env);
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));
 
-app.all('/sparql', (req, res) => {
+app.all('/sparql', async (req, res) => {
   let query;
   switch (req.method) {
     case "GET":
@@ -86,41 +86,45 @@ app.all('/sparql', (req, res) => {
   const digest   = crypto.createHash('md5').update(query).update("\0").update(accept).digest('hex');
   const cacheKey = `${digest}.${config.compressor}`;
 
-  cache.get(cacheKey).then((entry) => {
+  try {
+    const entry = await cache.get(cacheKey);
+
     if (entry) {
       console.log('cache hit');
       res.header('Content-Type', entry.contentType);
       res.header('X-Cache', 'hit');
       res.send(entry.body);
-    } else {
-      const token = req.query.token;
-      const job = new Job(config.backend, query, accept, config.jobTimeout, req.ip);
-      job.on('cancel', () => {
-        if (!res.headerSent) {
-          res.status(503).send('Job Canceled');
-        }
-      });
-
-      const promise = queue.enqueue(job, token);
-
-      promise.then((result) => {
-        res.header('Conten-Type', result.contentType);
-        res.send(result.body);
-
-        cache.put(cacheKey, result).catch((err) => {
-          console.log(`ERROR: in cache put: ${err}`);
-        });
-      }).catch((error) => {
-        console.log(`ERROR: ${error}`);
-        res.status(error.statusCode || 500);
-        res.send(error.data || 'ERROR');
-      });
+      return;
     }
-  }).catch((error) => {
+  } catch (error) {
     console.log(`ERROR: in cache get: ${error}`);
+  }
+
+  const token = req.query.token;
+  const job   = new Job(config.backend, query, accept, config.jobTimeout, req.ip);
+
+  job.on('cancel', () => {
+    if (!res.headerSent) {
+      res.status(503).send('Job Canceled');
+    }
+  });
+
+  try {
+    const result = await queue.enqueue(job, token);
+
+    res.header('Conten-Type', result.contentType);
+    res.send(result.body);
+
+    try {
+      await cache.put(cacheKey, result);
+    } catch (error) {
+      console.log(`ERROR: in cache put: ${err}`);
+    }
+  } catch (error) {
+    console.log(`ERROR: ${error}`);
     res.status(error.statusCode || 500);
     res.send(error.data || 'ERROR');
-  });
+  }
 });
 
 app.get('/jobs/:token', (req, res) => {
