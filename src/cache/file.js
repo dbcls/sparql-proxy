@@ -23,7 +23,7 @@ export default class extends Base {
       return await this.deserialize(data);
     } catch (error) {
       if (error.code === 'ENOENT') {
-        // do nothing
+        return null;
       } else {
         throw error;
       }
