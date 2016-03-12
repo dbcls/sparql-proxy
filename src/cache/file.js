@@ -9,13 +9,9 @@ export default class extends Base {
   constructor(compressor, env) {
     super(compressor);
 
-    this.rootDir = env.CACHE_STORE_PATH;
+    this.rootDir = env.CACHE_STORE_PATH || '/tmp/sparql-proxy/cache';
 
-    if (!this.rootDir) {
-      throw new Error('Please set CACHE_STORE_PATH environment variable');
-    } else {
-      console.log(`cache directory is ${this.rootDir}`);
-    }
+    console.log(`cache directory is ${this.rootDir}`);
   }
 
   async get(key) {

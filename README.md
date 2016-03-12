@@ -68,6 +68,7 @@ Cache compression algorithm. Specify one of the followings:
 ### `CACHE_STORE_PATH`
 
 (only applicable to `CACHE_STORE=file` case)
+(default: `/tmp/sparql-proxy/cache`)
 
 Root directory of the cache store.
 
