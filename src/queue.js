@@ -153,7 +153,7 @@ export default class extends EventEmitter {
     let n = -1;
 
     for (let i in this.waiting) {
-      if (this.waiting[i].id == jobId) {
+      if (this.waiting[i].id === jobId) {
         n = i;
         break;
       }
@@ -182,7 +182,7 @@ export default class extends EventEmitter {
   jobStatus(token) {
     for (let id in this.jobs) {
       const jw = this.jobs[id];
-      if (jw.token && jw.token == token) {
+      if (jw.token && jw.token === token) {
         return jw.data();
       }
     }

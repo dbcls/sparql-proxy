@@ -17,7 +17,7 @@ class JobStateLabel extends React.Component {
   render() {
     const state = this.props.state;
     const reason = this.props.reason;
-    const label = (state == 'done') ? reason : state;
+    const label = (state === 'done') ? reason : state;
     const c = jobLabelMapping[label] || 'default';
 
     return (
@@ -49,7 +49,7 @@ class JobList extends React.Component {
       }
       const age = moment(job.createdAt).from(this.props.now);
       let cancelButtonColumn = <td></td>;
-      if (job.state != "done") {
+      if (job.state !== "done") {
         const cancel = this.props.onCancel.bind(null, job);
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }

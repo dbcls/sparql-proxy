@@ -155,7 +155,7 @@ console.log('backend is', config.backend);
 io.use((socket, next) => {
   const cookies = cookie.parse(socket.request.headers.cookie);
   const secretProvided = cookies[cookieKey];
-  if (secretProvided == secret) {
+  if (secretProvided === secret) {
     next();
   } else {
     console.log(`${socket.id} socket.io authentication failed`);

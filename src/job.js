@@ -41,7 +41,7 @@ export default class extends EventEmitter {
     return new Promise((resolve, reject) => {
       const r = request.post(options, (error, response, body) => {
         if (error) {
-          if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
+          if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKETTIMEDOUT') {
             this.setReason('timeout');
             error.statusCode = 503;
             error.data = 'Request Timeout';
@@ -49,7 +49,7 @@ export default class extends EventEmitter {
             this.setReason('error');
           }
           reject(error);
-        } else if (response.statusCode != 200) {
+        } else if (response.statusCode !== 200) {
           this.setReason('error');
           const error = new Error(`unexpected response from backend: ${response.stausCode}`);
           reject(error);
