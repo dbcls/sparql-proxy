@@ -1,8 +1,8 @@
 // SPARQL_BACKEND=http://example.com/sparql node request-chunking.js '[SPARQL query]'
 
-var request = require('request');
-var SparqlParser = require('sparqljs').Parser;
-var SparqlGenerator = require('sparqljs').Generator;
+import request from 'request';
+import {Parser as SparqlParser} from 'sparqljs';
+import {Generator as SparqlGenerator} from 'sparqljs';
 
 function _req(backend, parsedQuery, accept, timeout, limit, chunkLimit, chunkOffset) {
   parsedQuery.limit = chunkLimit;
