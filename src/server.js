@@ -114,12 +114,6 @@ app.all('/sparql', cors(), async (req, res) => {
   const token = req.query.token;
   const job   = new Job(config.backend, query, accept, config.jobTimeout, req.ip);
 
-  job.on('cancel', () => {
-    if (!res.headerSent) {
-      res.status(503).send('Job Canceled');
-    }
-  });
-
   try {
     const result = await queue.enqueue(job, token);
 

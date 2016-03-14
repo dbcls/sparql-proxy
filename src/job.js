@@ -4,6 +4,8 @@ import uuid from 'uuid';
 import { EventEmitter } from 'events';
 import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 
+const aborted = Symbol();
+
 function post(options) {
   let ret;
 
@@ -14,6 +16,10 @@ function post(options) {
       } else {
         resolve({response, body});
       }
+    });
+
+    ret.on('abort', () => {
+      reject(aborted);
     });
   });
 
@@ -82,21 +88,31 @@ export default class extends EventEmitter {
     const {ret, promise} = post(options);
 
     this.on('cancel', () => {
-      ret.abort();
       this.setReason('canceled');
-
-      const error      = new Error('aborted');
-      error.StatusCode = 503;
-      error.data       = 'Job Canceled (running)';
-
-      throw error;
+      ret.abort();
     });
 
-    const {response, body} = await promise;
+    let result;
+
+    try {
+      result = await promise;
+    } catch (e) {
+      if (e === aborted) {
+        const error      = new Error('aborted');
+        error.statusCode = 503;
+        error.data       = 'Job Canceled (running)';
+
+        throw error;
+      } else {
+        throw e;
+      }
+    }
+
+    const {response, body} = result;
     const bindings         = body.results.bindings;
 
     if (acc) {
-      acc.body.results.bindings.concat(bindings);
+      acc.body.results.bindings.push(...bindings);
     } else {
       acc = {
         contentType: response.headers['content-type'],
