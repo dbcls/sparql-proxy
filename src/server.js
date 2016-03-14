@@ -11,6 +11,7 @@ import { createCacheStore } from './cache';
 import { createCompressor } from './compressor';
 import bodyParser from 'body-parser';
 import 'babel-polyfill';
+import morgan from 'morgan';
 
 const app    = express();
 const server = http.Server(app);
@@ -38,6 +39,7 @@ console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor}
 const compressor = createCompressor(config.compressor);
 const cache      = createCacheStore(config.cacheStore, compressor, process.env);
 
+app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));
 
