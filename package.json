@@ -45,7 +45,7 @@
   "devDependencies": {},
   "scripts": {
     "build": "npm run babel && npm run webpack",
-    "babel": "babel src -d lib",
+    "babel": "rm -rf lib && babel src -d lib",
     "webpack": "webpack",
     "postinstall": "npm run build",
     "start": "NODE_PATH=lib node lib/server.js"
