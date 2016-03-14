@@ -32,7 +32,7 @@ const config = Object.freeze({
   trustProxy:            process.env.TRUST_PROXY || 'false'
 });
 
-const secret    = config.adminUser + ":" + config.adminPassword;
+const secret    = `${config.adminUser}:${config.adminPassword}`;
 const cookieKey = 'sparql-proxy-token';
 
 const queue = new Queue(config.maxWaiting, config.maxConcurrency, config.durationToKeepOldJobs);

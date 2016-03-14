@@ -1,25 +1,43 @@
-import request from 'request'
-import uuid from 'uuid'
-import { EventEmitter } from 'events'
-import {Parser as SparqlParser} from 'sparqljs';
-import {Generator as SparqlGenerator} from 'sparqljs';
+import 'babel-polyfill';
+import request from 'request';
+import uuid from 'uuid';
+import { EventEmitter } from 'events';
+import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 
-const config = {
+function post(options) {
+  let ret;
+
+  const promise = new Promise((resolve, reject) => {
+    ret = request.post(options, (err, response, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({response, body});
+      }
+    });
+  });
+
+  return {ret, promise};
+}
+
+const config = Object.freeze({
   maxChunkLimit: 100,
-  maxLimit: 10000,
-};
+  maxLimit:      10000
+});
 
 export default class extends EventEmitter {
   constructor(backend, rawQuery, accept, timeout, ip) {
     super();
 
-    this.backend = backend;
-    this.rawQuery = rawQuery;
-    this.accept = accept;
-    this.timeout = timeout;
+    this.backend     = backend;
+    this.accept      = accept;
+    this.timeout     = timeout;
+    this.parsedQuery = SparqlParser().parse(rawQuery);
+    this.limit       = Math.min(this.parsedQuery.limit || config.maxLimit, config.maxLimit);
+    this.chunkLimit  = Math.min(this.limit, config.maxChunkLimit);
 
     this.data = {
-      ip: ip,
+      ip,
       rawQuery: rawQuery,
       reason: null
     };
@@ -35,69 +53,65 @@ export default class extends EventEmitter {
     this.emit('update');
   }
 
-  _req(backend, parsedQuery, accept, timeout, limit, chunkLimit, chunkOffset) {
-    parsedQuery.limit = chunkLimit;
-    parsedQuery.offset = chunkOffset;
-    const generator = SparqlGenerator();
-    const query = generator.stringify(parsedQuery);
+  run() {
+    const chunkOffset = this.parsedQuery.offset || 0;
+    const acc         = null;
 
-    const options = {
-      uri: backend,
-      form: {query: query},
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': accept,
-      },
-      json: true,
-      timeout: timeout
-    };
-
-    console.log("REQ limit=" + limit + ", chunkLimit=" + chunkLimit + ", chunkOffset=" + chunkOffset);
-    return new Promise((resolve, reject) => {
-      request.post(options, (error, response, body) => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        const numReturned = body.results.bindings.length;
-        const nextOffset = chunkOffset + chunkLimit;
-        console.log("RET", numReturned);
-        let nextPromise = Promise.resolve();
-        if (nextOffset < limit && numReturned >= chunkLimit) {
-          nextPromise = this._req(backend, parsedQuery, accept, timeout, limit, chunkLimit, nextOffset);
-        }
-
-        nextPromise.then((data) => {
-          if (data) {
-            const mergedBindings = data.body.results.bindings.concat(body.results.bindings);
-            data.body.results.bindings = mergedBindings;
-            resolve(data);
-          } else {
-            resolve({contentType: response.headers['content-type'], body});
-          }
-        }).catch((err) => {
-          reject(err);
-        });
-      });
-    });
+    return this._req(chunkOffset, acc);
   }
 
-  run() {
-    const parser = SparqlParser();
-    const parsedQuery = parser.parse(this.rawQuery);
-    let limit = parsedQuery.limit;
-    const offset = parsedQuery.offset || 0;
+  async _req(chunkOffset, acc) {
+    const query = SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
+      limit:  this.chunkLimit,
+      offset: chunkOffset
+    }));
 
-    if (!limit || limit > config.maxLimit) {
-      limit = config.maxLimit;
+    const options = {
+      uri: this.backend,
+      form: {query},
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': this.accept,
+      },
+      json: true,
+      timeout: this.timeout
+    };
+
+    console.log(`REQ limit=${this.limit}, chunkLimit=${this.chunkLimit}, chunkOffset=${chunkOffset}`);
+
+    const {ret, promise} = post(options);
+
+    this.on('cancel', () => {
+      ret.abort();
+      this.setReason('canceled');
+
+      const error      = new Error('aborted');
+      error.StatusCode = 503;
+      error.data       = 'Job Canceled (running)';
+
+      throw error;
+    });
+
+    const {response, body} = await promise;
+    const bindings         = body.results.bindings;
+
+    if (acc) {
+      acc.body.results.bindings.concat(bindings);
+    } else {
+      acc = {
+        contentType: response.headers['content-type'],
+        body
+      };
     }
 
-    let chunkLimit = limit;
-    if (!chunkLimit || chunkLimit > config.maxChunkLimit) {
-      chunkLimit = config.maxChunkLimit;
-    }
-    const chunkOffset = offset;
+    const numReturned = bindings.length;
+    const nextOffset  = chunkOffset + this.chunkLimit;
+    console.log('RET', numReturned);
 
-    return this._req(this.backend, parsedQuery, this.accept, this.timeout, limit, chunkLimit, chunkOffset);
+    if (nextOffset < this.limit && numReturned >= this.chunkLimit) {
+      return await this._req(nextOffset, acc);
+    } else {
+      return acc;
+    }
   }
 }
