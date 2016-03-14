@@ -14,10 +14,18 @@ class JobWrapper extends EventEmitter {
     this.token     = token;
     this.userData  = {};
 
-    job.on('update', (data) => {
-      this.userData = data;
+    this.updateUserData();
+    job.on('update', () => {
+      this.updateUserData();
       this.emit('update');
     });
+  }
+
+  updateUserData() {
+    const data = this.job.data || {};
+    for (let key in data) {
+      this.userData[key] = data[key];
+    }
   }
 
   data() {

@@ -10,12 +10,21 @@ export default class extends EventEmitter {
     this.rawQuery = rawQuery;
     this.accept = accept;
     this.timeout = timeout;
-    this.ip = ip;
+
+    this.data = {
+      ip: ip,
+      reason: null
+    };
   }
 
   canceled() {
     // STATE: canceled
     this.emit('cancel');
+  }
+
+  setReason(reason) {
+    this.data.reason = reason;
+    this.emit('update');
   }
 
   run() {
@@ -33,19 +42,19 @@ export default class extends EventEmitter {
       const r = request.post(options, (error, response, body) => {
         if (error) {
           if (error.code == 'ETIMEDOUT' || error.code == 'ESOCKETTIMEDOUT') {
-            this.emit('update', {reason: 'timeout'});
+            this.setReason('timeout');
             error.statusCode = 503;
             error.data = 'Request Timeout';
           } else {
-            this.emit('update', {reason: 'error'});
+            this.setReason('error');
           }
           reject(error);
         } else if (response.statusCode != 200) {
-          this.emit('update', {reason: 'error'});
+          this.setReason('error');
           const error = new Error(`unexpected response from backend: ${response.stausCode}`);
           reject(error);
         } else {
-          this.emit('update', {reason: 'success'});
+          this.setReason('success');
           resolve({contentType: response.headers['content-type'], body});
         }
       });
@@ -54,7 +63,7 @@ export default class extends EventEmitter {
         const error = new Error('aborted');
         error.StatusCode = 503;
         error.data = 'Job Canceled (running)';
-        this.emit('update', {reason: 'canceled'});
+        this.setReason('canceled');
         reject(error);
       });
     });
