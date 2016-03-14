@@ -89,7 +89,6 @@ export default class extends EventEmitter {
         return;
       }
 
-
       const jw = new JobWrapper(resolve, reject, job, token);
       jw.on('update', this.publishState.bind(this));
 
