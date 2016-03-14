@@ -7,10 +7,10 @@ import {Generator as SparqlGenerator} from 'sparqljs';
 function _req(backend, parsedQuery, accept, timeout, limit, chunkLimit, chunkOffset) {
   parsedQuery.limit = chunkLimit;
   parsedQuery.offset = chunkOffset;
-  var generator = SparqlGenerator();
-  var query = generator.stringify(parsedQuery);
+  const generator = SparqlGenerator();
+  const query = generator.stringify(parsedQuery);
 
-  var options = {
+  const options = {
     uri: backend,
     form: {query: query},
     headers: {
@@ -27,8 +27,8 @@ function _req(backend, parsedQuery, accept, timeout, limit, chunkLimit, chunkOff
       console.log("ERROR", error);
       return;
     }
-    var numReturned = body.results.bindings.length;
-    var nextOffset = chunkOffset + chunkLimit;
+    const numReturned = body.results.bindings.length;
+    const nextOffset = chunkOffset + chunkLimit;
     console.log("RET", numReturned);
     if (numReturned >= chunkLimit) {
       _req(backend, parsedQuery, accept, timeout, limit, chunkLimit, nextOffset);
@@ -36,33 +36,33 @@ function _req(backend, parsedQuery, accept, timeout, limit, chunkLimit, chunkOff
   });
 }
 
-var config = {
+const config = {
   maxChunkLimit: 100,
   maxLimit: 10000,
 };
 
 function req(backend, query, accept, timeout) {
-  var parser = SparqlParser();
-  var parsedQuery = parser.parse(query);
-  var limit = parsedQuery.limit;
-  var offset = parsedQuery.offset || 0;
+  const parser = SparqlParser();
+  const parsedQuery = parser.parse(query);
+  let limit = parsedQuery.limit;
+  const offset = parsedQuery.offset || 0;
 
   if (!limit || limit > config.maxLimit) {
     limit = config.maxLimit;
   }
 
-  var chunkLimit = limit;
+  let chunkLimit = limit;
   if (!chunkLimit || chunkLimit > config.maxChunkLimit) {
     chunkLimit = config.maxChunkLimit;
   }
-  var chunkOffset = offset;
+  const chunkOffset = offset;
 
   _req(backend, parsedQuery, accept, timeout, limit, chunkLimit, chunkOffset);
 };
 
-var env = process.env;
-var q = process.argv[2];
-var timeout = 5 * 1000;
-var accept = 'application/sparql-results+json';
-var backend = env.SPARQL_BACKEND;
+const env = process.env;
+const q = process.argv[2];
+const timeout = 5 * 1000;
+const accept = 'application/sparql-results+json';
+const backend = env.SPARQL_BACKEND;
 req(backend, q, accept, timeout);
