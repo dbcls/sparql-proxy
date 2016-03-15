@@ -51,7 +51,7 @@ export default class extends EventEmitter {
   }
 
   canceled() {
-    // STATE: canceled
+    this.setReason('canceled');
     this.emit('cancel');
   }
 
@@ -89,7 +89,6 @@ export default class extends EventEmitter {
     const {promise, abort} = post(options);
 
     this.on('cancel', () => {
-      this.setReason('canceled');
       abort();
     });
 

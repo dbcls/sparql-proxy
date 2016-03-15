@@ -105,6 +105,15 @@ export default class extends EventEmitter {
       console.log(`${jw.id} queued; token=${jw.token}`);
       this.publishState();
 
+      job.on('cancel', () => {
+        jw.done();
+
+        const error = new Error('canceled');
+        error.data = 'Job canceled';
+        error.statusCode = 503;
+        reject(error);
+      });
+
       this._dequeue();
     });
   }
