@@ -166,7 +166,7 @@ export default class extends EventEmitter {
     try {
       await item.run();
     } finally {
-      this.move(item, 'running', 'done');
+      this.move(item, 'done');
     }
   }
 
@@ -176,7 +176,7 @@ export default class extends EventEmitter {
     if (!item) { return false };
 
     item.cancel();
-    this.move(item, item.state, 'done');
+    this.move(item, 'done');
 
     return true;
   }
@@ -209,10 +209,11 @@ export default class extends EventEmitter {
     this.tryDequeue();
   }
 
-  move(item, from, to) {
-    const i = this.items[from].indexOf(item);
+  move(item, to) {
+    const from = this.items[item.state];
+    const i    = from.indexOf(item);
 
-    this.items[from].splice(i, 1);
+    from.splice(i, 1);
     this.items[to].push(item);
 
     this.publishState();
