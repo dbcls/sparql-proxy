@@ -50,7 +50,7 @@ export default class extends EventEmitter {
     };
   }
 
-  canceled() {
+  cancel() {
     this.setReason('canceled');
     this.emit('cancel');
   }

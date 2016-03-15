@@ -172,7 +172,7 @@ export default class extends EventEmitter {
       // job is waiting
       const job = this.waiting[n].job;
       this.waiting.splice(n, 1);
-      job.canceled();
+      job.cancel();
       this.publishState();
       return true;
     } else {
@@ -180,7 +180,7 @@ export default class extends EventEmitter {
       const jw = this.jobs[jobId];
       const job = jw.job;
       if (job) {
-        job.canceled();
+        job.cancel();
         this.publishState();
         return true;
       } else {
