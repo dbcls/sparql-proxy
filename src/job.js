@@ -106,7 +106,7 @@ export default class extends EventEmitter {
       if (e === aborted) {
         const error      = new Error('aborted');
         error.statusCode = 503;
-        error.data       = 'Job Canceled (running)';
+        error.data       = 'Job Canceled';
 
         throw error;
       } else {
