@@ -19,10 +19,15 @@ class Navbar extends React.Component {
 
 class ResponseBox extends React.Component {
   render() {
+    let table = "";
+    if (this.props.response.ok) {
+      table = <SparqlResultTable json={this.props.response.data}/>;
+    }
     return (
       <div className="card card-block">
         <h4 className="card-title">Response <span className="label label-default">{this.props.response.statusText}</span></h4>
         {this.error()}
+        {table}
         <textarea className="form-control" rows="10" value={this.props.response.data} readOnly/>
       </div>
     );
@@ -36,6 +41,41 @@ class ResponseBox extends React.Component {
     } else {
       return '';
     }
+  }
+}
+
+class SparqlResultTable extends React.Component {
+  render() {
+    const json = JSON.parse(this.props.json);
+    const head = json.head.vars;
+    const data = json.results.bindings;
+
+    const ths = head.map((col) => {
+      return (
+        <th>{col}</th>
+      );
+    });
+
+    const trs = data.map((row) => {
+      const tds = head.map((c) => {
+        const value = row[c].value;
+        return (
+          <td>{value}</td>
+        );
+      });
+      return (
+        <tr>{tds}</tr>
+      );
+    });
+
+    return (
+      <table className="table sparql-results">
+        <thead><tr>{ths}</tr></thead>
+        <tbody>
+          {trs}
+        </tbody>
+      </table>
+    );
   }
 }
 
@@ -113,7 +153,7 @@ class QueryBox extends React.Component {
 
       if (response.ok) {
         const data = await response.text();
-        this.setState({response: {statusText, data}});
+        this.setState({response: {statusText, data, ok: true}});
       } else {
         try {
           const {message, data} = await response.json();
