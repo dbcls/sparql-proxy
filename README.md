@@ -116,6 +116,18 @@ Number of the concurrent requests.
 
 Number of the jobs possible to be waiting.
 
+### `MAX_LIMIT`
+
+(default: `10000`)
+
+Cap the LIMIT of queries.
+
+### `MAX_CHUNK_LIMIT`
+
+(default: `1000`)
+
+Split queries into the chunk size specified.
+
 ### `TRUST_PROXY`
 
 (default: `false`)

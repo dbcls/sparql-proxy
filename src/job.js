@@ -32,11 +32,6 @@ function post(options) {
   };
 }
 
-const config = Object.freeze({
-  maxChunkLimit: 100,
-  maxLimit:      10000
-});
-
 export default class extends EventEmitter {
   constructor(params) {
     super();
@@ -45,8 +40,8 @@ export default class extends EventEmitter {
     this.accept      = params.accept;
     this.timeout     = params.timeout;
     this.parsedQuery = SparqlParser().parse(params.rawQuery);
-    this.limit       = Math.min(this.parsedQuery.limit || config.maxLimit, config.maxLimit);
-    this.chunkLimit  = Math.min(this.limit, config.maxChunkLimit);
+    this.limit       = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
+    this.chunkLimit  = Math.min(this.limit, params.maxChunkLimit);
 
     this.data = {
       ip:       params.ip,
