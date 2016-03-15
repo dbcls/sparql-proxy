@@ -48,14 +48,16 @@ export default class extends EventEmitter {
       rawQuery: params.rawQuery,
       reason:   null
     };
-
-    this.on('cancel', () => {
-      this.setReason('canceled');
-    });
   }
 
-  cancel() {
-    this.emit('cancel');
+  cancelRunning() {
+    this.setReason('canceled');
+    this.emit('cancel:running');
+  }
+
+  cancelWaiting() {
+    this.setReason('canceled');
+    this.emit('cancel:waiting');
   }
 
   setReason(reason) {
@@ -91,7 +93,7 @@ export default class extends EventEmitter {
 
     const {promise, abort} = post(options);
 
-    this.on('cancel', abort);
+    this.on('cancel:running', abort);
 
     let result;
 

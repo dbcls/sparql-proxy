@@ -105,7 +105,7 @@ export default class extends EventEmitter {
       console.log(`${jw.id} queued; token=${jw.token}`);
       this.publishState();
 
-      job.on('cancel', () => {
+      job.on('cancel:waiting', () => {
         jw.done();
 
         const error = new Error('canceled');
@@ -172,7 +172,7 @@ export default class extends EventEmitter {
       // job is waiting
       const job = this.waiting[n].job;
       this.waiting.splice(n, 1);
-      job.cancel();
+      job.cancelWaiting();
       this.publishState();
       return true;
     } else {
@@ -180,7 +180,7 @@ export default class extends EventEmitter {
       const jw = this.jobs[jobId];
       const job = jw.job;
       if (job) {
-        job.cancel();
+        job.cancelRunning();
         this.publishState();
         return true;
       } else {
