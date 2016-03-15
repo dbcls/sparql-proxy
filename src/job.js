@@ -7,10 +7,10 @@ import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 const aborted = Symbol();
 
 function post(options) {
-  let ret;
+  let req;
 
   const promise = new Promise((resolve, reject) => {
-    ret = request.post(options, (err, response, body) => {
+    req = request.post(options, (err, response, body) => {
       if (err) {
         reject(err);
       } else {
@@ -18,12 +18,18 @@ function post(options) {
       }
     });
 
-    ret.on('abort', () => {
+    req.on('abort', () => {
       reject(aborted);
     });
   });
 
-  return {ret, promise};
+  return {
+    promise,
+
+    abort() {
+      req.abort();
+    }
+  };
 }
 
 const config = Object.freeze({
@@ -85,11 +91,11 @@ export default class extends EventEmitter {
 
     console.log(`REQ limit=${this.limit}, chunkLimit=${this.chunkLimit}, chunkOffset=${chunkOffset}`);
 
-    const {ret, promise} = post(options);
+    const {promise, abort} = post(options);
 
     this.on('cancel', () => {
       this.setReason('canceled');
-      ret.abort();
+      abort();
     });
 
     let result;
