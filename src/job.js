@@ -69,7 +69,10 @@ export default class extends EventEmitter {
     const chunkOffset = this.parsedQuery.offset || 0;
     const acc         = null;
 
-    return this._req(chunkOffset, acc);
+    return this._req(chunkOffset, acc).then((data) => {
+      this.setReason('success');
+      return data;
+    });
   }
 
   async _req(chunkOffset, acc) {
