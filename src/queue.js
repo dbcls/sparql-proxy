@@ -169,6 +169,7 @@ export default class extends EventEmitter {
     }
 
     if (n >= 0) {
+      // job is waiting
       const job = this.waiting[n].job;
       this.waiting.splice(n, 1);
       job.canceled();
