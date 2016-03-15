@@ -112,7 +112,13 @@ app.all('/sparql', cors(), async (req, res) => {
   }
 
   const token = req.query.token;
-  const job   = new Job(config.backend, query, accept, config.jobTimeout, req.ip);
+  const job   = new Job({
+    backend:  config.backend,
+    rawQuery: query,
+    accept:   accept,
+    timeout:  config.jobTimeout,
+    ip:       req.ip
+  });
 
   try {
     const result = await queue.enqueue(job, token);

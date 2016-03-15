@@ -38,20 +38,20 @@ const config = Object.freeze({
 });
 
 export default class extends EventEmitter {
-  constructor(backend, rawQuery, accept, timeout, ip) {
+  constructor(params) {
     super();
 
-    this.backend     = backend;
-    this.accept      = accept;
-    this.timeout     = timeout;
-    this.parsedQuery = SparqlParser().parse(rawQuery);
+    this.backend     = params.backend;
+    this.accept      = params.accept;
+    this.timeout     = params.timeout;
+    this.parsedQuery = SparqlParser().parse(params.rawQuery);
     this.limit       = Math.min(this.parsedQuery.limit || config.maxLimit, config.maxLimit);
     this.chunkLimit  = Math.min(this.limit, config.maxChunkLimit);
 
     this.data = {
-      ip,
-      rawQuery: rawQuery,
-      reason: null
+      ip:       params.ip,
+      rawQuery: params.rawQuery,
+      reason:   null
     };
   }
 
