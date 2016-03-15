@@ -30,7 +30,7 @@ const config = Object.freeze({
   jobTimeout:            process.env.JOB_TIMEOUT || 5 * 60 * 1000,
   durationToKeepOldJobs: process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000,
   maxChunkLimit:         process.env.MAX_CHUNK_LIMIT || 100,
-  maxLimit:              process.env.MAX_LIMIT || 10000
+  maxLimit:              process.env.MAX_LIMIT || 10000,
   trustProxy:            process.env.TRUST_PROXY || 'false'
 });
 
