@@ -44,7 +44,6 @@ app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));
 
-
 app.all('/sparql', cors(), async (req, res) => {
   let query;
   switch (req.method) {
