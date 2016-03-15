@@ -12,6 +12,7 @@ import { createCompressor } from './compressor';
 import bodyParser from 'body-parser';
 import 'babel-polyfill';
 import morgan from 'morgan';
+import cors from 'cors';
 
 const app    = express();
 const server = http.Server(app);
@@ -43,7 +44,8 @@ app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));
 
-app.all('/sparql', async (req, res) => {
+
+app.all('/sparql', cors(), async (req, res) => {
   let query;
   switch (req.method) {
     case "GET":
@@ -56,6 +58,9 @@ app.all('/sparql', async (req, res) => {
         query = req.body.query;
       }
       break;
+    case "OPTIONS":
+      res.status(200);
+      return;
     default:
       res.status(405).send('Method Not Allowed');
       return;
