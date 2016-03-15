@@ -4,7 +4,7 @@ import uuid from 'uuid';
 import { EventEmitter } from 'events';
 import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 
-const aborted = Symbol();
+export const aborted = Symbol();
 
 function post(options) {
   let req;
@@ -50,14 +50,9 @@ export default class extends EventEmitter {
     };
   }
 
-  cancelRunning() {
+  cancel() {
     this.setReason('canceled');
-    this.emit('cancel:running');
-  }
-
-  cancelWaiting() {
-    this.setReason('canceled');
-    this.emit('cancel:waiting');
+    this.emit('abort');
   }
 
   setReason(reason) {
@@ -65,14 +60,14 @@ export default class extends EventEmitter {
     this.emit('update');
   }
 
-  run() {
+  async run() {
     const chunkOffset = this.parsedQuery.offset || 0;
     const acc         = null;
+    const data        = await this._req(chunkOffset, acc);
 
-    return this._req(chunkOffset, acc).then((data) => {
-      this.setReason('success');
-      return data;
-    });
+    this.setReason('success');
+
+    return data;
   }
 
   async _req(chunkOffset, acc) {
@@ -96,25 +91,9 @@ export default class extends EventEmitter {
 
     const {promise, abort} = post(options);
 
-    this.on('cancel:running', abort);
+    this.on('abort', abort);
 
-    let result;
-
-    try {
-      result = await promise;
-    } catch (e) {
-      if (e === aborted) {
-        const error      = new Error('aborted');
-        error.statusCode = 503;
-        error.data       = 'Job Canceled';
-
-        throw error;
-      } else {
-        throw e;
-      }
-    }
-
-    const {response, body} = result;
+    const {response, body} = await promise;
     const bindings         = body.results.bindings;
 
     if (acc) {

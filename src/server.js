@@ -110,7 +110,7 @@ app.all('/sparql', cors(), async (req, res) => {
       return;
     }
   } catch (error) {
-    console.log(`ERROR: in cache get: ${error}`);
+    console.log('ERROR: in cache get:', error);
   }
 
   const token = req.query.token;
@@ -133,10 +133,10 @@ app.all('/sparql', cors(), async (req, res) => {
     try {
       await cache.put(cacheKey, result);
     } catch (error) {
-      console.log(`ERROR: in cache put: ${error}`);
+      console.log('ERROR: in cache put:', error);
     }
   } catch (error) {
-    console.log(`ERROR: ${error}`);
+    console.log('ERROR:', error);
     res.status(error.statusCode || 500);
     res.send(error.data || 'ERROR');
   }
