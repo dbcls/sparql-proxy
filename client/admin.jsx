@@ -57,7 +57,7 @@ class JobList extends React.Component {
         <tr key={job.id}>
           <td><JobStateLabel state={job.state} reason={job.data.reason}/></td>
           <td>{job.data.ip}</td>
-          <td>{job.id}</td>
+          <td><pre>{job.data.rawQuery}</pre></td>
           <td>{age}</td>
           <td>{runtime}</td>
           {cancelButtonColumn}
@@ -70,7 +70,7 @@ class JobList extends React.Component {
           <tr>
             <th>status</th>
             <th>requester</th>
-            <th>ID</th>
+            <th>query</th>
             <th>created</th>
             <th>runtime</th>
             <th>control</th>

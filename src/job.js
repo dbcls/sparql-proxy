@@ -13,6 +13,7 @@ export default class extends EventEmitter {
 
     this.data = {
       ip: ip,
+      rawQuery: rawQuery,
       reason: null
     };
   }
