@@ -17,6 +17,17 @@ class Navbar extends React.Component {
   }
 }
 
+class StatusLabel extends React.Component {
+  render() {
+    const n = Math.floor(this.props.response.statusCode / 100);
+    const c = {2: 'success', 3: 'info', 4: 'danger', 5: 'danger'}[n] || 'default';
+
+    return (
+      <span className={"label label-" + c}>{this.props.response.statusText}</span>
+    );
+  }
+}
+
 class ResponseBox extends React.Component {
   render() {
     let table = "";
@@ -25,7 +36,7 @@ class ResponseBox extends React.Component {
     }
     return (
       <div className="card card-block">
-        <h4 className="card-title">Response <span className="label label-default">{this.props.response.statusText}</span></h4>
+        <h4 className="card-title">Response <StatusLabel response={this.props.response}/></h4>
         {this.error()}
         {table}
         <textarea className="form-control" rows="10" value={this.props.response.data} readOnly/>
@@ -149,18 +160,19 @@ class QueryBox extends React.Component {
       const params     = queryString.stringify({query, token});
       const response   = await fetch(`/sparql?${params}`);
       const statusText = `${response.status} ${response.statusText}`;
+      const statusCode = response.status;
       this.setState({request: null, running: false});
 
       if (response.ok) {
         const data = await response.text();
-        this.setState({response: {statusText, data, ok: true}});
+        this.setState({response: {statusText, statusCode, data, ok: true}});
       } else {
         try {
           const {message, data} = await response.json();
-          this.setState({response: {statusText, error: message, data}});
+          this.setState({response: {statusText, statusCode, error: message, data}});
         } catch (err) {
           const error = await response.text();
-          this.setState({response: {statusText, error}});
+          this.setState({response: {statusText, statusCode, error}});
         }
       }
     } catch (err) {
