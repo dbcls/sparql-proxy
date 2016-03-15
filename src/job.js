@@ -1,26 +1,63 @@
-import request from 'request'
-import uuid from 'uuid'
-import { EventEmitter } from 'events'
+import 'babel-polyfill';
+import request from 'request';
+import uuid from 'uuid';
+import { EventEmitter } from 'events';
+import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
+
+const aborted = Symbol();
+
+function post(options) {
+  let req;
+
+  const promise = new Promise((resolve, reject) => {
+    req = request.post(options, (err, response, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({response, body});
+      }
+    });
+
+    req.on('abort', () => {
+      reject(aborted);
+    });
+  });
+
+  return {
+    promise,
+
+    abort() {
+      req.abort();
+    }
+  };
+}
 
 export default class extends EventEmitter {
-  constructor(backend, rawQuery, accept, timeout, ip) {
+  constructor(params) {
     super();
 
-    this.backend = backend;
-    this.rawQuery = rawQuery;
-    this.accept = accept;
-    this.timeout = timeout;
+    this.backend     = params.backend;
+    this.accept      = params.accept;
+    this.timeout     = params.timeout;
+    this.parsedQuery = SparqlParser().parse(params.rawQuery);
+    this.limit       = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
+    this.chunkLimit  = Math.min(this.limit, params.maxChunkLimit);
 
     this.data = {
-      ip: ip,
-      rawQuery: rawQuery,
-      reason: null
+      ip:       params.ip,
+      rawQuery: params.rawQuery,
+      reason:   null
     };
   }
 
-  canceled() {
-    // STATE: canceled
-    this.emit('cancel');
+  cancelRunning() {
+    this.setReason('canceled');
+    this.emit('cancel:running');
+  }
+
+  cancelWaiting() {
+    this.setReason('canceled');
+    this.emit('cancel:waiting');
   }
 
   setReason(reason) {
@@ -29,44 +66,71 @@ export default class extends EventEmitter {
   }
 
   run() {
+    const chunkOffset = this.parsedQuery.offset || 0;
+    const acc         = null;
+
+    return this._req(chunkOffset, acc);
+  }
+
+  async _req(chunkOffset, acc) {
+    const query = SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
+      limit:  this.chunkLimit,
+      offset: chunkOffset
+    }));
+
     const options = {
       uri: this.backend,
-      form: {query: this.rawQuery},
+      form: {query},
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': this.accept,
       },
+      json: true,
       timeout: this.timeout
     };
 
-    return new Promise((resolve, reject) => {
-      const r = request.post(options, (error, response, body) => {
-        if (error) {
-          if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKETTIMEDOUT') {
-            this.setReason('timeout');
-            error.statusCode = 503;
-            error.data = 'Request Timeout';
-          } else {
-            this.setReason('error');
-          }
-          reject(error);
-        } else if (response.statusCode !== 200) {
-          this.setReason('error');
-          const error = new Error(`unexpected response from backend: ${response.stausCode}`);
-          reject(error);
-        } else {
-          this.setReason('success');
-          resolve({contentType: response.headers['content-type'], body});
-        }
-      });
-      this.on('cancel', () => {
-        r.abort();
-        const error = new Error('aborted');
-        error.StatusCode = 503;
-        error.data = 'Job Canceled (running)';
-        this.setReason('canceled');
-        reject(error);
-      });
-    });
+    console.log(`REQ limit=${this.limit}, chunkLimit=${this.chunkLimit}, chunkOffset=${chunkOffset}`);
+
+    const {promise, abort} = post(options);
+
+    this.on('cancel:running', abort);
+
+    let result;
+
+    try {
+      result = await promise;
+    } catch (e) {
+      if (e === aborted) {
+        const error      = new Error('aborted');
+        error.statusCode = 503;
+        error.data       = 'Job Canceled';
+
+        throw error;
+      } else {
+        throw e;
+      }
+    }
+
+    const {response, body} = result;
+    const bindings         = body.results.bindings;
+
+    if (acc) {
+      acc.body.results.bindings.push(...bindings);
+    } else {
+      acc = {
+        contentType: response.headers['content-type'],
+        body
+      };
+    }
+
+    const numReturned = bindings.length;
+    const nextOffset  = chunkOffset + this.chunkLimit;
+    console.log('RET', numReturned);
+
+    if (nextOffset < this.limit && numReturned >= this.chunkLimit) {
+      return await this._req(nextOffset, acc);
+    } else {
+      return acc;
+    }
   }
 }

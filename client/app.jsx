@@ -167,10 +167,10 @@ class QueryBox extends React.Component {
         const data = await response.text();
         this.setState({response: {statusText, statusCode, data, ok: true}});
       } else {
-        try {
+        if (response.headers.get('content-type').indexOf('application/json') !== -1) {
           const {message, data} = await response.json();
           this.setState({response: {statusText, statusCode, error: message, data}});
-        } catch (err) {
+        } else {
           const error = await response.text();
           this.setState({response: {statusText, statusCode, error}});
         }

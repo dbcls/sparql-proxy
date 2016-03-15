@@ -105,6 +105,15 @@ export default class extends EventEmitter {
       console.log(`${jw.id} queued; token=${jw.token}`);
       this.publishState();
 
+      job.on('cancel:waiting', () => {
+        jw.done();
+
+        const error = new Error('canceled');
+        error.data = 'Job canceled';
+        error.statusCode = 503;
+        reject(error);
+      });
+
       this._dequeue();
     });
   }
@@ -160,9 +169,10 @@ export default class extends EventEmitter {
     }
 
     if (n >= 0) {
+      // job is waiting
       const job = this.waiting[n].job;
       this.waiting.splice(n, 1);
-      job.canceled();
+      job.cancelWaiting();
       this.publishState();
       return true;
     } else {
@@ -170,7 +180,7 @@ export default class extends EventEmitter {
       const jw = this.jobs[jobId];
       const job = jw.job;
       if (job) {
-        job.canceled();
+        job.cancelRunning();
         this.publishState();
         return true;
       } else {
