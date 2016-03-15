@@ -115,3 +115,9 @@ Number of the concurrent requests.
 (default: `Infinity`)
 
 Number of the jobs possible to be waiting.
+
+### `TRUST_PROXY`
+
+(default: `false`)
+
+Set `true` to trust proxies in front of the server.

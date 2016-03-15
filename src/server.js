@@ -29,6 +29,7 @@ const config = Object.freeze({
   compressor:            process.env.COMPRESSOR || 'raw',
   jobTimeout:            process.env.JOB_TIMEOUT || 5 * 60 * 1000,
   durationToKeepOldJobs: process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000,
+  trustProxy:            process.env.TRUST_PROXY || 'false'
 });
 
 const secret    = config.adminUser + ":" + config.adminPassword;
@@ -43,6 +44,10 @@ const cache      = createCacheStore(config.cacheStore, compressor, process.env);
 app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));
+
+if (config.trustProxy === 'true') {
+  app.enable('trust proxy');
+}
 
 app.all('/sparql', cors(), async (req, res) => {
   let query;
