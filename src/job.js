@@ -72,9 +72,8 @@ export default class extends EventEmitter {
   async run() {
     if (this.enableQuerySplitting) {
       const chunkOffset = this.parsedQuery.offset || 0;
-      const acc         = null;
 
-      return await this._reqSplit(chunkOffset, acc);
+      return await this._reqSplit(chunkOffset);
     } else {
       return await this._reqNormal();
     }
@@ -96,6 +95,7 @@ export default class extends EventEmitter {
     this.on('abort', abort);
 
     const {response, body} = await promise;
+
     if (!isSuccessful(response)) {
       throw new Error(`unexpected response from backend; ${response.statusCode}`);
     }
@@ -106,7 +106,7 @@ export default class extends EventEmitter {
     };
   }
 
-  async _reqSplit(chunkOffset, acc) {
+  async _reqSplit(chunkOffset, acc = null) {
     const query = SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
       limit:  this.chunkLimit,
       offset: chunkOffset
