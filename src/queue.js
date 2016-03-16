@@ -192,7 +192,7 @@ export default class extends EventEmitter {
 
     this.items.done.forEach((item, i) => {
       if (item.doneAt < threshold) {
-        this.items.splice(i, 1);
+        this.items.done.splice(i, 1);
         deleted = true;
       }
     });
