@@ -36,6 +36,10 @@ function post(options) {
   };
 }
 
+function isSuccessful(response) {
+  return response.statusCode >= 200 && response.statusCode < 300;
+}
+
 export default class extends EventEmitter {
   constructor(params) {
     super();
@@ -106,6 +110,9 @@ export default class extends EventEmitter {
     this.on('abort', abort);
 
     const {response, body} = await promise;
+    if (!isSuccessful(response)) {
+      throw new Error(`unexpected response from backend; ${response.statusCode}`);
+    }
 
     return {
       contentType: response.headers['content-type'],
@@ -137,6 +144,9 @@ export default class extends EventEmitter {
     this.on('abort', abort);
 
     const {response, body} = await promise;
+    if (!isSuccessful(response)) {
+      throw new Error(`unexpected response from backend; ${response.statusCode}`);
+    }
     const bindings         = body.results.bindings;
 
     if (acc) {
