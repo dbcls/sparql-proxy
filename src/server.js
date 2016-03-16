@@ -127,7 +127,7 @@ app.all('/sparql', cors(), async (req, res) => {
   try {
     const result = await queue.enqueue(job, token);
 
-    res.header('Conten-Type', result.contentType);
+    res.header('Content-Type', result.contentType);
     res.send(result.body);
 
     try {
