@@ -51,10 +51,15 @@ class Item extends EventEmitter {
   }
 
   cancel() {
-    this.job.cancel();
-
-    if (this.state === 'waiting') {
-      this.emit('cancel');
+    switch (this.state) {
+      case 'waiting':
+        this.emit('cancel');
+        break;
+      case 'running':
+        this.job.cancel();
+        break;
+      default:
+        // do nothing
     }
   }
 
