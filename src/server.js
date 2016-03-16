@@ -14,6 +14,7 @@ import 'babel-polyfill';
 import morgan from 'morgan';
 import cors from 'cors';
 import fs from 'fs';
+import denodeify from 'denodeify';
 
 const app    = express();
 const server = http.Server(app);
@@ -58,16 +59,16 @@ if (config.trustProxy === 'true') {
   app.enable('trust proxy');
 }
 
-function log(req, res, log) {
-  if (!config.queryLogPath) { return; }
-  const data = Object.assign({
-    time: new Date(),
-    ip: req.ip,
-  }, log);
-  fs.appendFileSync(config.queryLogPath, JSON.stringify(data) + "\n");
-}
-
 app.all('/sparql', cors(), async (req, res) => {
+  const log = async function (log) {
+    if (!config.queryLogPath) { return; }
+    const data = Object.assign({
+      time: new Date(),
+      ip: req.ip,
+    }, log);
+    return denodeify(fs.appendFile)(config.queryLogPath, JSON.stringify(data) + "\n");
+  };
+
   let query;
   switch (req.method) {
     case "GET":
@@ -123,7 +124,7 @@ app.all('/sparql', cors(), async (req, res) => {
       res.header('Content-Type', cached.contentType);
       res.header('X-Cache', 'hit');
       res.send(cached.body);
-      log(req, res, {
+      await log({
         query,
         'cache-hit': true,
         'response': {'content-type': cached.contentType, 'body': cached.body}
@@ -151,7 +152,7 @@ app.all('/sparql', cors(), async (req, res) => {
 
     res.header('Content-Type', result.contentType);
     res.send(result.body);
-    log(req, res, {
+    await log({
       query,
       'cache-hit': false,
       'response': {'content-type': result.contentType, 'body': result.body}
