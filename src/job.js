@@ -72,7 +72,11 @@ export default class extends EventEmitter {
     try {
       data = await this._req(chunkOffset, acc);
     } catch (e) {
-      this.setReason('error');
+      if (e.code == 'ETIMEDOUT') {
+        this.setReason('timeout');
+      } else {
+        this.setReason('error');
+      }
       throw e;
     }
 
