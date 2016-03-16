@@ -78,8 +78,8 @@ export default class extends EventEmitter {
   constructor(maxWaiting, maxConcurrency) {
     super();
 
-    this.maxWaiting            = maxWaiting;
-    this.maxConcurrency        = maxConcurrency;
+    this.maxWaiting     = maxWaiting;
+    this.maxConcurrency = maxConcurrency;
 
     this.items = {
       waiting: [],
@@ -123,7 +123,7 @@ export default class extends EventEmitter {
 
       const item = new Item(job, token);
 
-      item.on('update',  this.publishState.bind(this));
+      item.on('update', this.publishState.bind(this));
 
       item.on('success', (data) => {
         item.job.setReason('success');
