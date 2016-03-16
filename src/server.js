@@ -124,7 +124,7 @@ app.all('/sparql', cors(), async (req, res) => {
       res.header('Content-Type', cached.contentType);
       res.header('X-Cache', 'hit');
       res.send(cached.body);
-      await log({
+      log({
         query,
         'cache-hit': true,
         'response': {'content-type': cached.contentType, 'body': cached.body}
@@ -152,7 +152,7 @@ app.all('/sparql', cors(), async (req, res) => {
 
     res.header('Content-Type', result.contentType);
     res.send(result.body);
-    await log({
+    log({
       query,
       'cache-hit': false,
       'response': {'content-type': result.contentType, 'body': result.body}
