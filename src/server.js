@@ -30,7 +30,7 @@ const config = Object.freeze({
   jobTimeout:            Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
   durationToKeepOldJobs: Number(process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000),
   enableQuerySplitting:  process.env.ENABLE_QUERY_SPLITTING === 'true',
-  maxChunkLimit:         Number(process.env.MAX_CHUNK_LIMIT || 100),
+  maxChunkLimit:         Number(process.env.MAX_CHUNK_LIMIT || 1000),
   maxLimit:              Number(process.env.MAX_LIMIT || 10000),
   trustProxy:            process.env.TRUST_PROXY || 'false'
 });
