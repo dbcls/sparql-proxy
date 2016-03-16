@@ -8,6 +8,7 @@ export const aborted = Symbol();
 
 function post(options) {
   let req;
+  let userRequestedAbort = false;
 
   const promise = new Promise((resolve, reject) => {
     req = request.post(options, (err, response, body) => {
@@ -19,7 +20,9 @@ function post(options) {
     });
 
     req.on('abort', () => {
-      reject(aborted);
+      if (userRequestedAbort) {
+        reject(aborted);
+      }
     });
   });
 
@@ -27,6 +30,7 @@ function post(options) {
     promise,
 
     abort() {
+      userRequestedAbort = true;
       req.abort();
     }
   };
