@@ -11,7 +11,7 @@ module.exports = {
   },
   module: {
     loaders: [
-      { test: /\.jsx?$/, loader: 'babel', query: {presets: ['react', 'es2015']} },
+      { test: /\.jsx?$/, loader: 'babel', query: {presets: ['react', 'es2015'], compact: true} },
       { test: /\.css$/, loader: 'style-loader!css-loader' },
       { test: /\.scss$/, loader: 'style-loader!css-loader!sass-loader' },
       { test: /\.woff2?(?:\?.*)?$/, loader: 'url-loader?limit=10000&mimetype=application/font-woff' },
