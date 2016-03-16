@@ -116,20 +116,29 @@ Number of the concurrent requests.
 
 Number of the jobs possible to be waiting.
 
+### `TRUST_PROXY`
+
+(default: `false`)
+
+Set `true` to trust proxies in front of the server.
+
+### `ENABLE_QUERY_SPLITTING`
+
+(default: `false`)
+
+Set `true` to enable query splitting.
+
 ### `MAX_LIMIT`
 
+(only applicable to `ENABLE_QUERY_SPLITTING=true` case)
 (default: `10000`)
 
 Cap the LIMIT of queries.
 
 ### `MAX_CHUNK_LIMIT`
 
+(only applicable to `ENABLE_QUERY_SPLITTING=true` case)
 (default: `1000`)
 
 Split queries into the chunk size specified.
 
-### `TRUST_PROXY`
-
-(default: `false`)
-
-Set `true` to trust proxies in front of the server.

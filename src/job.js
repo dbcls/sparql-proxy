@@ -40,12 +40,14 @@ export default class extends EventEmitter {
   constructor(params) {
     super();
 
-    this.backend     = params.backend;
-    this.accept      = params.accept;
-    this.timeout     = params.timeout;
-    this.parsedQuery = SparqlParser().parse(params.rawQuery);
-    this.limit       = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
-    this.chunkLimit  = Math.min(this.limit, params.maxChunkLimit);
+    this.backend              = params.backend;
+    this.accept               = params.accept;
+    this.timeout              = params.timeout;
+    this.rawQuery             = params.rawQuery;
+    this.enableQuerySplitting = params.enableQuerySplitting;
+    this.parsedQuery          = SparqlParser().parse(this.rawQuery);
+    this.limit                = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
+    this.chunkLimit           = Math.min(this.limit, params.maxChunkLimit);
 
     this.data = {
       ip:       params.ip,
@@ -65,12 +67,15 @@ export default class extends EventEmitter {
   }
 
   async run() {
-    const chunkOffset = this.parsedQuery.offset || 0;
-    const acc         = null;
-
     let data;
     try {
-      data = await this._req(chunkOffset, acc);
+      if (this.enableQuerySplitting) {
+        const chunkOffset = this.parsedQuery.offset || 0;
+        const acc         = null;
+        data = await this._reqSplit(chunkOffset, acc);
+      } else {
+        data = await this._reqNormal();
+      }
     } catch (e) {
       if (e.code == 'ETIMEDOUT') {
         this.setReason('timeout');
@@ -85,7 +90,30 @@ export default class extends EventEmitter {
     return data;
   }
 
-  async _req(chunkOffset, acc) {
+  async _reqNormal() {
+    const options = {
+      uri: this.backend,
+      form: {query: this.rawQuery},
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': this.accept,
+      },
+      timeout: this.timeout
+    };
+
+    const {promise, abort} = post(options);
+
+    this.on('abort', abort);
+
+    const {response, body} = await promise;
+
+    return {
+      contentType: response.headers['content-type'],
+      body
+    };
+  }
+
+  async _reqSplit(chunkOffset, acc) {
     const query = SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
       limit:  this.chunkLimit,
       offset: chunkOffset
@@ -125,7 +153,7 @@ export default class extends EventEmitter {
     console.log('RET', numReturned);
 
     if (nextOffset < this.limit && numReturned >= this.chunkLimit) {
-      return await this._req(nextOffset, acc);
+      return await this._reqSplit(nextOffset, acc);
     } else {
       return acc;
     }
