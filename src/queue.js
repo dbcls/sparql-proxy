@@ -37,8 +37,6 @@ class Item extends EventEmitter {
   }
 
   async run() {
-    this.running();
-
     try {
       const data = await this.job.run();
 
@@ -49,20 +47,13 @@ class Item extends EventEmitter {
       } else {
         this.emit('error', e);
       }
-    } finally {
-      this.done();
     }
   }
 
   cancel() {
-    const originalState = this.state;
-
-    if (originalState === 'done') { return; }
-
     this.job.cancel();
-    this.done();
 
-    if (originalState === 'waiting') {
+    if (this.state === 'waiting') {
       this.emit('cancel');
     }
   }
@@ -70,15 +61,11 @@ class Item extends EventEmitter {
   running() {
     this.state     = 'running';
     this.startedAt = new Date();
-
-    this.emit('update');
   }
 
   done() {
     this.state  = 'done';
     this.doneAt = new Date();
-
-    this.emit('update');
   }
 }
 
@@ -165,17 +152,16 @@ export default class extends EventEmitter {
   async tryDequeue() {
     if (this.items.running.length >= this.maxConcurrency) { return; }
 
-    const item = this.items.waiting.shift();
+    const item = this.items.waiting[0];
 
     if (!item) { return; }
 
-    this.items.running.push(item);
-    this.publishState();
+    this.running(item);
 
     try {
       await item.run();
     } finally {
-      this.move(item);
+      this.done(item);
     }
   }
 
@@ -185,7 +171,7 @@ export default class extends EventEmitter {
     if (!item) { return false };
 
     item.cancel();
-    this.move(item);
+    this.done(item);
 
     return true;
   }
@@ -218,20 +204,27 @@ export default class extends EventEmitter {
     this.tryDequeue();
   }
 
-  move(item) {
-    for (let type in this.items) {
-      const from = this.items[type];
-      const i    = from.indexOf(item);
-      if (i >= 0) {
-        from.splice(i, 1);
-        break;
-      }
-    }
-
-    const to = item.state;
-    this.items[to].push(item);
+  running(item) {
+    this.move(item, 'running');
+    item.running();
 
     this.publishState();
     this.tryDequeue();
+  }
+
+  done(item) {
+    this.move(item, 'done');
+    item.done();
+
+    this.publishState();
+    this.tryDequeue();
+  }
+
+  move(item, to) {
+    const from = this.items[item.state];
+    const i    = from.indexOf(item);
+
+    from.splice(i, 1);
+    this.items[to].push(item);
   }
 }
