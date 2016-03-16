@@ -124,7 +124,7 @@ export default class extends EventEmitter {
       form: {query},
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': this.accept,
+        'Accept': 'application/sparql-results+json',
       },
       json: true,
       timeout: this.timeout
