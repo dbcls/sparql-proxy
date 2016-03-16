@@ -13,6 +13,7 @@ import bodyParser from 'body-parser';
 import 'babel-polyfill';
 import morgan from 'morgan';
 import cors from 'cors';
+import fs from 'fs';
 
 const app    = express();
 const server = http.Server(app);
@@ -32,7 +33,8 @@ const config = Object.freeze({
   enableQuerySplitting:  process.env.ENABLE_QUERY_SPLITTING === 'true',
   maxChunkLimit:         Number(process.env.MAX_CHUNK_LIMIT || 1000),
   maxLimit:              Number(process.env.MAX_LIMIT || 10000),
-  trustProxy:            process.env.TRUST_PROXY || 'false'
+  trustProxy:            process.env.TRUST_PROXY || 'false',
+  queryLogPath:          process.env.QUERY_LOG_PATH,
 });
 
 const secret    = `${config.adminUser}:${config.adminPassword}`;
@@ -54,6 +56,15 @@ app.use(bodyParser.text({type: 'application/sparql-query'}));
 
 if (config.trustProxy === 'true') {
   app.enable('trust proxy');
+}
+
+function log(req, res, log) {
+  if (!config.queryLogPath) { return; }
+  const data = Object.assign({
+    time: new Date(),
+    ip: req.ip,
+  }, log);
+  fs.appendFileSync(config.queryLogPath, JSON.stringify(data) + "\n");
 }
 
 app.all('/sparql', cors(), async (req, res) => {
@@ -112,6 +123,11 @@ app.all('/sparql', cors(), async (req, res) => {
       res.header('Content-Type', cached.contentType);
       res.header('X-Cache', 'hit');
       res.send(cached.body);
+      log(req, res, {
+        query,
+        'cache-hit': true,
+        'response': {'content-type': cached.contentType, 'body': cached.body}
+      });
       return;
     }
   } catch (error) {
@@ -135,6 +151,11 @@ app.all('/sparql', cors(), async (req, res) => {
 
     res.header('Content-Type', result.contentType);
     res.send(result.body);
+    log(req, res, {
+      query,
+      'cache-hit': false,
+      'response': {'content-type': result.contentType, 'body': result.body}
+    });
 
     try {
       await cache.put(cacheKey, result);

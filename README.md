@@ -142,3 +142,9 @@ Cap the LIMIT of queries.
 
 Split queries into the chunk size specified.
 
+
+### `QUERY_LOG_PATH`
+
+(default: null)
+
+Log queries (and the corresponding responses) to the file, if specified.
