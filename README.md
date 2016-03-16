@@ -10,6 +10,8 @@
     $ cd sparql-proxy
     $ npm install
 
+(Be patient, `npm install` may take a few minutes)
+
 ## Run
 
     $ PORT=3000 SPARQL_BACKEND=http://example.com/sparql ADMIN_USER=admin ADMIN_PASSWORD=password npm start
