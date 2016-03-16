@@ -131,11 +131,26 @@ export default class extends EventEmitter {
 
       const item = new Item(job, token);
 
-      item.on('success', resolve);
-      item.on('error',   reject);
       item.on('update',  this.publishState.bind(this));
 
+      item.on('success', (data) => {
+        item.job.setReason('success');
+        resolve(data);
+      });
+
+      item.on('error', (e) => {
+        if (e.code === 'ETIMEDOUT') {
+          item.job.setReason('timeout');
+        } else {
+          item.job.setReason('error');
+        }
+
+        reject(e);
+      });
+
       item.on('cancel', () => {
+        item.job.setReason('canceled');
+
         const err      = new Error('Job Canceled');
         err.statusCode = 503;
         err.data       = 'Job Canceled';

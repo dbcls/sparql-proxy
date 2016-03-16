@@ -61,7 +61,6 @@ export default class extends EventEmitter {
   }
 
   cancel() {
-    this.setReason('canceled');
     this.emit('abort');
   }
 
@@ -71,27 +70,14 @@ export default class extends EventEmitter {
   }
 
   async run() {
-    let data;
-    try {
-      if (this.enableQuerySplitting) {
-        const chunkOffset = this.parsedQuery.offset || 0;
-        const acc         = null;
-        data = await this._reqSplit(chunkOffset, acc);
-      } else {
-        data = await this._reqNormal();
-      }
-    } catch (e) {
-      if (e.code == 'ETIMEDOUT') {
-        this.setReason('timeout');
-      } else {
-        this.setReason('error');
-      }
-      throw e;
+    if (this.enableQuerySplitting) {
+      const chunkOffset = this.parsedQuery.offset || 0;
+      const acc         = null;
+
+      return await this._reqSplit(chunkOffset, acc);
+    } else {
+      return await this._reqNormal();
     }
-
-    this.setReason('success');
-
-    return data;
   }
 
   async _reqNormal() {
@@ -144,10 +130,12 @@ export default class extends EventEmitter {
     this.on('abort', abort);
 
     const {response, body} = await promise;
+
     if (!isSuccessful(response)) {
       throw new Error(`unexpected response from backend; ${response.statusCode}`);
     }
-    const bindings         = body.results.bindings;
+
+    const bindings = body.results.bindings;
 
     if (acc) {
       acc.body.results.bindings.push(...bindings);
