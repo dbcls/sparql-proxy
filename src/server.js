@@ -60,11 +60,15 @@ if (config.trustProxy === 'true') {
 }
 
 app.all('/sparql', cors(), async (req, res) => {
+  const startedAt = new Date();
   const log = async function (log) {
     if (!config.queryLogPath) { return; }
+    const doneAt = new Date();
     const data = Object.assign({
-      time: new Date(),
-      ip: req.ip,
+      'started-at': startedAt,
+      'done-at':    doneAt,
+      'elapsed':    doneAt - startedAt,
+      'ip':         req.ip,
     }, log);
     return denodeify(fs.appendFile)(config.queryLogPath, JSON.stringify(data) + "\n");
   };
