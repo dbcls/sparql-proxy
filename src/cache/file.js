@@ -43,6 +43,6 @@ export default class extends Base {
   }
 
   getPath(key) {
-    return path.join(this.rootDir, key[0], key[1], key);
+    return path.join(this.rootDir, key.slice(0, 2), key.slice(2, 4), key);
   }
 }
