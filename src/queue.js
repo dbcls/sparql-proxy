@@ -150,7 +150,7 @@ export default class extends EventEmitter {
         reject(err);
       });
 
-      this.add(item);
+      this.waiting(item);
     });
   }
 
@@ -202,8 +202,8 @@ export default class extends EventEmitter {
     }
   }
 
-  add(...items) {
-    this.items.waiting.push(...items);
+  waiting(item) {
+    this.items.waiting.push(item);
 
     this.publishState();
     this.tryDequeue();
