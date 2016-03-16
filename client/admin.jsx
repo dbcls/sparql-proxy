@@ -18,7 +18,7 @@ class JobStateLabel extends React.Component {
   render() {
     const state = this.props.state;
     const reason = this.props.reason;
-    const label = (state === 'done') ? reason : state;
+    const label = (state === 'done' && reason) ? reason : state;
     const c = jobLabelMapping[label] || 'default';
 
     return (
