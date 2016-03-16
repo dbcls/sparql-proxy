@@ -19,18 +19,18 @@ const server = http.Server(app);
 const io     = SocketIo(server);
 
 const config = Object.freeze({
-  port:                  process.env.PORT || 3000,
+  port:                  Number(process.env.PORT || 3000),
   backend:               process.env.SPARQL_BACKEND,
-  maxConcurrency:        process.env.MAX_CONCURRENCY || 1,
-  maxWaiting:            process.env.MAX_WAITING || Infinity,
+  maxConcurrency:        Number(process.env.MAX_CONCURRENCY || 1),
+  maxWaiting:            Number(process.env.MAX_WAITING || Infinity),
   adminUser:             process.env.ADMIN_USER || 'admin',
   adminPassword:         process.env.ADMIN_PASSWORD || 'password',
   cacheStore:            process.env.CACHE_STORE || 'null',
   compressor:            process.env.COMPRESSOR || 'raw',
-  jobTimeout:            process.env.JOB_TIMEOUT || 5 * 60 * 1000,
-  durationToKeepOldJobs: process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000,
-  maxChunkLimit:         process.env.MAX_CHUNK_LIMIT || 100,
-  maxLimit:              process.env.MAX_LIMIT || 10000,
+  jobTimeout:            Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
+  durationToKeepOldJobs: Number(process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000),
+  maxChunkLimit:         Number(process.env.MAX_CHUNK_LIMIT || 100),
+  maxLimit:              Number(process.env.MAX_LIMIT || 10000),
   trustProxy:            process.env.TRUST_PROXY || 'false'
 });
 
