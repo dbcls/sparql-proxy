@@ -67,7 +67,14 @@ export default class extends EventEmitter {
   async run() {
     const chunkOffset = this.parsedQuery.offset || 0;
     const acc         = null;
-    const data        = await this._req(chunkOffset, acc);
+
+    let data;
+    try {
+      data = await this._req(chunkOffset, acc);
+    } catch (e) {
+      this.setReason('error');
+      throw e;
+    }
 
     this.setReason('success');
 
