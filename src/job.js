@@ -17,16 +17,18 @@ function post(options) {
         resolve({response, body});
       }
     });
-
-    req.on('abort', () => {
-      reject(aborted);
-    });
   });
 
   return {
     promise,
 
     abort() {
+      // Note that timeout also emits 'abort' event.
+      // Add 'abort' handler here in order to call reject()
+      // only when abort() is called.
+      req.on('abort', () => {
+        reject(aborted);
+      });
       req.abort();
     }
   };
