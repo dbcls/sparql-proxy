@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 import 'bootstrap/scss/bootstrap.scss'
 import './app.scss'
 import moment from 'moment'
+import queryString from 'query-string';
 
 const jobLabelMapping = {
   waiting:  'default',
@@ -53,11 +54,17 @@ class JobList extends React.Component {
         const cancel = this.props.onCancel.bind(null, job);
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }
+      const redoLink = "/?" + queryString.stringify({query: job.data.rawQuery});
       return (
         <tr key={job.id}>
           <td><JobStateLabel state={job.state} reason={job.data.reason}/></td>
           <td>{job.data.ip}</td>
-          <td><pre>{job.data.rawQuery}</pre></td>
+          <td>
+            <pre>{job.data.rawQuery}</pre>
+            <a href={redoLink} target="_blank">
+              try this query
+            </a>
+          </td>
           <td>{age}</td>
           <td>{runtime}</td>
           {cancelButtonColumn}
