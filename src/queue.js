@@ -1,20 +1,20 @@
-import uuid from 'uuid'
-import { EventEmitter } from 'events'
+import uuid from 'uuid';
+import { EventEmitter } from 'events';
+import { aborted } from './job';
 
-class JobWrapper extends EventEmitter {
-  constructor(resolve, reject, job, token) {
+class Item extends EventEmitter {
+  constructor(job, token) {
     super();
 
-    this.resolve   = resolve;
-    this.reject    = reject;
     this.job       = job;
+    this.token     = token;
     this.createdAt = new Date();
     this.id        = uuid.v4();
     this.state     = 'waiting';
-    this.token     = token;
     this.userData  = {};
 
     this.updateUserData();
+
     job.on('update', () => {
       this.updateUserData();
       this.emit('update');
@@ -22,10 +22,7 @@ class JobWrapper extends EventEmitter {
   }
 
   updateUserData() {
-    const data = this.job.data || {};
-    for (let key in data) {
-      this.userData[key] = data[key];
-    }
+    Object.assign(this.userData, this.job.data || {});
   }
 
   data() {
@@ -39,14 +36,49 @@ class JobWrapper extends EventEmitter {
     };
   }
 
-  start() {
+  async run() {
+    this.running();
+
+    try {
+      const data = await this.job.run();
+
+      this.emit('success', data);
+    } catch (e) {
+      if (e === aborted) {
+        this.emit('cancel');
+      } else {
+        this.emit('error', e);
+      }
+    } finally {
+      this.done();
+    }
+  }
+
+  cancel() {
+    const originalState = this.state;
+
+    if (originalState === 'done') { return; }
+
+    this.job.cancel();
+    this.done();
+
+    if (originalState === 'waiting') {
+      this.emit('cancel');
+    }
+  }
+
+  running() {
     this.state     = 'running';
     this.startedAt = new Date();
+
+    this.emit('update');
   }
 
   done() {
     this.state  = 'done';
     this.doneAt = new Date();
+
+    this.emit('update');
   }
 }
 
@@ -54,33 +86,38 @@ export default class extends EventEmitter {
   constructor(maxWaiting, maxConcurrency, durationToKeepOldJobs) {
     super();
 
-    this.jobs = {};
-    this.waiting = [];
-    this.maxWaiting = maxWaiting;
-    this.maxConcurrency = maxConcurrency;
+    this.maxWaiting            = maxWaiting;
+    this.maxConcurrency        = maxConcurrency;
     this.durationToKeepOldJobs = durationToKeepOldJobs;
-    this.numRunning = 0;
+
+    this.items = {
+      waiting: [],
+      running: [],
+      done:    []
+    };
 
     setInterval(() => {
       const now = new Date();
-      this.sweepOldJobs(now - this.durationToKeepOldJobs);
+      this.sweepOldItems(now - this.durationToKeepOldJobs);
     }, 5 * 1000);
   }
 
   state() {
-    let jobList = [];
-    for (let id in this.jobs) {
-      jobList.push(this.jobs[id].data());
-    }
-    jobList.sort((a, b) => {
-      return b.createdAt - a.createdAt;
-    });
+    const items = this.allItems().map(item => item.data()).sort((a, b) => b.createdAt - a.createdAt);
+
+    const {waiting, running} = this.items;
 
     return {
-      numWaiting: this.waiting.length,
-      numRunning: this.numRunning,
-      jobs: jobList
-    };
+      jobs:       items,
+      numWaiting: waiting.length,
+      numRunning: running.length,
+    }
+  }
+
+  allItems() {
+    const {waiting, running, done} = this.items;
+
+    return [...waiting, ...running, ...done];
   }
 
   publishState() {
@@ -89,127 +126,103 @@ export default class extends EventEmitter {
 
   enqueue(job, token) {
     return new Promise((resolve, reject) => {
-      if (this.waiting.length >= this.maxWaiting) {
-        const err = new Error('Too many waiting jobs');
+      if (this.items.waiting.length >= this.maxWaiting) {
+        const err      = new Error('Too many waiting jobs');
         err.statusCode = 503;
-        err.data = 'Too many waiting jobs';
+        err.data       = 'Too many waiting jobs';
+
         reject(err);
         return;
       }
 
-      const jw = new JobWrapper(resolve, reject, job, token);
-      jw.on('update', this.publishState.bind(this));
+      const item = new Item(job, token);
 
-      this.waiting.push(jw);
-      this.jobs[jw.id] = jw;
-      console.log(`${jw.id} queued; token=${jw.token}`);
-      this.publishState();
+      item.on('success', resolve);
+      item.on('error',   reject);
+      item.on('update',  this.publishState.bind(this));
 
-      job.on('cancel:waiting', () => {
-        jw.done();
+      item.on('cancel', () => {
+        const err      = new Error('Job Canceled');
+        err.statusCode = 503;
+        err.data       = 'Job Canceled';
 
-        const error = new Error('canceled');
-        error.data = 'Job canceled';
-        error.statusCode = 503;
-        reject(error);
+        reject(err);
       });
 
-      this._dequeue();
+      this.add(item);
     });
   }
 
-  _dequeue() {
-    if (this.numRunning >= this.maxConcurrency) {
-      return false;
-    }
+  async tryDequeue() {
+    if (this.items.running.length >= this.maxConcurrency) { return; }
 
-    const item = this.waiting.shift();
-    if (!item) {
-      return false;
-    }
+    const item = this.items.waiting.shift();
+
+    if (!item) { return; }
+
+    this.items.running.push(item);
+    this.publishState();
 
     try {
-      this.numRunning++;
-
-      console.log(`${item.id} start`);
-      item.start();
-      this.publishState();
-      item.job.run()
-        .then((value) => {
-          this.numRunning--;
-          item.done();
-          this.publishState();
-          item.resolve(value);
-          this._dequeue();
-        }, (err) => {
-          this.numRunning--;
-          item.done();
-          this.publishState();
-          item.reject(err);
-          this._dequeue();
-        });
-    } catch (err) {
-      this.numRunning--;
-      item.done();
-      this.publishState();
-      item.reject(err);
-      this._dequeue();
+      await item.run();
+    } finally {
+      this.move(item);
     }
+  }
+
+  cancel(id) {
+    const item = this.allItems().find(item => item.id === id);
+
+    if (!item) { return false };
+
+    item.cancel();
+    this.move(item);
+
     return true;
   }
 
-  cancel(jobId) {
-    let n = -1;
+  jobStatus(token) {
+    const item = this.allItems().find(item => item.token === token);
 
-    for (let i in this.waiting) {
-      if (this.waiting[i].id === jobId) {
-        n = i;
+    return item ? item.data() : null;
+  }
+
+  sweepOldItems(threshold) {
+    let deleted = false;
+
+    this.items.done.forEach((item, i) => {
+      if (item.doneAt < threshold) {
+        this.items.done.splice(i, 1);
+        deleted = true;
+      }
+    });
+
+    if (deleted) {
+      this.publishState();
+    }
+  }
+
+  add(...items) {
+    this.items.waiting.push(...items);
+
+    this.publishState();
+    this.tryDequeue();
+  }
+
+  move(item) {
+    for (let type in this.items) {
+      const from = this.items[type];
+      const i    = from.indexOf(item);
+      if (i >= 0) {
+        from.splice(i, 1);
         break;
       }
     }
 
-    if (n >= 0) {
-      // job is waiting
-      const job = this.waiting[n].job;
-      this.waiting.splice(n, 1);
-      job.cancelWaiting();
-      this.publishState();
-      return true;
-    } else {
-      // job is running
-      const jw = this.jobs[jobId];
-      const job = jw.job;
-      if (job) {
-        job.cancelRunning();
-        this.publishState();
-        return true;
-      } else {
-        return false;
-      }
-    }
-  }
+    const to = item.state;
+    this.items[to].push(item);
 
-  jobStatus(token) {
-    for (let id in this.jobs) {
-      const jw = this.jobs[id];
-      if (jw.token && jw.token === token) {
-        return jw.data();
-      }
-    }
-    return null;
-  }
-
-  sweepOldJobs(threshold) {
-    let deleted = false;
-    for (let id in this.jobs) {
-      const jw = this.jobs[id];
-      if (jw.doneAt && jw.doneAt < threshold) {
-        delete this.jobs[id];
-        deleted = true;
-      }
-    }
-    if (deleted) {
-      this.publishState();
-    }
+    this.publishState();
+    this.tryDequeue();
   }
 }
