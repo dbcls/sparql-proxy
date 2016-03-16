@@ -98,7 +98,7 @@ export default class extends EventEmitter {
 
     setInterval(() => {
       const now = new Date();
-      this.sweepOldItems(now - this.durationToKeepOldItems);
+      this.sweepOldItems(now - this.durationToKeepOldJobs);
     }, 5 * 1000);
   }
 
