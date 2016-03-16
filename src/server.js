@@ -37,7 +37,11 @@ const config = Object.freeze({
 const secret    = `${config.adminUser}:${config.adminPassword}`;
 const cookieKey = 'sparql-proxy-token';
 
-const queue = new Queue(config.maxWaiting, config.maxConcurrency, config.durationToKeepOldJobs);
+const queue = new Queue(config.maxWaiting, config.maxConcurrency);
+setInterval(() => {
+  const threshold = new Date() - config.durationToKeepOldJobs;
+  queue.sweepOldItems(threshold);
+}, 5 * 1000);
 
 console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
 const compressor = createCompressor(config.compressor);

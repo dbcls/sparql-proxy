@@ -83,23 +83,17 @@ class Item extends EventEmitter {
 }
 
 export default class extends EventEmitter {
-  constructor(maxWaiting, maxConcurrency, durationToKeepOldJobs) {
+  constructor(maxWaiting, maxConcurrency) {
     super();
 
     this.maxWaiting            = maxWaiting;
     this.maxConcurrency        = maxConcurrency;
-    this.durationToKeepOldJobs = durationToKeepOldJobs;
 
     this.items = {
       waiting: [],
       running: [],
       done:    []
     };
-
-    setInterval(() => {
-      const now = new Date();
-      this.sweepOldItems(now - this.durationToKeepOldJobs);
-    }, 5 * 1000);
   }
 
   state() {
