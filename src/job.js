@@ -80,9 +80,13 @@ export default class extends EventEmitter {
   }
 
   async _reqNormal() {
+    const query = SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
+      limit: this.limit
+    }));
+
     const options = {
       uri: this.backend,
-      form: {query: this.rawQuery},
+      form: {query},
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': this.accept,

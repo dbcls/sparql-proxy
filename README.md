@@ -124,18 +124,17 @@ Number of the jobs possible to be waiting.
 
 Set `true` to trust proxies in front of the server.
 
+### `MAX_LIMIT`
+
+(default: `10000`)
+
+Cap the LIMIT of queries.
+
 ### `ENABLE_QUERY_SPLITTING`
 
 (default: `false`)
 
 Set `true` to enable query splitting.
-
-### `MAX_LIMIT`
-
-(only applicable to `ENABLE_QUERY_SPLITTING=true` case)
-(default: `10000`)
-
-Cap the LIMIT of queries.
 
 ### `MAX_CHUNK_LIMIT`
 
@@ -143,7 +142,6 @@ Cap the LIMIT of queries.
 (default: `1000`)
 
 Split queries into the chunk size specified.
-
 
 ### `QUERY_LOG_PATH`
 
