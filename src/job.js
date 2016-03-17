@@ -49,7 +49,7 @@ export default class extends EventEmitter {
     this.timeout              = params.timeout;
     this.rawQuery             = params.rawQuery;
     this.enableQuerySplitting = params.enableQuerySplitting;
-    this.parsedQuery          = SparqlParser().parse(this.rawQuery);
+    this.parsedQuery          = new SparqlParser().parse(this.rawQuery);
     this.limit                = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
     this.chunkLimit           = Math.min(this.limit, params.maxChunkLimit);
 
@@ -80,7 +80,7 @@ export default class extends EventEmitter {
   }
 
   async _reqNormal() {
-    const query = SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
+    const query = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
       limit: this.limit
     }));
 
@@ -111,7 +111,7 @@ export default class extends EventEmitter {
   }
 
   async _reqSplit(chunkOffset, acc = null) {
-    const query = SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
+    const query = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
       limit:  this.chunkLimit,
       offset: chunkOffset
     }));
