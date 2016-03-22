@@ -109,9 +109,8 @@ app.all('/sparql', cors(), async (req, res) => {
     return;
   }
 
-  const queryType = parsedQuery.queryType;
-  if (parsedQuery.type !== 'query' || queryType !== 'SELECT') {
-    console.log(`Query type not allowed: ${parsedQuery.type} (${queryType})`);
+  if (parsedQuery.type !== 'query') {
+    console.log(`Query type not allowed: ${parsedQuery.type}`);
     res.status(400).send('Query type not allowed');
     return;
   }
