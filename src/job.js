@@ -83,16 +83,9 @@ export default class extends EventEmitter {
     return this.parsedQuery.type === "query" && this.parsedQuery.queryType === "SELECT";
   }
 
-  limitCappedQuery() {
-    let query = Object.assign({}, this.parsedQuery);
-    if (this.isSelectQuery()) {
-      Object.assign(query, {limit: this.limit});
-    }
-    return new SparqlGenerator().stringify(query);
-  }
-
   async _reqNormal() {
-    const query = this.limitCappedQuery();
+    const override = this.isSelectQuery() ? {limit: this.limit} : {};
+    const query = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, override));
 
     const options = {
       uri: this.backend,
@@ -122,7 +115,10 @@ export default class extends EventEmitter {
   }
 
   async _reqSplit(chunkOffset, acc = null) {
-    const query = this.limitCappedQuery();
+    const query = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
+      limit:  this.chunkLimit,
+      offset: chunkOffset
+    }));
 
     const options = {
       uri: this.backend,
