@@ -31,8 +31,9 @@ class StatusLabel extends React.Component {
 class ResponseBox extends React.Component {
   render() {
     let table = "";
-    if (this.props.response.ok) {
-      table = <SparqlResultTable json={this.props.response.data}/>;
+    const json = JSON.parse(this.props.response.data);
+    if (this.props.response.ok && json.results && json.results.bindings) {
+      table = <SparqlResultTable json={json}/>;
     }
     return (
       <div className="card card-block">
@@ -57,9 +58,8 @@ class ResponseBox extends React.Component {
 
 class SparqlResultTable extends React.Component {
   render() {
-    const json = JSON.parse(this.props.json);
-    const head = json.head.vars;
-    const data = json.results.bindings;
+    const head = this.props.json.head.vars;
+    const data = this.props.json.results.bindings;
 
     const ths = head.map((col) => {
       return (
