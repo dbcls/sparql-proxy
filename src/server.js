@@ -1,6 +1,6 @@
 import express from 'express';
 import cookie from 'cookie';
-import { Parser as SparqlParser } from 'sparqljs';
+import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 import Job from './job';
 import SocketIo from 'socket.io';
 import Queue from './queue';
@@ -115,9 +115,10 @@ app.all('/sparql', cors(), async (req, res) => {
     return;
   }
 
-  const accept   = req.header.accept || 'application/sparql-results+json';
-  const digest   = crypto.createHash('md5').update(query).update("\0").update(accept).digest('hex');
-  const cacheKey = `${digest}.${config.compressor}`;
+  const normalizedQuery = new SparqlGenerator().stringify(parsedQuery);
+  const accept          = req.header.accept || 'application/sparql-results+json';
+  const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept).digest('hex');
+  const cacheKey        = `${digest}.${config.compressor}`;
 
   try {
     const cached = await cache.get(cacheKey);
