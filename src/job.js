@@ -70,7 +70,7 @@ export default class extends EventEmitter {
   }
 
   async run() {
-    if (this.enableQuerySplitting) {
+    if (this.enableQuerySplitting && this.isSelectQuery()) {
       const chunkOffset = this.parsedQuery.offset || 0;
 
       return await this._reqSplit(chunkOffset);
@@ -79,10 +79,20 @@ export default class extends EventEmitter {
     }
   }
 
+  isSelectQuery() {
+    return this.parsedQuery.type === "query" && this.parsedQuery.queryType === "SELECT";
+  }
+
+  limitCappedQuery() {
+    let query = Object.assign({}, this.parsedQuery);
+    if (this.isSelectQuery()) {
+      Object.assign(query, {limit: this.limit});
+    }
+    return new SparqlGenerator().stringify(query);
+  }
+
   async _reqNormal() {
-    const query = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
-      limit: this.limit
-    }));
+    const query = this.limitCappedQuery();
 
     const options = {
       uri: this.backend,
@@ -101,6 +111,7 @@ export default class extends EventEmitter {
     const {response, body} = await promise;
 
     if (!isSuccessful(response)) {
+      console.log(body);
       throw new Error(`unexpected response from backend; ${response.statusCode}`);
     }
 
@@ -111,10 +122,7 @@ export default class extends EventEmitter {
   }
 
   async _reqSplit(chunkOffset, acc = null) {
-    const query = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
-      limit:  this.chunkLimit,
-      offset: chunkOffset
-    }));
+    const query = this.limitCappedQuery();
 
     const options = {
       uri: this.backend,
