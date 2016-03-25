@@ -127,7 +127,9 @@ class MainComponent extends React.Component {
   }
 
   componentDidMount() {
-    const socket = io();
+    const socket = io.connect(location.origin, {
+      path: location.pathname + "../socket.io"
+    });
     this.socket = socket;
     socket.on('state', (state) => {
       console.log('state received', state);
