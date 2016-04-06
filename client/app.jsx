@@ -153,14 +153,14 @@ class QueryBox extends React.Component {
     const token = uuid.v4();
 
     const timerId = setInterval(async () => {
-      const job     = await fetch(`/jobs/${token}`);
+      const job     = await fetch(`./jobs/${token}`);
       const {state} = await job.json();
       this.setState({request: {jobState: state}});
     }, 1000);
 
     try {
       const params     = queryString.stringify({query, token});
-      const response   = await fetch(`/sparql?${params}`);
+      const response   = await fetch(`./sparql?${params}`);
       const statusText = `${response.status} ${response.statusText}`;
       const statusCode = response.status;
       this.setState({request: null, running: false});
