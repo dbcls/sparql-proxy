@@ -72,7 +72,7 @@ class JobList extends React.Component {
       );
     });
     return (
-      <table className="table">
+      <table className="table my-3">
         <thead>
           <tr>
             <th>status</th>
@@ -104,7 +104,7 @@ class MainComponent extends React.Component {
         <div>
           <Navbar waiting={st.numWaiting} running={st.numRunning}/>
           <div className="container">
-            <div className="text-xs-right m-b-1">
+            <div className="text-xl-right m-b-1 my-3">
               <button className="btn btn-danger" onClick={this.purgeCache.bind(this)}>Purge cache</button>
             </div>
             <JobList jobs={st.jobs} now={this.state.now} onCancel={this.cancelJob.bind(this)}/>
@@ -144,9 +144,11 @@ class MainComponent extends React.Component {
 class Navbar extends React.Component {
   render() {
     return (
-      <nav className="navbar navbar-fixed-top navbar-dark bg-inverse">
+      <nav className="navbar navbar-toggleable-xl fixed-top navbar-inverse bg-inverse">
         <a className="navbar-brand" href="#">SPARQL Proxy</a>
-        <div className="navbar-text pull-xs-right">
+        <div className="mr-auto">
+        </div>
+        <div className="navbar-text">
           {this.props.running} running, {this.props.waiting} waiting
         </div>
       </nav>
