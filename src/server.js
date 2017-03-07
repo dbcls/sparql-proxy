@@ -15,6 +15,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import fs from 'fs';
 import denodeify from 'denodeify';
+import { splitPreamble } from 'preamble';
 
 const app    = express();
 const server = http.Server(app);
@@ -101,8 +102,10 @@ app.all('/sparql', cors(), async (req, res) => {
   const parser = new SparqlParser();
   let parsedQuery;
 
+  const {preamble, compatibleQuery} = splitPreamble(query);
+
   try {
-    parsedQuery = parser.parse(query);
+    parsedQuery = parser.parse(compatibleQuery);
   } catch (ex) {
     console.log(ex);
     res.status(400).send({message: 'Query parse failed', data: ex.message});
@@ -115,7 +118,7 @@ app.all('/sparql', cors(), async (req, res) => {
     return;
   }
 
-  const normalizedQuery = new SparqlGenerator().stringify(parsedQuery);
+  const normalizedQuery = preamble + (new SparqlGenerator().stringify(parsedQuery));
   const accept          = req.header.accept || 'application/sparql-results+json';
   const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept).digest('hex');
   const cacheKey        = `${digest}.${config.compressor}`;

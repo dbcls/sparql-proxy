@@ -3,6 +3,7 @@ import request from 'request';
 import uuid from 'uuid';
 import { EventEmitter } from 'events';
 import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
+import { splitPreamble } from 'preamble';
 
 export const aborted = Symbol();
 
@@ -49,7 +50,13 @@ export default class extends EventEmitter {
     this.timeout              = params.timeout;
     this.rawQuery             = params.rawQuery;
     this.enableQuerySplitting = params.enableQuerySplitting;
-    this.parsedQuery          = new SparqlParser().parse(this.rawQuery);
+
+    const {preamble, compatibleQuery} = splitPreamble(this.rawQuery);
+    this.preamble             = preamble;
+    this.compatibleQuery      = compatibleQuery;
+
+    this.parsedQuery          = new SparqlParser().parse(this.compatibleQuery);
+
     this.limit                = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
     this.chunkLimit           = Math.min(this.limit, params.maxChunkLimit);
 
@@ -85,7 +92,8 @@ export default class extends EventEmitter {
 
   async _reqNormal() {
     const override = this.isSelectQuery() ? {limit: this.limit} : {};
-    const query = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, override));
+    const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, override));
+    const query = this.preamble + compatibleQuery;
 
     const options = {
       uri: this.backend,
@@ -115,10 +123,11 @@ export default class extends EventEmitter {
   }
 
   async _reqSplit(chunkOffset, acc = null) {
-    const query = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
+    const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
       limit:  this.chunkLimit,
       offset: chunkOffset
     }));
+    const query = this.preamble + compatibleQuery;
 
     const options = {
       uri: this.backend,
