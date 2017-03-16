@@ -6,7 +6,7 @@
 
 ## Install
 
-    $ git clone git@github.com:enishitech/sparql-proxy.git
+    $ git clone git@github.com:dbcls/sparql-proxy.git
     $ cd sparql-proxy
     $ npm install
 
