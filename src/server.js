@@ -16,6 +16,7 @@ import cors from 'cors';
 import fs from 'fs';
 import denodeify from 'denodeify';
 import { splitPreamble } from 'preamble';
+import multer from 'multer';
 
 const app    = express();
 const server = http.Server(app);
@@ -60,7 +61,7 @@ if (config.trustProxy === 'true') {
   app.enable('trust proxy');
 }
 
-app.all('/sparql', cors(), async (req, res) => {
+app.all('/sparql', cors(), multer().array(), async (req, res) => {
   const startedAt = new Date();
   const log = async function (log) {
     if (!config.queryLogPath) { return; }
