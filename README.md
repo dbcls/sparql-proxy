@@ -102,9 +102,9 @@ Job timeout in millisecond.
 
 ### `DURATION_TO_KEEP_OLD_JOBS`
 
-(default: `60000`)
+(default: `300000`)
 
-Duration to keep old jobs in the administrator dashboard.
+Duration in millisecond to keep old jobs in the administrator dashboard.
 
 ### `MAX_CONCURRENCY`
 
