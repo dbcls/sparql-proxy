@@ -9,7 +9,7 @@
 
 FROM ubuntu:16.04
 
-ARG node_version=v8.8.1
+ARG node_version=v8.9.4
 
 RUN apt-get -qq update && apt-get -qq install -y \
     pkg-config \
@@ -48,5 +48,3 @@ RUN npm install
 
 #CMD forever --workingDir=/opt/git/sparql-proxy npm start > npm.log
 CMD npm start
-
-
