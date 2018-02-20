@@ -46,5 +46,4 @@ WORKDIR /opt/git/sparql-proxy
 
 RUN npm install
 
-#CMD forever --workingDir=/opt/git/sparql-proxy npm start > npm.log
 CMD npm start
