@@ -10,7 +10,7 @@ import 'babel-polyfill';
 class Navbar extends React.Component {
   render() {
     return (
-      <nav className="navbar fixed-top navbar-inverse bg-inverse">
+      <nav className="navbar fixed-top navbar-dark bg-dark">
         <a className="navbar-brand" href="#">SPARQL Proxy</a>
       </nav>
     );
@@ -38,7 +38,7 @@ class ResponseBox extends React.Component {
       }
     }
     return (
-      <div className="card card-block my-3">
+      <div className="card card-body my-3">
         <h4 className="card-title">Response <StatusLabel response={this.props.response}/></h4>
         {this.error()}
         {table}
@@ -109,7 +109,7 @@ class RequestBox extends React.Component {
       );
     }
     return (
-      <div className="card card-block my-3">
+      <div className="card card-body my-3">
         <h4 className="card-title">Query</h4>
         <form onSubmit={this.handleSubmit.bind(this)}>
           <div className="form-group">
