@@ -120,7 +120,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
   }
 
   const normalizedQuery = preamble + (new SparqlGenerator().stringify(parsedQuery));
-  const accept          = req.headers.accept || 'application/sparql-results+json';
+  const accept          = (config.enableQuerySplitting ? null : req.headers.accept) || 'application/sparql-results+json';
   const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept).digest('hex');
   const cacheKey        = `${digest}.${config.compressor}`;
 
