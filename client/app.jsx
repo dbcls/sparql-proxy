@@ -160,7 +160,11 @@ class QueryBox extends React.Component {
 
     try {
       const params     = queryString.stringify({query, token});
-      const response   = await fetch(`./sparql?${params}`);
+      const response   = await fetch(`./sparql?${params}`, {
+        headers: {
+          'accept': 'application/sparql-results+json'
+        }
+      });
       const statusText = `${response.status} ${response.statusText}`;
       const statusCode = response.status;
       this.setState({request: null, running: false});
