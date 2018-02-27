@@ -132,9 +132,11 @@ Cap the LIMIT of queries.
 
 ### `ENABLE_QUERY_SPLITTING`
 
+THIS IS AN EXPERIMENTAL FEATURE.
+
 (default: `false`)
 
-Set `true` to enable query splitting.
+Set `true` to enable query splitting. If enabled, content negotiation will be disabled; spaql-proxy will always use `application/sparql-results+json`. That is because merging results other than JSON is not supported.
 
 ### `MAX_CHUNK_LIMIT`
 
