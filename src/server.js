@@ -101,6 +101,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
   }
 
   const parser = new SparqlParser();
+  parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
   let parsedQuery;
 
   const {preamble, compatibleQuery} = splitPreamble(query);
