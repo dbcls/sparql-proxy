@@ -71,7 +71,7 @@ class SparqlResultTable extends React.Component {
 
     const trs = data.map((row) => {
       const tds = head.map((c) => {
-        const value = row[c].value;
+        const value = row[c] ? row[c].value : "";
         return (
           <td>{value}</td>
         );
