@@ -1,5 +1,7 @@
 # sparql-proxy
 
+SPARQL-proxy is a portable Web application that works as a proxy server of a SPARQL endpoint. It provides several functions such as job scheduling for SPARQL queries, validating the safety of query statements, caching of SPARQL search results to improve response time performance.
+
 ## Prerequisites
 
 * [Node.js](https://nodejs.org/)
