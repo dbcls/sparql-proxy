@@ -9,6 +9,10 @@ SPARQL-proxy is a portable Web application that works as a proxy server for any 
 5. (optional) logging SPARQL queries and results
 6. (experimental) splitting a SPARQL query into chunks by adding OFFSET & LIMIT
 
+## Docker
+
+    $ docker run -p 8080:3000 -e SPARQL_BACKEND=http://example.com/sparql dbcls/sparqlist
+
 ## Prerequisites
 
 * [Node.js](https://nodejs.org/)
