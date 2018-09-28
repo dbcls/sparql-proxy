@@ -32,7 +32,7 @@ const config = Object.freeze({
   cacheStore:            process.env.CACHE_STORE || 'null',
   compressor:            process.env.COMPRESSOR || 'raw',
   jobTimeout:            Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
-  durationToKeepOldJobs: Number(process.env.DURATION_TO_KEEP_OLD_JOBS || 60 * 1000),
+  durationToKeepOldJobs: Number(process.env.DURATION_TO_KEEP_OLD_JOBS || 5 * 60 * 1000),
   enableQuerySplitting:  process.env.ENABLE_QUERY_SPLITTING === 'true',
   maxChunkLimit:         Number(process.env.MAX_CHUNK_LIMIT || 1000),
   maxLimit:              Number(process.env.MAX_LIMIT || 10000),
@@ -101,6 +101,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
   }
 
   const parser = new SparqlParser();
+  parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
   let parsedQuery;
 
   const {preamble, compatibleQuery} = splitPreamble(query);
@@ -120,7 +121,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
   }
 
   const normalizedQuery = preamble + (new SparqlGenerator().stringify(parsedQuery));
-  const accept          = req.header.accept || 'application/sparql-results+json';
+  const accept          = (config.enableQuerySplitting ? null : req.headers.accept) || 'application/sparql-results+json';
   const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept).digest('hex');
   const cacheKey        = `${digest}.${config.compressor}`;
 

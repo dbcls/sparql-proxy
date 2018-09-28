@@ -1,6 +1,17 @@
 # sparql-proxy
 
-SPARQL-proxy is a portable Web application that works as a proxy server of a SPARQL endpoint. It provides several functions such as job scheduling for SPARQL queries, validating the safety of query statements, caching of SPARQL search results to improve response time performance.
+SPARQL-proxy is a portable Web application that works as a proxy server for any SPARQL endpoint providing the following functionalities:
+
+1. validation of the safety of query statements (omit SPARQL Update queries)
+2. job scheduling for a large number of simultaneous SPARQL queries
+3. providing a job management interface for time consuming SPARQL queries
+4. (optional) cache mechanisms with compression for SPARQL results to improve response time
+5. (optional) logging SPARQL queries and results
+6. (experimental) splitting a SPARQL query into chunks by adding OFFSET & LIMIT
+
+## Docker
+
+    $ docker run -p 8080:3000 -e SPARQL_BACKEND=http://example.com/sparql dbcls/sparql-proxy
 
 ## Prerequisites
 
@@ -104,9 +115,9 @@ Job timeout in millisecond.
 
 ### `DURATION_TO_KEEP_OLD_JOBS`
 
-(default: `60000`)
+(default: `300000`)
 
-Duration to keep old jobs in the administrator dashboard.
+Duration in millisecond to keep old jobs in the administrator dashboard.
 
 ### `MAX_CONCURRENCY`
 
@@ -134,9 +145,11 @@ Cap the LIMIT of queries.
 
 ### `ENABLE_QUERY_SPLITTING`
 
+THIS IS AN EXPERIMENTAL FEATURE.
+
 (default: `false`)
 
-Set `true` to enable query splitting.
+Set `true` to enable query splitting. If enabled, content negotiation will be disabled; spaql-proxy will always use `application/sparql-results+json`. That is because merging results other than JSON is not supported.
 
 ### `MAX_CHUNK_LIMIT`
 

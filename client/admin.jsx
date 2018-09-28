@@ -144,7 +144,7 @@ class MainComponent extends React.Component {
 class Navbar extends React.Component {
   render() {
     return (
-      <nav className="navbar navbar-toggleable-xl fixed-top navbar-inverse bg-inverse">
+      <nav className="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
         <a className="navbar-brand" href="#">SPARQL Proxy</a>
         <div className="mr-auto">
         </div>
