@@ -110,6 +110,9 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
     parsedQuery = parser.parse(compatibleQuery);
   } catch (ex) {
     console.log(ex);
+    console.log("==== raw query (before splitting preamble)");
+    console.log(query);
+    console.log("====");
     res.status(400).send({message: 'Query parse failed', data: ex.message});
     return;
   }
