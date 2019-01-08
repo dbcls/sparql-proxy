@@ -1,6 +1,5 @@
 import '@babel/polyfill';
 import request from 'request';
-import uuid from 'uuid';
 import { EventEmitter } from 'events';
 import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 import { splitPreamble } from 'preamble';
