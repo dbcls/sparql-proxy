@@ -115,7 +115,7 @@ class RequestBox extends React.Component {
           <div className="form-group">
             <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
           </div>
-          <button type="submit" className="btn btn-default" disabled={this.props.running}>Submit</button>
+          <button type="submit" className="btn btn-primary" disabled={this.props.running}>Submit</button>
           {requestStatus}
         </form>
       </div>
