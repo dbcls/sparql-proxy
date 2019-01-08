@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+import '@babel/polyfill';
 import request from 'request';
 import uuid from 'uuid';
 import { EventEmitter } from 'events';
@@ -16,7 +16,7 @@ function post(options) {
       if (err) {
         reject(err);
       } else {
-        resolve({response, body});
+        resolve({ response, body });
       }
     });
 
@@ -45,25 +45,25 @@ export default class extends EventEmitter {
   constructor(params) {
     super();
 
-    this.backend              = params.backend;
-    this.accept               = params.accept;
-    this.timeout              = params.timeout;
-    this.rawQuery             = params.rawQuery;
+    this.backend = params.backend;
+    this.accept = params.accept;
+    this.timeout = params.timeout;
+    this.rawQuery = params.rawQuery;
     this.enableQuerySplitting = params.enableQuerySplitting;
 
-    const {preamble, compatibleQuery} = splitPreamble(this.rawQuery);
-    this.preamble             = preamble;
-    this.compatibleQuery      = compatibleQuery;
+    const { preamble, compatibleQuery } = splitPreamble(this.rawQuery);
+    this.preamble = preamble;
+    this.compatibleQuery = compatibleQuery;
 
-    this.parsedQuery          = new SparqlParser().parse(this.compatibleQuery);
+    this.parsedQuery = new SparqlParser().parse(this.compatibleQuery);
 
-    this.limit                = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
-    this.chunkLimit           = Math.min(this.limit, params.maxChunkLimit);
+    this.limit = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
+    this.chunkLimit = Math.min(this.limit, params.maxChunkLimit);
 
     this.data = {
-      ip:       params.ip,
+      ip: params.ip,
       rawQuery: params.rawQuery,
-      reason:   null
+      reason: null
     };
   }
 
@@ -91,13 +91,13 @@ export default class extends EventEmitter {
   }
 
   async _reqNormal() {
-    const override = this.isSelectQuery() ? {limit: this.limit} : {};
+    const override = this.isSelectQuery() ? { limit: this.limit } : {};
     const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, override));
     const query = this.preamble + compatibleQuery;
 
     const options = {
       uri: this.backend,
-      form: {query},
+      form: { query },
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': this.accept,
@@ -105,11 +105,11 @@ export default class extends EventEmitter {
       timeout: this.timeout
     };
 
-    const {promise, abort} = post(options);
+    const { promise, abort } = post(options);
 
     this.on('abort', abort);
 
-    const {response, body} = await promise;
+    const { response, body } = await promise;
 
     if (!isSuccessful(response)) {
       console.log(body);
@@ -124,14 +124,14 @@ export default class extends EventEmitter {
 
   async _reqSplit(chunkOffset, acc = null) {
     const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
-      limit:  this.chunkLimit,
+      limit: this.chunkLimit,
       offset: chunkOffset
     }));
     const query = this.preamble + compatibleQuery;
 
     const options = {
       uri: this.backend,
-      form: {query},
+      form: { query },
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/sparql-results+json',
@@ -142,11 +142,11 @@ export default class extends EventEmitter {
 
     console.log(`REQ limit=${this.limit}, chunkLimit=${this.chunkLimit}, chunkOffset=${chunkOffset}`);
 
-    const {promise, abort} = post(options);
+    const { promise, abort } = post(options);
 
     this.on('abort', abort);
 
-    const {response, body} = await promise;
+    const { response, body } = await promise;
 
     if (!isSuccessful(response)) {
       throw new Error(`unexpected response from backend; ${response.statusCode}`);
@@ -164,7 +164,7 @@ export default class extends EventEmitter {
     }
 
     const numReturned = bindings.length;
-    const nextOffset  = chunkOffset + this.chunkLimit;
+    const nextOffset = chunkOffset + this.chunkLimit;
     console.log('RET', numReturned);
 
     if (nextOffset < this.limit && numReturned >= this.chunkLimit) {

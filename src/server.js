@@ -10,7 +10,7 @@ import basicAuth from 'basic-auth-connect';
 import { createCacheStore } from './cache';
 import { createCompressor } from './compressor';
 import bodyParser from 'body-parser';
-import 'babel-polyfill';
+import '@babel/polyfill';
 import morgan from 'morgan';
 import cors from 'cors';
 import fs from 'fs';
@@ -18,29 +18,29 @@ import denodeify from 'denodeify';
 import { splitPreamble } from 'preamble';
 import multer from 'multer';
 
-const app    = express();
+const app = express();
 const server = http.Server(app);
-const io     = SocketIo(server);
+const io = SocketIo(server);
 
 const config = Object.freeze({
-  port:                  Number(process.env.PORT || 3000),
-  backend:               process.env.SPARQL_BACKEND,
-  maxConcurrency:        Number(process.env.MAX_CONCURRENCY || 1),
-  maxWaiting:            Number(process.env.MAX_WAITING || Infinity),
-  adminUser:             process.env.ADMIN_USER || 'admin',
-  adminPassword:         process.env.ADMIN_PASSWORD || 'password',
-  cacheStore:            process.env.CACHE_STORE || 'null',
-  compressor:            process.env.COMPRESSOR || 'raw',
-  jobTimeout:            Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
+  port: Number(process.env.PORT || 3000),
+  backend: process.env.SPARQL_BACKEND,
+  maxConcurrency: Number(process.env.MAX_CONCURRENCY || 1),
+  maxWaiting: Number(process.env.MAX_WAITING || Infinity),
+  adminUser: process.env.ADMIN_USER || 'admin',
+  adminPassword: process.env.ADMIN_PASSWORD || 'password',
+  cacheStore: process.env.CACHE_STORE || 'null',
+  compressor: process.env.COMPRESSOR || 'raw',
+  jobTimeout: Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
   durationToKeepOldJobs: Number(process.env.DURATION_TO_KEEP_OLD_JOBS || 5 * 60 * 1000),
-  enableQuerySplitting:  process.env.ENABLE_QUERY_SPLITTING === 'true',
-  maxChunkLimit:         Number(process.env.MAX_CHUNK_LIMIT || 1000),
-  maxLimit:              Number(process.env.MAX_LIMIT || 10000),
-  trustProxy:            process.env.TRUST_PROXY || 'false',
-  queryLogPath:          process.env.QUERY_LOG_PATH,
+  enableQuerySplitting: process.env.ENABLE_QUERY_SPLITTING === 'true',
+  maxChunkLimit: Number(process.env.MAX_CHUNK_LIMIT || 1000),
+  maxLimit: Number(process.env.MAX_LIMIT || 10000),
+  trustProxy: process.env.TRUST_PROXY || 'false',
+  queryLogPath: process.env.QUERY_LOG_PATH,
 });
 
-const secret    = `${config.adminUser}:${config.adminPassword}`;
+const secret = `${config.adminUser}:${config.adminPassword}`;
 const cookieKey = 'sparql-proxy-token';
 
 const queue = new Queue(config.maxWaiting, config.maxConcurrency);
@@ -51,11 +51,11 @@ setInterval(() => {
 
 console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
 const compressor = createCompressor(config.compressor);
-const cache      = createCacheStore(config.cacheStore, compressor, process.env);
+const cache = createCacheStore(config.cacheStore, compressor, process.env);
 
 app.use(morgan('combined'));
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.text({type: 'application/sparql-query'}));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.text({ type: 'application/sparql-query' }));
 
 if (config.trustProxy === 'true') {
   app.enable('trust proxy');
@@ -68,9 +68,9 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
     const doneAt = new Date();
     const data = Object.assign({
       'started-at': startedAt,
-      'done-at':    doneAt,
-      'elapsed':    doneAt - startedAt,
-      'ip':         req.ip,
+      'done-at': doneAt,
+      'elapsed': doneAt - startedAt,
+      'ip': req.ip,
     }, log);
     return denodeify(fs.appendFile)(config.queryLogPath, JSON.stringify(data) + "\n");
   };
@@ -96,7 +96,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
   }
 
   if (!query) {
-    res.status(400).send({message: 'Query is required'});
+    res.status(400).send({ message: 'Query is required' });
     return;
   }
 
@@ -104,7 +104,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
   parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
   let parsedQuery;
 
-  const {preamble, compatibleQuery} = splitPreamble(query);
+  const { preamble, compatibleQuery } = splitPreamble(query);
 
   try {
     parsedQuery = parser.parse(compatibleQuery);
@@ -113,7 +113,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
     console.log("==== raw query (before splitting preamble)");
     console.log(query);
     console.log("====");
-    res.status(400).send({message: 'Query parse failed', data: ex.message});
+    res.status(400).send({ message: 'Query parse failed', data: ex.message });
     return;
   }
 
@@ -124,9 +124,9 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
   }
 
   const normalizedQuery = preamble + (new SparqlGenerator().stringify(parsedQuery));
-  const accept          = (config.enableQuerySplitting ? null : req.headers.accept) || 'application/sparql-results+json';
-  const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept).digest('hex');
-  const cacheKey        = `${digest}.${config.compressor}`;
+  const accept = (config.enableQuerySplitting ? null : req.headers.accept) || 'application/sparql-results+json';
+  const digest = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept).digest('hex');
+  const cacheKey = `${digest}.${config.compressor}`;
 
   try {
     const cached = await cache.get(cacheKey);
@@ -139,7 +139,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
       log({
         query,
         'cache-hit': true,
-        'response': {'content-type': cached.contentType, 'body': cached.body}
+        'response': { 'content-type': cached.contentType, 'body': cached.body }
       });
       return;
     }
@@ -148,15 +148,15 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
   }
 
   const token = req.query.token;
-  const job   = new Job({
-    backend:              config.backend,
-    rawQuery:             query,
-    accept:               accept,
-    timeout:              config.jobTimeout,
-    ip:                   req.ip,
+  const job = new Job({
+    backend: config.backend,
+    rawQuery: query,
+    accept: accept,
+    timeout: config.jobTimeout,
+    ip: req.ip,
     enableQuerySplitting: config.enableQuerySplitting,
-    maxLimit:             config.maxLimit,
-    maxChunkLimit:        config.maxChunkLimit
+    maxLimit: config.maxLimit,
+    maxChunkLimit: config.maxChunkLimit
   });
 
   try {
@@ -167,7 +167,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
     log({
       query,
       'cache-hit': false,
-      'response': {'content-type': result.contentType, 'body': result.body}
+      'response': { 'content-type': result.contentType, 'body': result.body }
     });
 
     try {

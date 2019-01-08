@@ -1,35 +1,42 @@
 var webpack = require('webpack');
 
 module.exports = {
+  mode: "development",
   entry: {
-    app:   './client/app.jsx',
+    app: './client/app.jsx',
     admin: './client/admin.jsx'
   },
   output: {
     filename: '[name].js',
-    path: 'public',
+    path: __dirname + '/public',
   },
   module: {
-    loaders: [
-      { test: /\.jsx?$/, loader: 'babel', query: {presets: ['react', 'es2015'], compact: false} },
-      { test: /\.css$/, loader: 'style-loader!css-loader' },
-      { test: /\.scss$/, loader: 'style-loader!css-loader!sass-loader' },
-      { test: /\.woff2?(?:\?.*)?$/, loader: 'url-loader?limit=10000&mimetype=application/font-woff' },
-      { test: /\.ttf(?:\?.*)?$/, loader: 'file-loader' },
-      { test: /\.eot(?:\?.*)?$/, loader: 'file-loader' },
-      { test: /\.svg(?:\?.*)?$/, loader: 'file-loader' }
+    rules: [
+      {
+        test: /\.jsx?$/, use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-react']
+          }
+        }
+      },
+      {
+        test: /\.css$/, use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' }
+        ]
+      },
+      {
+        test: /\.scss$/, use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          { loader: 'sass-loader' }
+        ]
+      },
+      { test: /\.woff2?(?:\?.*)?$/, use: 'url-loader?limit=10000&mimetype=application/font-woff' },
+      { test: /\.ttf(?:\?.*)?$/, use: 'file-loader' },
+      { test: /\.eot(?:\?.*)?$/, use: 'file-loader' },
+      { test: /\.svg(?:\?.*)?$/, use: 'file-loader' }
     ]
   },
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.env': {
-        'NODE_ENV': JSON.stringify('production')
-      }
-    }),
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-    new webpack.ProvidePlugin({
-      'fetch': 'imports?this=>global!exports?global.fetch!whatwg-fetch'
-    }),
-    new webpack.optimize.UglifyJsPlugin()
-  ]
 }
