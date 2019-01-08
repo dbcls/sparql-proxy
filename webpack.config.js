@@ -3,8 +3,8 @@ var webpack = require('webpack');
 module.exports = {
   mode: "development",
   entry: {
-    app: './client/app.jsx',
-    admin: './client/admin.jsx'
+    app: ['whatwg-fetch', './client/app.jsx'],
+    admin: ['whatwg-fetch', './client/admin.jsx'],
   },
   output: {
     filename: '[name].js',
@@ -38,5 +38,5 @@ module.exports = {
       { test: /\.eot(?:\?.*)?$/, use: 'file-loader' },
       { test: /\.svg(?:\?.*)?$/, use: 'file-loader' }
     ]
-  },
+  }
 }
