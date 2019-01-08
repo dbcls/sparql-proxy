@@ -5052,10 +5052,10 @@ source-map@^0.6.0, source-map@^0.6.1, source-map@~0.6.1:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
   integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
 
-sparqljs@^1.1.4:
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/sparqljs/-/sparqljs-1.5.2.tgz#bf4e676024c5216cca8ecd25b32cc6ae3777e323"
-  integrity sha512-oKPSYbP/fBomMqMQhHDnAawwW0v4GKyMHnOK1GREAAomcBSIC+zA1UfgSYvePZsuqWgxzGkmsTL5tb6LmiLttw==
+sparqljs@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/sparqljs/-/sparqljs-2.2.1.tgz#9bac98bc783ade98b802a8e1794339f65a516e86"
+  integrity sha512-nvwCxdqZbggDEFc/1b4FfAUxAzBjAkpruDRwqQSMApyvr94qxta6DG9hCFI423i/1wJkPi5pggLmN0q2YdgpCg==
 
 spdx-correct@^3.0.0:
   version "3.1.0"

@@ -27,7 +27,7 @@
     "rimraf": "^2.5.2",
     "snappy": "^6.1.1",
     "socket.io": "^1.4.5",
-    "sparqljs": "^1.1.4",
+    "sparqljs": "^2.2.1",
     "url-loader": "^1.1.2",
     "uuid": "^2.0.1",
     "whatwg-fetch": "^0.11.0"
