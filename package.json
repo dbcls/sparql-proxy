@@ -5,6 +5,7 @@
   "private": true,
   "author": "",
   "dependencies": {
+    "babel-regenerator-runtime": "^6.5.0",
     "basic-auth-connect": "^1.0.0",
     "body-parser": "^1.15.0",
     "bootstrap": "^4.0.0-alpha.6",

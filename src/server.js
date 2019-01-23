@@ -1,3 +1,4 @@
+import 'babel-regenerator-runtime';
 import express from 'express';
 import cookie from 'cookie';
 import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
