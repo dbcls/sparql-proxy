@@ -1,4 +1,3 @@
-import 'babel-regenerator-runtime';
 import request from 'request';
 import { EventEmitter } from 'events';
 import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
