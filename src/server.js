@@ -10,7 +10,6 @@ import basicAuth from 'basic-auth-connect';
 import { createCacheStore } from './cache';
 import { createCompressor } from './compressor';
 import bodyParser from 'body-parser';
-import '@babel/polyfill';
 import morgan from 'morgan';
 import cors from 'cors';
 import fs from 'fs';
