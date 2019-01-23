@@ -7,6 +7,12 @@ import uuid from 'uuid';
 import queryString from 'query-string';
 import '@babel/polyfill';
 
+import CodeMirror from 'codemirror';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/mode/sparql/sparql';
+import 'sparql-support';
+import 'sparql-support/css/base.css';
+
 class Navbar extends React.Component {
   render() {
     return (
@@ -92,6 +98,47 @@ class SparqlResultTable extends React.Component {
   }
 }
 
+class Editor extends React.Component {
+  render() {
+    const textareaStyle = {
+      width: "100%",
+      height: "400px"
+    };
+    return <div>
+      <textarea ref={ref => this.textareaNode = ref} style={textareaStyle} />
+    </div>;
+  }
+  componentDidMount() {
+    const options = {
+      mode: "application/sparql-query",
+      matchBrackets: true,
+      autoCloseBrackets: true,
+      lineNumbers: true,
+      sparqlSupportAutoComp: true, // Auto completion
+      extraKeys: {
+        "Tab": () => false,
+        "Ctrl-Space": () => false,
+        "Ctrl-Enter": () => {
+          if (this.props.onSubmit) {
+            this.props.onSubmit();
+          }
+          return false;
+        }
+      }
+    };
+    // FIXME stop to invoke the default handler of SPARQL support on Ctrl-Enter
+
+    this.codeMirror = CodeMirror.fromTextArea(this.textareaNode, options);
+    this.codeMirror.on('change', this.codemirrorValueChanged.bind(this));
+  }
+
+  codemirrorValueChanged(doc, change) {
+    if (this.props.onChange && change.origin !== 'setValue') {
+      this.props.onChange(doc.getValue(), change);
+    }
+  }
+}
+
 class RequestBox extends React.Component {
   constructor() {
     super(...arguments);
@@ -113,7 +160,7 @@ class RequestBox extends React.Component {
         <h4 className="card-title">Query</h4>
         <form onSubmit={this.handleSubmit.bind(this)}>
           <div className="form-group">
-            <textarea className="form-control" rows="5" onChange={this.handleQueryChange.bind(this)} value={this.state.query} />
+            <Editor onChange={this.handleQueryChange.bind(this)} onSubmit={this.handleSubmit.bind(this)} value={this.state.query} />
           </div>
           <button type="submit" className="btn btn-primary" disabled={this.props.running}>Submit</button>
           {requestStatus}
@@ -122,12 +169,14 @@ class RequestBox extends React.Component {
     );
   }
 
-  handleQueryChange(e) {
-    this.setState({ query: e.target.value });
+  handleQueryChange(query) {
+    this.setState({ query });
   }
 
   handleSubmit(e) {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     this.props.onSubmit(this.state.query);
   }
 }
