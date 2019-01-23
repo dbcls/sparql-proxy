@@ -5,7 +5,7 @@ import './app.scss';
 import 'font-awesome/css/font-awesome.css';
 import uuid from 'uuid';
 import queryString from 'query-string';
-import '@babel/polyfill';
+import 'babel-regenerator-runtime';
 
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
