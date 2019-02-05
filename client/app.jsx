@@ -64,8 +64,11 @@ class QueryBox extends React.Component {
           <div className="form-group">
             <Editor />
           </div>
+          <button class="btn btn-primary">
+            Run Query
+            <span class="ml-1 small">(Ctrl+Enter)</span>
+          </button>
         </form>
-        <p class="text-muted">Hint: Hit Ctrl+Enter to execute the query.</p>
       </div>
     );
   }
