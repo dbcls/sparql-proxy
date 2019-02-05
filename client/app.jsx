@@ -8,7 +8,7 @@ import 'babel-regenerator-runtime';
 
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
-import 'codemirror/mode/sparql/sparql';
+import 'sparql-support/js/sparql';
 import 'sparql-support';
 import 'sparql-support/css/base.css';
 
