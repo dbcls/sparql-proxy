@@ -8,6 +8,7 @@
     "basic-auth-connect": "^1.0.0",
     "body-parser": "^1.15.0",
     "bootstrap": "^4.0.0-alpha.6",
+    "codemirror": "^5.43.0",
     "cookie": "^0.3.1",
     "cors": "^2.7.1",
     "denodeify": "^1.2.1",
@@ -25,17 +26,19 @@
     "redis": "^2.4.2",
     "request": "^2.67.0",
     "rimraf": "^2.5.2",
+    "rollup": "^1.1.2",
     "snappy": "^6.1.1",
     "socket.io": "^2.2.0",
+    "sparql-support": "github:ursm/sparql-support#mod-2",
     "sparqljs": "^2.2.1",
     "url-loader": "^1.1.2",
     "uuid": "^3.3.2",
     "whatwg-fetch": "^3.0.0"
   },
   "devDependencies": {
+    "babel-regenerator-runtime": "^6.5.0",
     "@babel/cli": "^7.2.3",
     "@babel/core": "^7.2.2",
-    "@babel/polyfill": "^7.2.5",
     "@babel/preset-env": "^7.2.3",
     "@babel/preset-react": "^7.0.0",
     "babel-loader": "^8.0.5",
@@ -47,7 +50,7 @@
     "webpack-cli": "^3.2.1"
   },
   "scripts": {
-    "build": "npm run babel && npm run webpack",
+    "build": "npm run babel && (cd node_modules/sparql-support && npm run build) && npm run webpack",
     "babel": "rm -rf lib && babel src -d lib",
     "webpack": "webpack",
     "postinstall": "npm run build",
