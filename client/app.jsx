@@ -114,22 +114,16 @@ class Editor extends React.Component {
       matchBrackets: true,
       autoCloseBrackets: true,
       lineNumbers: true,
-      sparqlSupportAutoComp: true, // Auto completion
+      sparqlSupportQueries: 'query', // Tabbed interface
+      sparqlSupportAutoComp: 'query', // Auto completion
+      sparqlSupportInnerMode: 'query', // Inner mode
       extraKeys: {
         "Tab": () => false,
         "Ctrl-Space": () => false,
-        "Ctrl-Enter": () => {
-          if (this.props.onSubmit) {
-            this.props.onSubmit();
-          }
-          return false;
-        }
       }
     };
-    // FIXME stop to invoke the default handler of SPARQL support on Ctrl-Enter
 
     this.codeMirror = CodeMirror.fromTextArea(this.textareaNode, options);
-    this.codeMirror.on('change', this.codemirrorValueChanged.bind(this));
   }
 
   codemirrorValueChanged(doc, change) {
@@ -158,12 +152,10 @@ class RequestBox extends React.Component {
     return (
       <div className="card card-body my-3">
         <h4 className="card-title">Query</h4>
-        <form onSubmit={this.handleSubmit.bind(this)}>
+        <form>
           <div className="form-group">
-            <Editor onChange={this.handleQueryChange.bind(this)} onSubmit={this.handleSubmit.bind(this)} value={this.state.query} />
+            <Editor />
           </div>
-          <button type="submit" className="btn btn-primary" disabled={this.props.running}>Submit</button>
-          {requestStatus}
         </form>
       </div>
     );
