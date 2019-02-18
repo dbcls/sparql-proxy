@@ -79,10 +79,10 @@ function returnServiceDescription(req, res) {
       ext:  'ttl',
       type: 'text/turtle'
     }
-  ].find(({ext}) => fs.pathExistsSync(`${__dirname}/../public/sparql.${ext}`));
+  ].find(({ext}) => fs.pathExistsSync(`${__dirname}/../files/description.${ext}`));
 
   if (file) {
-    res.type(file.type).sendFile(`sparql.${file.ext}`, {root: `${__dirname}/../public`});
+    res.type(file.type).sendFile(`description.${file.ext}`, {root: `${__dirname}/../files`});
   } else {
     const unsafeHeaders = [
       'authorization',
