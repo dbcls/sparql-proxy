@@ -1,5 +1,7 @@
-/node_modules
-/lib
-/public
+/files/
+/lib/
+/node_modules/
+/tmp/
+
+/public/*
 !/public/*.html
-/tmp
