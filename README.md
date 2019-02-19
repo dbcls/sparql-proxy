@@ -35,7 +35,7 @@ Dashboard for administrators is at `http://localhost:3000/admin` .
 
 ## Configuration
 
-All configurations are done with environment variables.
+Most configurations are done with environment variables:
 
 ### `PORT`
 
@@ -163,3 +163,11 @@ Split queries into the chunk size specified.
 (default: null)
 
 Log queries (and the corresponding responses) to the file, if specified.
+
+## Serving SPARQL Service Description
+
+If you want to serve SPARQL service description, put the descriptions under `files` directory with the name `description.[format]`.
+
+Use `files/description.ttl` for `text/turtle` and `files/description.rdf` for `application/rdf+xml`.
+
+NOTE: If you're running `sparql-proxy` within Docker, you may want to use `-v` option for `docker` command to make the files accessible from the inside of the container.
