@@ -11,7 +11,6 @@ import fs from 'fs-extra';
 import http from 'http';
 import morgan from 'morgan';
 import multer from 'multer';
-import path from 'path';
 import request from 'request';
 import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 import { createCacheStore } from './cache';

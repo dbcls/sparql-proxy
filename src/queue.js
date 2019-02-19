@@ -173,7 +173,7 @@ export default class extends EventEmitter {
   cancel(id) {
     const item = this.allItems().find(item => item.id === id);
 
-    if (!item) { return false };
+    if (!item) { return false; }
 
     item.cancel();
     this.done(item);

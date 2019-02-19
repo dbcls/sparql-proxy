@@ -61,7 +61,7 @@ class JobList extends React.Component {
           <td>{job.data.ip}</td>
           <td>
             <pre>{job.data.rawQuery}</pre>
-            <a href={redoLink} target="_blank">
+            <a href={redoLink} target="_blank" rel="noopener noreferrer">
               try this query
             </a>
           </td>
@@ -127,6 +127,7 @@ class MainComponent extends React.Component {
   }
 
   componentDidMount() {
+    /* global io */
     const socket = io.connect(location.origin, {
       path: location.pathname + "../socket.io"
     });

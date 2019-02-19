@@ -1,5 +1,3 @@
-var webpack = require('webpack');
-
 module.exports = {
   mode: "development",
   entry: {
@@ -39,4 +37,4 @@ module.exports = {
       { test: /\.svg(?:\?.*)?$/, use: 'file-loader' }
     ]
   }
-}
+};

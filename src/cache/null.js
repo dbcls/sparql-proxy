@@ -1,9 +1,9 @@
 export default class {
-  async get(key) {
+  async get() {
     return null;
   }
 
-  async put(key, obj) {
+  async put() {
     // do nothing
   }
 
