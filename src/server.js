@@ -1,21 +1,22 @@
-import express from 'express';
-import cookie from 'cookie';
-import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 import Job from './job';
-import SocketIo from 'socket.io';
 import Queue from './queue';
-import http from 'http';
-import crypto from 'crypto';
+import SocketIo from 'socket.io';
 import basicAuth from 'basic-auth-connect';
+import bodyParser from 'body-parser';
+import cookie from 'cookie';
+import cors from 'cors';
+import crypto from 'crypto';
+import express from 'express';
+import fs from 'fs-extra';
+import http from 'http';
+import morgan from 'morgan';
+import multer from 'multer';
+import path from 'path';
+import request from 'request';
+import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 import { createCacheStore } from './cache';
 import { createCompressor } from './compressor';
-import bodyParser from 'body-parser';
-import morgan from 'morgan';
-import cors from 'cors';
-import fs from 'fs';
-import denodeify from 'denodeify';
 import { splitPreamble } from 'preamble';
-import multer from 'multer';
 
 const app = express();
 const server = http.Server(app);
@@ -61,8 +62,49 @@ if (config.trustProxy === 'true') {
 }
 
 app.all('/sparql', cors(), multer().array(), async (req, res) => {
+  if (req.method === 'GET' && Object.keys(req.query).length === 0) {
+    await returnServiceDescription(req, res);
+  } else {
+    await executeQuery(req, res);
+  }
+});
+
+function returnServiceDescription(req, res) {
+  const file = [
+    {
+      ext:  'rdf',
+      type: 'application/rdf+xml'
+    },
+    {
+      ext:  'ttl',
+      type: 'text/turtle'
+    }
+  ].find(({ext}) => fs.pathExistsSync(`${__dirname}/../files/description.${ext}`));
+
+  if (file) {
+    res.type(file.type).sendFile(`description.${file.ext}`, {root: `${__dirname}/../files`});
+  } else {
+    const unsafeHeaders = [
+      'authorization',
+      'cookie',
+      'host',
+    ];
+
+    const headers = Object.entries(req.headers).reduce((acc, [k, v]) => unsafeHeaders.includes(k) ? acc : Object.assign({[k]: v}), {});
+
+    return new Promise((resolve, reject) => {
+      request({
+        url: config.backend,
+        method: req.method,
+        headers
+      }).pipe(res).on('finish', resolve).on('error', reject);
+    });
+  }
+}
+
+async function executeQuery(req, res) {
   const startedAt = new Date();
-  const log = async function (log) {
+  const log = function(log) {
     if (!config.queryLogPath) { return; }
     const doneAt = new Date();
     const data = Object.assign({
@@ -71,10 +113,11 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
       'elapsed': doneAt - startedAt,
       'ip': req.ip,
     }, log);
-    return denodeify(fs.appendFile)(config.queryLogPath, JSON.stringify(data) + "\n");
+    return fs.appendFile(config.queryLogPath, JSON.stringify(data) + "\n");
   };
 
   let query;
+
   switch (req.method) {
     case "GET":
       query = req.query.query;
@@ -179,7 +222,7 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
     res.status(error.statusCode || 500);
     res.send(error.data || 'ERROR');
   }
-});
+}
 
 app.get('/jobs/:token', (req, res) => {
   const js = queue.jobStatus(req.params.token);

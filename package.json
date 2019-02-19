@@ -14,6 +14,7 @@
     "denodeify": "^1.2.1",
     "express": "^4.13.3",
     "font-awesome": "^4.5.0",
+    "fs-extra": "^7.0.1",
     "memcached": "^2.2.1",
     "mkdirp": "^0.5.1",
     "moment": "^2.11.1",
