@@ -30,7 +30,7 @@
     "rollup": "^1.1.2",
     "snappy": "^6.1.1",
     "socket.io": "^2.2.0",
-    "sparql-support": "github:ursm/sparql-support#mod-2",
+    "sparql-support": "^0.9.1",
     "sparqljs": "^2.2.1",
     "url-loader": "^1.1.2",
     "uuid": "^3.3.2",
@@ -54,7 +54,7 @@
     "webpack-cli": "^3.2.1"
   },
   "scripts": {
-    "build": "npm run babel && (cd node_modules/sparql-support && npm run build) && npm run webpack",
+    "build": "npm run babel && npm run webpack",
     "babel": "rm -rf lib && babel src -d lib",
     "webpack": "webpack",
     "postinstall": "npm run build",
