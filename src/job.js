@@ -71,10 +71,19 @@ function isSelectQuery(parsedQuery) {
 }
 
 function parseQuery(query) {
+  const {preamble, compatibleQuery} = splitPreamble(query);
+
   const parser = new SparqlParser();
   parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
 
-  return parser.parse(query);
+  try {
+    return {
+      preamble,
+      parsedQuery: parser.parse(compatibleQuery)
+    };
+  } catch (e) {
+    throw new ParseError(query, e);
+  }
 }
 
 export default class extends EventEmitter {
@@ -113,14 +122,7 @@ export default class extends EventEmitter {
       return await this._reqPassthrough(this.rawQuery);
     }
 
-    const {preamble, compatibleQuery} = splitPreamble(this.rawQuery);
-    let parsedQuery;
-
-    try {
-      parsedQuery = parseQuery(compatibleQuery);
-    } catch (e) {
-      throw new ParseError(this.rawQuery, e);
-    }
+    const {preamble, parsedQuery} = parseQuery(this.rawQuery);
 
     if (parsedQuery.type !== 'query') {
       throw new QueryTypeError(parsedQuery.type);
