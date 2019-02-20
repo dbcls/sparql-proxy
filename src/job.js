@@ -70,13 +70,6 @@ function isSelectQuery(parsedQuery) {
   return parsedQuery.type === 'query' && parsedQuery.queryType === 'SELECT';
 }
 
-function buildCacheKey(preamble, parsedQuery, accept, compressor) {
-  const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
-  const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept || '').digest('hex');
-
-  return `${digest}.${compressor}`;
-}
-
 function parseQuery(query) {
   const parser = new SparqlParser();
   parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
@@ -133,38 +126,18 @@ export default class extends EventEmitter {
       throw new QueryTypeError(parsedQuery.type);
     }
 
-    const cacheKey = buildCacheKey(preamble, parsedQuery, this.accept, this.compressorType);
+    return await this.tryCache(this.cacheKey(preamble, parsedQuery), async () => {
+      const limit = Math.min(parsedQuery.limit || this.maxLimit, this.maxLimit);
 
-    try {
-      const cached = await this.cache.get(cacheKey);
+      if (this.enableQuerySplitting && isSelectQuery(parsedQuery)) {
+        const chunkLimit  = Math.min(limit, this.maxChunkLimit);
+        const chunkOffset = parsedQuery.offset || 0;
 
-      if (cached) {
-        return Object.assign(cached, {cached: true});
+        return await this._reqSplit(preamble, parsedQuery, limit, chunkLimit, chunkOffset);
+      } else {
+        return await this._reqNormal(preamble, parsedQuery, limit);
       }
-    } catch (e) {
-      console.log('ERROR: in cache get:', e);
-    }
-
-    const limit = Math.min(parsedQuery.limit || this.maxLimit, this.maxLimit);
-
-    let result;
-
-    if (this.enableQuerySplitting && isSelectQuery(parsedQuery)) {
-      const chunkLimit  = Math.min(limit, this.maxChunkLimit);
-      const chunkOffset = parsedQuery.offset || 0;
-
-      result = await this._reqSplit(preamble, parsedQuery, limit, chunkLimit, chunkOffset);
-    } else {
-      result = await this._reqNormal(preamble, parsedQuery, limit);
-    }
-
-    try {
-      await this.cache.put(cacheKey, result);
-    } catch (e) {
-      console.log('ERROR: in cache put:', e);
-    }
-
-    return Object.assign(result, {cached: false});
+    });
   }
 
   async _reqPassthrough(query) {
@@ -245,5 +218,36 @@ export default class extends EventEmitter {
     }
 
     return {response, body};
+  }
+
+  async tryCache(key, ifnone) {
+    let cached = null;
+
+    try {
+      cached = await this.cache.get(key);
+    } catch (e) {
+      console.log('ERROR: in cache get:', e);
+    }
+
+    if (cached) {
+      return Object.assign(cached, {cached: true});
+    }
+
+    const obj = await ifnone();
+
+    try {
+      await this.cache.put(key, obj);
+    } catch (e) {
+      console.log('ERROR: in cache put:', e);
+    }
+
+    return Object.assign(obj, {cached: false});
+  }
+
+  cacheKey(preamble, parsedQuery) {
+    const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
+    const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(this.accept || '').digest('hex');
+
+    return `${digest}.${this.compressorType}`;
   }
 }
