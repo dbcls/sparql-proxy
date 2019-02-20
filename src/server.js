@@ -1,4 +1,4 @@
-import Job, { ParseError, BackendError } from './job';
+import Job, { ParseError, QueryTypeError, BackendError } from './job';
 import Queue from './queue';
 import SocketIo from 'socket.io';
 import basicAuth from 'basic-auth-connect';
@@ -186,14 +186,14 @@ async function executeQuery(req, res) {
       console.log('==== raw query (before splitting preamble)');
       console.log(e.query);
       console.log('====');
-      res.status(400).send({message: 'Query parse failed'});
+
+      res.status(400).send({message: e.message});
+    } else if (e instanceof QueryTypeError) {
+      res.status(400).send({message: e.message});
     } else if (e instanceof BackendError) {
-      res.status(e.response.statusCode);
-      res.contentType(e.response.headers['content-type']);
-      res.send(e.body);
+      res.status(e.response.statusCode).contentType(e.response.headers['content-type']).send(e.body);
     } else {
-      res.status(e.statusCode || 500);
-      res.send(e.data || 'ERROR');
+      res.status(e.statusCode || 500).send(e.data || 'ERROR');
     }
   }
 }

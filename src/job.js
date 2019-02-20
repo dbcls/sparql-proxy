@@ -13,6 +13,14 @@ export class ParseError extends Error {
   }
 }
 
+export class QueryTypeError extends Error {
+  constructor(type) {
+    super(`query type not allowed: ${type}`);
+
+    this.type = type;
+  }
+}
+
 export class BackendError extends Error {
   constructor(response, body) {
     super(`unexpected response from backend; ${response.statusCode}`);
@@ -119,6 +127,10 @@ export default class extends EventEmitter {
       parsedQuery = parseQuery(compatibleQuery);
     } catch (e) {
       throw new ParseError(this.rawQuery, e);
+    }
+
+    if (parsedQuery.type !== 'query') {
+      throw new QueryTypeError(parsedQuery.type);
     }
 
     const cacheKey = buildCacheKey(preamble, parsedQuery, this.accept, this.compressorType);
