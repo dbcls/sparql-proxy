@@ -69,6 +69,13 @@ function cacheKey(preamble, parsedQuery, accept, compressor) {
   return `${digest}.${compressor}`;
 }
 
+function parseQuery(query) {
+  const parser = new SparqlParser();
+  parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
+
+  return parser.parse(query);
+}
+
 export default class extends EventEmitter {
   constructor(params) {
     super();
@@ -106,14 +113,10 @@ export default class extends EventEmitter {
     }
 
     const {preamble, compatibleQuery} = splitPreamble(this.rawQuery);
-
-    const parser = new SparqlParser();
-    parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
-
     let parsedQuery;
 
     try {
-      parsedQuery = parser.parse(compatibleQuery);
+      parsedQuery = parseQuery(compatibleQuery);
     } catch (e) {
       throw new ParseError(this.rawQuery, e);
     }
