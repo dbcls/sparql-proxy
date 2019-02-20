@@ -193,7 +193,7 @@ export default class extends EventEmitter {
     console.log('RET', numReturned);
 
     if (nextOffset < limit && numReturned >= chunkLimit) {
-      return await this._reqSplit({preamble, parsedQuery, limit, chunkLimit, chunkOffset: nextOffset}, acc);
+      return await this._reqSplit(preamble, parsedQuery, limit, chunkLimit, nextOffset, acc);
     } else {
       return acc;
     }
