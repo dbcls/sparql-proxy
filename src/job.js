@@ -62,7 +62,7 @@ function isSelectQuery(parsedQuery) {
   return parsedQuery.type === 'query' && parsedQuery.queryType === 'SELECT';
 }
 
-function cacheKey(preamble, parsedQuery, accept, compressor) {
+function buildCacheKey(preamble, parsedQuery, accept, compressor) {
   const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
   const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept || '').digest('hex');
 
@@ -121,10 +121,10 @@ export default class extends EventEmitter {
       throw new ParseError(this.rawQuery, e);
     }
 
-    const key = cacheKey(preamble, parsedQuery, this.accept, this.compressorType);
+    const cacheKey = buildCacheKey(preamble, parsedQuery, this.accept, this.compressorType);
 
     try {
-      const cached = await this.cache.get(key);
+      const cached = await this.cache.get(cacheKey);
 
       if (cached) {
         return Object.assign(cached, {cached: true});
@@ -147,7 +147,7 @@ export default class extends EventEmitter {
     }
 
     try {
-      await this.cache.put(key, result);
+      await this.cache.put(cacheKey, result);
     } catch (e) {
       console.log('ERROR: in cache put:', e);
     }
