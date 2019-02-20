@@ -100,7 +100,7 @@ Maximum number of the entries to keep in the cache.
 
 Specify URL to the redis server.
 
-## `MEMCACHE_SERVERS`
+### `MEMCACHE_SERVERS`
 
 (only applicable to `CACHE_STORE=memcache` case)
 (default: `localhost:11211`)
