@@ -89,7 +89,9 @@ function returnServiceDescription(req, res) {
       'host',
     ];
 
-    const headers = Object.entries(req.headers).reduce((acc, [k, v]) => unsafeHeaders.includes(k) ? acc : Object.assign({[k]: v}), {});
+    const headers = Object.entries(req.headers).reduce((acc, [k, v]) => {
+      return unsafeHeaders.includes(k) ? acc : Object.assign(acc, {[k]: v});
+    }, {});
 
     return new Promise((resolve, reject) => {
       request({
