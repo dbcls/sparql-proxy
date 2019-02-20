@@ -48,15 +48,18 @@ export default class extends EventEmitter {
     this.timeout = params.timeout;
     this.rawQuery = params.rawQuery;
     this.enableQuerySplitting = params.enableQuerySplitting;
+    this.passthrough = params.passthrough;
 
-    const { preamble, compatibleQuery } = splitPreamble(this.rawQuery);
-    this.preamble = preamble;
-    this.compatibleQuery = compatibleQuery;
+    if (!this.passthrough) {
+      const { preamble, compatibleQuery } = splitPreamble(this.rawQuery);
+      this.preamble = preamble;
+      this.compatibleQuery = compatibleQuery;
 
-    this.parsedQuery = new SparqlParser().parse(this.compatibleQuery);
+      this.parsedQuery = new SparqlParser().parse(this.compatibleQuery);
 
-    this.limit = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
-    this.chunkLimit = Math.min(this.limit, params.maxChunkLimit);
+      this.limit = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
+      this.chunkLimit = Math.min(this.limit, params.maxChunkLimit);
+    }
 
     this.data = {
       ip: params.ip,
@@ -75,7 +78,9 @@ export default class extends EventEmitter {
   }
 
   async run() {
-    if (this.enableQuerySplitting && this.isSelectQuery()) {
+    if (this.passthrough) {
+      return await this._reqPassthrough();
+    } else if (this.enableQuerySplitting && this.isSelectQuery()) {
       const chunkOffset = this.parsedQuery.offset || 0;
 
       return await this._reqSplit(chunkOffset);
@@ -86,6 +91,36 @@ export default class extends EventEmitter {
 
   isSelectQuery() {
     return this.parsedQuery.type === "query" && this.parsedQuery.queryType === "SELECT";
+  }
+
+  async _reqPassthrough() {
+    const options = {
+      uri: this.backend,
+      form: {
+        query: this.rawQuery
+      },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': this.accept,
+      },
+      timeout: this.timeout
+    };
+
+    const { promise, abort } = post(options);
+
+    this.on('abort', abort);
+
+    const { response, body } = await promise;
+
+    if (!isSuccessful(response)) {
+      console.log(body);
+      throw new Error(`unexpected response from backend; ${response.statusCode}`);
+    }
+
+    return {
+      contentType: response.headers['content-type'],
+      body
+    };
   }
 
   async _reqNormal() {
