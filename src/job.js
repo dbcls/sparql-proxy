@@ -1,7 +1,26 @@
+import crypto from 'crypto';
 import request from 'request';
 import { EventEmitter } from 'events';
 import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 import { splitPreamble } from 'preamble';
+
+export class ParseError extends Error {
+  constructor(query, cause) {
+    super('query parse failed');
+
+    this.query = query;
+    this.cause = cause;
+  }
+}
+
+export class BackendError extends Error {
+  constructor(response, body) {
+    super(`unexpected response from backend; ${response.statusCode}`);
+
+    this.response = response;
+    this.body     = body;
+  }
+}
 
 export const aborted = Symbol();
 
@@ -43,6 +62,13 @@ function isSelectQuery(parsedQuery) {
   return parsedQuery.type === 'query' && parsedQuery.queryType === 'SELECT';
 }
 
+function cacheKey(preamble, parsedQuery, accept, compressor) {
+  const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
+  const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept || '').digest('hex');
+
+  return `${digest}.${compressor}`;
+}
+
 export default class extends EventEmitter {
   constructor(params) {
     super();
@@ -55,6 +81,8 @@ export default class extends EventEmitter {
     this.passthrough          = params.passthrough;
     this.maxLimit             = params.maxLimit;
     this.maxChunkLimit        = params.maxChunkLimit;
+    this.compressorType       = params.compressorType;
+    this.cache                = params.cache;
 
     this.data = {
       ip:       params.ip,
@@ -79,17 +107,49 @@ export default class extends EventEmitter {
 
     const {preamble, compatibleQuery} = splitPreamble(this.rawQuery);
 
-    const parsedQuery = new SparqlParser().parse(compatibleQuery);
-    const limit       = Math.min(parsedQuery.limit || this.maxLimit, this.maxLimit);
+    const parser = new SparqlParser();
+    parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
+
+    let parsedQuery;
+
+    try {
+      parsedQuery = parser.parse(compatibleQuery);
+    } catch (e) {
+      throw new ParseError(this.rawQuery, e);
+    }
+
+    const key = cacheKey(preamble, parsedQuery, this.accept, this.compressorType);
+
+    try {
+      const cached = await this.cache.get(key);
+
+      if (cached) {
+        return Object.assign(cached, {cached: true});
+      }
+    } catch (e) {
+      console.log('ERROR: in cache get:', e);
+    }
+
+    const limit = Math.min(parsedQuery.limit || this.maxLimit, this.maxLimit);
+
+    let result;
 
     if (this.enableQuerySplitting && isSelectQuery(parsedQuery)) {
       const chunkLimit  = Math.min(limit, this.maxChunkLimit);
       const chunkOffset = parsedQuery.offset || 0;
 
-      return await this._reqSplit({preamble, parsedQuery, limit, chunkLimit, chunkOffset});
+      result = await this._reqSplit(preamble, parsedQuery, limit, chunkLimit, chunkOffset);
     } else {
-      return await this._reqNormal({preamble, parsedQuery, limit});
+      result = await this._reqNormal(preamble, parsedQuery, limit);
     }
+
+    try {
+      await this.cache.put(key, result);
+    } catch (e) {
+      console.log('ERROR: in cache put:', e);
+    }
+
+    return Object.assign(result, {cached: false});
   }
 
   async _reqPassthrough(query) {
@@ -101,7 +161,7 @@ export default class extends EventEmitter {
     };
   }
 
-  async _reqNormal({preamble, parsedQuery, limit}) {
+  async _reqNormal(preamble, parsedQuery, limit) {
     const override        = isSelectQuery(parsedQuery) ? {limit} : {};
     const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, parsedQuery, override));
     const query           = preamble + compatibleQuery;
@@ -114,7 +174,7 @@ export default class extends EventEmitter {
     };
   }
 
-  async _reqSplit({preamble, parsedQuery, limit, chunkLimit, chunkOffset}, acc = null) {
+  async _reqSplit(preamble, parsedQuery, limit, chunkLimit, chunkOffset, acc = null) {
     const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, parsedQuery, {
       limit:  chunkLimit,
       offset: chunkOffset
@@ -166,7 +226,7 @@ export default class extends EventEmitter {
     const {response, body} = await promise;
 
     if (!isSuccessful(response)) {
-      throw new Error(`unexpected response from backend; ${response.statusCode}`);
+      throw new BackendError(response, body);
     }
 
     return {response, body};

@@ -1,21 +1,18 @@
-import Job from './job';
+import Job, { ParseError, BackendError } from './job';
 import Queue from './queue';
 import SocketIo from 'socket.io';
 import basicAuth from 'basic-auth-connect';
 import bodyParser from 'body-parser';
 import cookie from 'cookie';
 import cors from 'cors';
-import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs-extra';
 import http from 'http';
 import morgan from 'morgan';
 import multer from 'multer';
 import request from 'request';
-import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 import { createCacheStore } from './cache';
 import { createCompressor } from './compressor';
-import { splitPreamble } from 'preamble';
 
 const app    = express();
 const server = http.Server(app);
@@ -59,7 +56,7 @@ if (config.passthrough) {
 }
 
 const compressor = createCompressor(config.compressor);
-const cache = createCacheStore(config.cacheStore, compressor, process.env);
+const cache      = createCacheStore(config.cacheStore, compressor, process.env);
 
 app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({extended: false}));
@@ -156,97 +153,48 @@ async function executeQuery(req, res) {
     return;
   }
 
-  const accept = config.enableQuerySplitting ? 'application/sparql-results+json' : req.headers.accept;
-
-  let cacheKey;
-
-  if (config.passthrough) {
-    cacheKey = null;
-  } else {
-    let parsedQuery;
-
-    const parser = new SparqlParser();
-    parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
-
-    const { preamble, compatibleQuery } = splitPreamble(query);
-
-    try {
-      parsedQuery = parser.parse(compatibleQuery);
-    } catch (ex) {
-      console.log(ex);
-      console.log("==== raw query (before splitting preamble)");
-      console.log(query);
-      console.log("====");
-      res.status(400).send({ message: 'Query parse failed', data: ex.message });
-      return;
-    }
-
-    if (parsedQuery.type !== 'query') {
-      console.log(`Query type not allowed: ${parsedQuery.type}`);
-      res.status(400).send('Query type not allowed');
-      return;
-    }
-
-    const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
-    const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept || '').digest('hex');
-
-    cacheKey = `${digest}.${config.compressor}`;
-
-    try {
-      const cached = await cache.get(cacheKey);
-
-      if (cached) {
-        console.log('cache hit');
-        res.header('Content-Type', cached.contentType);
-        res.header('X-Cache', 'hit');
-        res.send(cached.body);
-        log({
-          query,
-          'cache-hit': true,
-          'response': { 'content-type': cached.contentType, 'body': cached.body }
-        });
-        return;
-      }
-    } catch (error) {
-      console.log('ERROR: in cache get:', error);
-    }
-  }
-
   const token = req.query.token;
   const job = new Job({
     backend: config.backend,
     rawQuery: query,
-    accept,
+    accept: config.enableQuerySplitting ? 'application/sparql-results+json' : req.headers.accept,
     timeout: config.jobTimeout,
     ip: req.ip,
     enableQuerySplitting: config.enableQuerySplitting,
     maxLimit: config.maxLimit,
     maxChunkLimit: config.maxChunkLimit,
     passthrough: config.passthrough,
+    compressorType: config.compressor,
+    cache,
   });
 
   try {
     const result = await queue.enqueue(job, token);
 
     res.header('Content-Type', result.contentType);
+    res.header('X-Cache', result.cached ? 'hit' : 'miss');
     res.send(result.body);
     log({
       query,
-      'cache-hit': false,
+      'cache-hit': result.cached,
       'response': { 'content-type': result.contentType, 'body': result.body }
     });
+  } catch (e) {
+    console.log('ERROR:', e);
 
-    if (!config.passthrough) {
-      try {
-        await cache.put(cacheKey, result);
-      } catch (error) {
-        console.log('ERROR: in cache put:', error);
-      }
+    if (e instanceof ParseError) {
+      console.log('==== raw query (before splitting preamble)');
+      console.log(e.query);
+      console.log('====');
+      res.status(400).send({message: 'Query parse failed'});
+    } else if (e instanceof BackendError) {
+      res.status(e.response.statusCode);
+      res.contentType(e.response.headers['content-type']);
+      res.send(e.body);
+    } else {
+      res.status(e.statusCode || 500);
+      res.send(e.data || 'ERROR');
     }
-  } catch (error) {
-    console.log('ERROR:', error);
-    res.status(error.statusCode || 500);
-    res.send(error.data || 'ERROR');
   }
 }
 
