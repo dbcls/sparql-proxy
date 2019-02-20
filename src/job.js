@@ -39,32 +39,27 @@ function isSuccessful(response) {
   return response.statusCode >= 200 && response.statusCode < 300;
 }
 
+function isSelectQuery(parsedQuery) {
+  return parsedQuery.type === 'query' && parsedQuery.queryType === 'SELECT';
+}
+
 export default class extends EventEmitter {
   constructor(params) {
     super();
 
-    this.backend = params.backend;
-    this.accept = params.accept;
-    this.timeout = params.timeout;
-    this.rawQuery = params.rawQuery;
+    this.backend              = params.backend;
+    this.accept               = params.accept;
+    this.timeout              = params.timeout;
+    this.rawQuery             = params.rawQuery;
     this.enableQuerySplitting = params.enableQuerySplitting;
-    this.passthrough = params.passthrough;
-
-    if (!this.passthrough) {
-      const { preamble, compatibleQuery } = splitPreamble(this.rawQuery);
-      this.preamble = preamble;
-      this.compatibleQuery = compatibleQuery;
-
-      this.parsedQuery = new SparqlParser().parse(this.compatibleQuery);
-
-      this.limit = Math.min(this.parsedQuery.limit || params.maxLimit, params.maxLimit);
-      this.chunkLimit = Math.min(this.limit, params.maxChunkLimit);
-    }
+    this.passthrough          = params.passthrough;
+    this.maxLimit             = params.maxLimit;
+    this.maxChunkLimit        = params.maxChunkLimit;
 
     this.data = {
-      ip: params.ip,
+      ip:       params.ip,
       rawQuery: params.rawQuery,
-      reason: null
+      reason:   null
     };
   }
 
@@ -79,43 +74,26 @@ export default class extends EventEmitter {
 
   async run() {
     if (this.passthrough) {
-      return await this._reqPassthrough();
-    } else if (this.enableQuerySplitting && this.isSelectQuery()) {
-      const chunkOffset = this.parsedQuery.offset || 0;
+      return await this._reqPassthrough(this.rawQuery);
+    }
 
-      return await this._reqSplit(chunkOffset);
+    const {preamble, compatibleQuery} = splitPreamble(this.rawQuery);
+
+    const parsedQuery = new SparqlParser().parse(compatibleQuery);
+    const limit       = Math.min(parsedQuery.limit || this.maxLimit, this.maxLimit);
+
+    if (this.enableQuerySplitting && isSelectQuery(parsedQuery)) {
+      const chunkLimit  = Math.min(limit, this.maxChunkLimit);
+      const chunkOffset = parsedQuery.offset || 0;
+
+      return await this._reqSplit({preamble, parsedQuery, limit, chunkLimit, chunkOffset});
     } else {
-      return await this._reqNormal();
+      return await this._reqNormal({preamble, parsedQuery, limit});
     }
   }
 
-  isSelectQuery() {
-    return this.parsedQuery.type === "query" && this.parsedQuery.queryType === "SELECT";
-  }
-
-  async _reqPassthrough() {
-    const options = {
-      uri: this.backend,
-      form: {
-        query: this.rawQuery
-      },
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': this.accept,
-      },
-      timeout: this.timeout
-    };
-
-    const { promise, abort } = post(options);
-
-    this.on('abort', abort);
-
-    const { response, body } = await promise;
-
-    if (!isSuccessful(response)) {
-      console.log(body);
-      throw new Error(`unexpected response from backend; ${response.statusCode}`);
-    }
+  async _reqPassthrough(query) {
+    const {response, body} = await this.postQuery(query);
 
     return {
       contentType: response.headers['content-type'],
@@ -123,31 +101,12 @@ export default class extends EventEmitter {
     };
   }
 
-  async _reqNormal() {
-    const override = this.isSelectQuery() ? { limit: this.limit } : {};
-    const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, override));
-    const query = this.preamble + compatibleQuery;
+  async _reqNormal({preamble, parsedQuery, limit}) {
+    const override        = isSelectQuery(parsedQuery) ? {limit} : {};
+    const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, parsedQuery, override));
+    const query           = preamble + compatibleQuery;
 
-    const options = {
-      uri: this.backend,
-      form: { query },
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': this.accept,
-      },
-      timeout: this.timeout
-    };
-
-    const { promise, abort } = post(options);
-
-    this.on('abort', abort);
-
-    const { response, body } = await promise;
-
-    if (!isSuccessful(response)) {
-      console.log(body);
-      throw new Error(`unexpected response from backend; ${response.statusCode}`);
-    }
+    const {response, body} = await this.postQuery(query);
 
     return {
       contentType: response.headers['content-type'],
@@ -155,35 +114,17 @@ export default class extends EventEmitter {
     };
   }
 
-  async _reqSplit(chunkOffset, acc = null) {
-    const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, this.parsedQuery, {
-      limit: this.chunkLimit,
+  async _reqSplit({preamble, parsedQuery, limit, chunkLimit, chunkOffset}, acc = null) {
+    const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, parsedQuery, {
+      limit:  chunkLimit,
       offset: chunkOffset
     }));
-    const query = this.preamble + compatibleQuery;
 
-    const options = {
-      uri: this.backend,
-      form: { query },
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/sparql-results+json',
-      },
-      json: true,
-      timeout: this.timeout
-    };
+    const query = preamble + compatibleQuery;
 
-    console.log(`REQ limit=${this.limit}, chunkLimit=${this.chunkLimit}, chunkOffset=${chunkOffset}`);
+    console.log(`REQ limit=${limit}, chunkLimit=${chunkLimit}, chunkOffset=${chunkOffset}`);
 
-    const { promise, abort } = post(options);
-
-    this.on('abort', abort);
-
-    const { response, body } = await promise;
-
-    if (!isSuccessful(response)) {
-      throw new Error(`unexpected response from backend; ${response.statusCode}`);
-    }
+    const {response, body} = await this.postQuery(query, {json: true});
 
     const bindings = body.results.bindings;
 
@@ -197,13 +138,37 @@ export default class extends EventEmitter {
     }
 
     const numReturned = bindings.length;
-    const nextOffset = chunkOffset + this.chunkLimit;
+    const nextOffset  = chunkOffset + chunkLimit;
+
     console.log('RET', numReturned);
 
-    if (nextOffset < this.limit && numReturned >= this.chunkLimit) {
-      return await this._reqSplit(nextOffset, acc);
+    if (nextOffset < limit && numReturned >= chunkLimit) {
+      return await this._reqSplit({preamble, parsedQuery, limit, chunkLimit, chunkOffset: nextOffset}, acc);
     } else {
       return acc;
     }
+  }
+
+  async postQuery(query, {json = false} = {}) {
+    const {promise, abort} = post({
+      uri: this.backend,
+      form: {query},
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept':       this.accept
+      },
+      json,
+      timeout: this.timeout
+    });
+
+    this.on('abort', abort);
+
+    const {response, body} = await promise;
+
+    if (!isSuccessful(response)) {
+      throw new Error(`unexpected response from backend; ${response.statusCode}`);
+    }
+
+    return {response, body};
   }
 }

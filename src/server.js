@@ -156,8 +156,7 @@ async function executeQuery(req, res) {
     return;
   }
 
-  const accept = config.enableQuerySplitting ? null
-                                             : req.headers.accept || 'application/sparql-results+json';
+  const accept = config.enableQuerySplitting ? 'application/sparql-results+json' : req.headers.accept;
 
   let cacheKey;
 
@@ -188,8 +187,8 @@ async function executeQuery(req, res) {
       return;
     }
 
-    const normalizedQuery = preamble + (new SparqlGenerator().stringify(parsedQuery));
-    const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept).digest('hex');
+    const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
+    const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept || '').digest('hex');
 
     cacheKey = `${digest}.${config.compressor}`;
 
