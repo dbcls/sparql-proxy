@@ -1,6 +1,6 @@
-import Memcached from 'memcached';
-import denodeify from 'denodeify';
 import Base from './base';
+import Memcached from 'memcached';
+import { promisify } from 'util';
 
 export default class extends Base {
   constructor(compressor, env) {
@@ -14,7 +14,7 @@ export default class extends Base {
   }
 
   async get(key) {
-    const data = await denodeify(this.client.get.bind(this.client))(key);
+    const data = await promisify(this.client.get.bind(this.client))(key);
 
     return await this.deserialize(data);
   }
@@ -22,10 +22,10 @@ export default class extends Base {
   async put(key, obj) {
     const data = await this.serialize(obj);
 
-    await denodeify(this.client.set.bind(this.client))(key, data, 0);
+    await promisify(this.client.set.bind(this.client))(key, data, 0);
   }
 
   async purge() {
-    await denodeify(this.client.flush.bind(this.client))();
+    await promisify(this.client.flush.bind(this.client))();
   }
 }

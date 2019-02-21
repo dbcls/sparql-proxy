@@ -1,9 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import mkdirp from 'mkdirp';
-import rimraf from 'rimraf';
-import denodeify from 'denodeify';
 import Base from './base';
+import fs from 'fs-extra';
+import path from 'path';
 
 export default class extends Base {
   constructor(compressor, env) {
@@ -18,7 +15,7 @@ export default class extends Base {
     const _path = this.getPath(key);
 
     try {
-      const data = await denodeify(fs.readFile)(_path);
+      const data = await fs.readFile(_path);
 
       return await this.deserialize(data);
     } catch (error) {
@@ -34,12 +31,12 @@ export default class extends Base {
     const _path = this.getPath(key);
     const data  = await this.serialize(obj);
 
-    await denodeify(mkdirp)(path.dirname(_path));
-    await denodeify(fs.writeFile)(_path, data);
+    await fs.ensureDir(path.dirname(_path));
+    await fs.writeFile(_path, data);
   }
 
   async purge() {
-    await denodeify(rimraf)(this.rootDir);
+    await fs.remove(this.rootDir);
   }
 
   getPath(key) {

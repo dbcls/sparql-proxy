@@ -1,6 +1,6 @@
-import redis from 'redis';
-import denodeify from 'denodeify';
 import Base from './base';
+import redis from 'redis';
+import { promisify } from 'util';
 
 export default class extends Base {
   constructor(compressor, env) {
@@ -16,7 +16,7 @@ export default class extends Base {
   }
 
   async get(key) {
-    const data = await denodeify(this.client.get.bind(this.client))(key);
+    const data = await promisify(this.client.get.bind(this.client))(key);
 
     return await this.deserialize(data);
   }
@@ -24,10 +24,10 @@ export default class extends Base {
   async put(key, obj) {
     const data = await this.serialize(obj);
 
-    await denodeify(this.client.set.bind(this.client))(key, data);
+    await promisify(this.client.set.bind(this.client))(key, data);
   }
 
   async purge() {
-    await denodeify(this.client.flushdb.bind(this.client))();
+    await promisify(this.client.flushdb.bind(this.client))();
   }
 }
