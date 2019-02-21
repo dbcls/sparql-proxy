@@ -50,10 +50,10 @@ setInterval(() => {
 }, 5 * 1000);
 
 if (config.passthrough) {
-  console.log('Passthrough mode is enabled. Query filtering, caching and splitting are disabled.');
-} else {
-  console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
+  console.log('Passthrough mode is enabled. Query filtering and splitting are disabled.');
 }
+
+console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
 
 const compressor = createCompressor(config.compressor);
 const cache      = createCacheStore(config.cacheStore, compressor, process.env);

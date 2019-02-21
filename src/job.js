@@ -119,7 +119,9 @@ export default class extends EventEmitter {
 
   async run() {
     if (this.passthrough) {
-      return await this._reqPassthrough(this.rawQuery);
+      return this.tryCache(this.cacheKey(this.rawQuery), async () => {
+        return await this._reqPassthrough(this.rawQuery);
+      });
     }
 
     const {preamble, parsedQuery} = parseQuery(this.rawQuery);
@@ -128,7 +130,9 @@ export default class extends EventEmitter {
       throw new QueryTypeError(parsedQuery.type);
     }
 
-    return await this.tryCache(this.cacheKey(preamble, parsedQuery), async () => {
+    const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
+
+    return await this.tryCache(this.cacheKey(normalizedQuery), async () => {
       const limit = Math.min(parsedQuery.limit || this.maxLimit, this.maxLimit);
 
       if (this.enableQuerySplitting && isSelectQuery(parsedQuery)) {
@@ -246,9 +250,8 @@ export default class extends EventEmitter {
     return Object.assign(obj, {cached: false});
   }
 
-  cacheKey(preamble, parsedQuery) {
-    const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
-    const digest          = crypto.createHash('md5').update(normalizedQuery).update("\0").update(this.accept || '').digest('hex');
+  cacheKey(query) {
+    const digest = crypto.createHash('md5').update(query).update("\0").update(this.accept || '').digest('hex');
 
     return `${digest}.${this.compressorType}`;
   }
