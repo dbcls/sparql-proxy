@@ -6,10 +6,10 @@
 
 FROM node:10.15
 
-RUN useradd --create-home sparql-proxy
-RUN install --owner sparql-proxy --group sparql-proxy --directory /app
+RUN useradd --create-home app
+RUN install --owner app --group app --directory /app
 
-USER sparql-proxy
+USER app
 WORKDIR /app
 
 RUN git clone https://github.com/dbcls/sparql-proxy.git .
