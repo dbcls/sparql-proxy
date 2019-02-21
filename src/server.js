@@ -1,42 +1,43 @@
-import Job from './job';
+import Job, { ParseError, QueryTypeError, BackendError } from './job';
 import Queue from './queue';
 import SocketIo from 'socket.io';
 import basicAuth from 'basic-auth-connect';
 import bodyParser from 'body-parser';
 import cookie from 'cookie';
 import cors from 'cors';
-import crypto from 'crypto';
 import express from 'express';
 import fs from 'fs-extra';
 import http from 'http';
 import morgan from 'morgan';
 import multer from 'multer';
 import request from 'request';
-import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
 import { createCacheStore } from './cache';
 import { createCompressor } from './compressor';
-import { splitPreamble } from 'preamble';
 
-const app = express();
+const app    = express();
 const server = http.Server(app);
-const io = SocketIo(server);
+const io     = SocketIo(server);
+
+const _passthrough          = process.env.PASSTHROUGH === 'true';
+const _enableQuerySplitting = !_passthrough && process.env.ENABLE_QUERY_SPLITTING === 'true';
 
 const config = Object.freeze({
-  port: Number(process.env.PORT || 3000),
-  backend: process.env.SPARQL_BACKEND,
-  maxConcurrency: Number(process.env.MAX_CONCURRENCY || 1),
-  maxWaiting: Number(process.env.MAX_WAITING || Infinity),
-  adminUser: process.env.ADMIN_USER || 'admin',
-  adminPassword: process.env.ADMIN_PASSWORD || 'password',
-  cacheStore: process.env.CACHE_STORE || 'null',
-  compressor: process.env.COMPRESSOR || 'raw',
-  jobTimeout: Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
+  adminPassword:         process.env.ADMIN_PASSWORD || 'password',
+  adminUser:             process.env.ADMIN_USER || 'admin',
+  backend:               process.env.SPARQL_BACKEND,
+  cacheStore:            process.env.CACHE_STORE || 'null',
+  compressor:            process.env.COMPRESSOR || 'raw',
   durationToKeepOldJobs: Number(process.env.DURATION_TO_KEEP_OLD_JOBS || 5 * 60 * 1000),
-  enableQuerySplitting: process.env.ENABLE_QUERY_SPLITTING === 'true',
-  maxChunkLimit: Number(process.env.MAX_CHUNK_LIMIT || 1000),
-  maxLimit: Number(process.env.MAX_LIMIT || 10000),
-  trustProxy: process.env.TRUST_PROXY || 'false',
-  queryLogPath: process.env.QUERY_LOG_PATH,
+  enableQuerySplitting:  _enableQuerySplitting,
+  jobTimeout:            Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
+  maxChunkLimit:         Number(process.env.MAX_CHUNK_LIMIT || 1000),
+  maxConcurrency:        Number(process.env.MAX_CONCURRENCY || 1),
+  maxLimit:              Number(process.env.MAX_LIMIT || 10000),
+  maxWaiting:            Number(process.env.MAX_WAITING || Infinity),
+  passthrough:           _passthrough,
+  port:                  Number(process.env.PORT || 3000),
+  queryLogPath:          process.env.QUERY_LOG_PATH,
+  trustProxy:            process.env.TRUST_PROXY || 'false',
 });
 
 const secret = `${config.adminUser}:${config.adminPassword}`;
@@ -48,13 +49,18 @@ setInterval(() => {
   queue.sweepOldItems(threshold);
 }, 5 * 1000);
 
-console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
+if (config.passthrough) {
+  console.log('Passthrough mode is enabled. Query filtering, caching and splitting are disabled.');
+} else {
+  console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
+}
+
 const compressor = createCompressor(config.compressor);
-const cache = createCacheStore(config.cacheStore, compressor, process.env);
+const cache      = createCacheStore(config.cacheStore, compressor, process.env);
 
 app.use(morgan('combined'));
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.text({ type: 'application/sparql-query' }));
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.text({type: 'application/sparql-query'}));
 
 if (config.trustProxy === 'true') {
   app.enable('trust proxy');
@@ -120,17 +126,21 @@ async function executeQuery(req, res) {
   let query;
 
   switch (req.method) {
-    case "GET":
+    case 'GET':
       query = req.query.query;
       break;
-    case "POST":
-      if (req.is('application/sparql-query')) {
+    case 'POST':
+      if (req.is('urlencoded')) {
+        query = req.body.query;
+      } else if (req.is('application/sparql-query')) {
         query = req.body;
       } else {
-        query = req.body.query;
+        res.status(415).send('Unsupported Media Type');
+        return;
       }
+
       break;
-    case "OPTIONS":
+    case 'OPTIONS':
       res.status(200);
       return;
     default:
@@ -139,89 +149,52 @@ async function executeQuery(req, res) {
   }
 
   if (!query) {
-    res.status(400).send({ message: 'Query is required' });
+    res.status(400).send({message: 'Query is required'});
     return;
-  }
-
-  const parser = new SparqlParser();
-  parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
-  let parsedQuery;
-
-  const { preamble, compatibleQuery } = splitPreamble(query);
-
-  try {
-    parsedQuery = parser.parse(compatibleQuery);
-  } catch (ex) {
-    console.log(ex);
-    console.log("==== raw query (before splitting preamble)");
-    console.log(query);
-    console.log("====");
-    res.status(400).send({ message: 'Query parse failed', data: ex.message });
-    return;
-  }
-
-  if (parsedQuery.type !== 'query') {
-    console.log(`Query type not allowed: ${parsedQuery.type}`);
-    res.status(400).send('Query type not allowed');
-    return;
-  }
-
-  const normalizedQuery = preamble + (new SparqlGenerator().stringify(parsedQuery));
-  const accept = (config.enableQuerySplitting ? null : req.headers.accept) || 'application/sparql-results+json';
-  const digest = crypto.createHash('md5').update(normalizedQuery).update("\0").update(accept).digest('hex');
-  const cacheKey = `${digest}.${config.compressor}`;
-
-  try {
-    const cached = await cache.get(cacheKey);
-
-    if (cached) {
-      console.log('cache hit');
-      res.header('Content-Type', cached.contentType);
-      res.header('X-Cache', 'hit');
-      res.send(cached.body);
-      log({
-        query,
-        'cache-hit': true,
-        'response': { 'content-type': cached.contentType, 'body': cached.body }
-      });
-      return;
-    }
-  } catch (error) {
-    console.log('ERROR: in cache get:', error);
   }
 
   const token = req.query.token;
   const job = new Job({
     backend: config.backend,
     rawQuery: query,
-    accept: accept,
+    accept: config.enableQuerySplitting ? 'application/sparql-results+json' : req.headers.accept,
     timeout: config.jobTimeout,
     ip: req.ip,
     enableQuerySplitting: config.enableQuerySplitting,
     maxLimit: config.maxLimit,
-    maxChunkLimit: config.maxChunkLimit
+    maxChunkLimit: config.maxChunkLimit,
+    passthrough: config.passthrough,
+    compressorType: config.compressor,
+    cache,
   });
 
   try {
     const result = await queue.enqueue(job, token);
 
     res.header('Content-Type', result.contentType);
+    res.header('X-Cache', result.cached ? 'hit' : 'miss');
     res.send(result.body);
     log({
       query,
-      'cache-hit': false,
+      'cache-hit': result.cached,
       'response': { 'content-type': result.contentType, 'body': result.body }
     });
+  } catch (e) {
+    console.log('ERROR:', e);
 
-    try {
-      await cache.put(cacheKey, result);
-    } catch (error) {
-      console.log('ERROR: in cache put:', error);
+    if (e instanceof ParseError) {
+      console.log('==== raw query (before splitting preamble)');
+      console.log(e.query);
+      console.log('====');
+
+      res.status(400).send({message: e.message});
+    } else if (e instanceof QueryTypeError) {
+      res.status(400).send({message: e.message});
+    } else if (e instanceof BackendError) {
+      res.status(e.response.statusCode).contentType(e.response.headers['content-type']).send(e.body);
+    } else {
+      res.status(e.statusCode || 500).send(e.data || 'ERROR');
     }
-  } catch (error) {
-    console.log('ERROR:', error);
-    res.status(error.statusCode || 500);
-    res.send(error.data || 'ERROR');
   }
 }
 

@@ -164,6 +164,16 @@ Split queries into the chunk size specified.
 
 Log queries (and the corresponding responses) to the file, if specified.
 
+### `PASSTHROUGH`
+
+THIS IS AN EXPERIMENTAL FEATURE.
+
+(default: `false`)
+
+Set `true` to enable passthrough mode. If enabled, queries are sent to the backend as is, as far as possible. All of the query varidations are bypassed; so the destructive queries can reach the backend.
+
+You should enable this feature only when you understand exactly what you are doing.
+
 ## Serving SPARQL Service Description
 
 If you want to serve SPARQL service description, put the descriptions under `files` directory with the name `description.[format]`.
