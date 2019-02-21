@@ -180,4 +180,6 @@ If you want to serve SPARQL service description, put the descriptions under `fil
 
 Use `files/description.ttl` for `text/turtle` and `files/description.rdf` for `application/rdf+xml`.
 
-NOTE: If you're running `sparql-proxy` within Docker, you may want to use `-v` option for `docker` command to make the files accessible from the inside of the container.
+NOTE: If you're running `sparql-proxy` within Docker, you may want to use `-v` option for `docker` command to make the files accessible from the inside of the container:
+
+    $ docker run -p 8080:3000 -e SPARQL_BACKEND=http://example.com/sparql -v `pwd`/files:/app/files dbcls/sparql-proxy
