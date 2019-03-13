@@ -83,10 +83,9 @@ function returnServiceDescription(req, res) {
   const matchedType = req.accepts(Object.keys(typeToExt));
 
   if (matchedType) {
-    const ext  = typeToExt[matchedType];
-    const path = `${__dirname}/../files/description.${ext}`;
+    const ext = typeToExt[matchedType];
 
-    if (fs.pathExistsSync(path)) {
+    if (fs.pathExistsSync(`${__dirname}/../files/description.${ext}`)) {
       res.type(matchedType).sendFile(`description.${ext}`, {root: `${__dirname}/../files`});
       return;
     }
