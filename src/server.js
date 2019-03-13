@@ -75,38 +75,40 @@ app.all('/sparql', cors(), multer().array(), async (req, res) => {
 });
 
 function returnServiceDescription(req, res) {
-  const file = [
-    {
-      ext:  'rdf',
-      type: 'application/rdf+xml'
-    },
-    {
-      ext:  'ttl',
-      type: 'text/turtle'
+  const typeToExt = {
+    'application/rdf+xml': 'rdf',
+    'text/turtle':         'ttl'
+  };
+
+  const matchedType = req.accepts(Object.keys(typeToExt));
+
+  if (matchedType) {
+    const ext  = typeToExt[matchedType];
+    const path = `${__dirname}/../files/description.${ext}`;
+
+    if (fs.pathExistsSync(path)) {
+      res.type(matchedType).sendFile(`description.${ext}`, {root: `${__dirname}/../files`});
+      return;
     }
-  ].find(({ext}) => fs.pathExistsSync(`${__dirname}/../files/description.${ext}`));
-
-  if (file) {
-    res.type(file.type).sendFile(`description.${file.ext}`, {root: `${__dirname}/../files`});
-  } else {
-    const unsafeHeaders = [
-      'authorization',
-      'cookie',
-      'host',
-    ];
-
-    const headers = Object.entries(req.headers).reduce((acc, [k, v]) => {
-      return unsafeHeaders.includes(k) ? acc : Object.assign(acc, {[k]: v});
-    }, {});
-
-    return new Promise((resolve, reject) => {
-      request({
-        url: config.backend,
-        method: req.method,
-        headers
-      }).pipe(res).on('finish', resolve).on('error', reject);
-    });
   }
+
+  const unsafeHeaders = [
+    'authorization',
+    'cookie',
+    'host',
+  ];
+
+  const headers = Object.entries(req.headers).reduce((acc, [k, v]) => {
+    return unsafeHeaders.includes(k) ? acc : Object.assign(acc, {[k]: v});
+  }, {});
+
+  return new Promise((resolve, reject) => {
+    request({
+      url: config.backend,
+      method: req.method,
+      headers
+    }).pipe(res).on('finish', resolve).on('error', reject);
+  });
 }
 
 async function executeQuery(req, res) {
