@@ -54,7 +54,7 @@ class JobList extends React.Component {
         const cancel = this.props.onCancel.bind(null, job);
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }
-      const redoLink = "/?" + queryString.stringify({query: job.data.rawQuery});
+      const redoLink = "../sparql?" + queryString.stringify({query: job.data.rawQuery});
       return (
         <tr key={job.id}>
           <td><JobStateLabel state={job.state} reason={job.data.reason}/></td>

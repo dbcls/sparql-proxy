@@ -60,7 +60,7 @@ class QueryBox extends React.Component {
   render() {
     return (
       <div className="container-fluid">
-        <form action="../sparql">
+        <form action="./sparql">
           <div className="form-group">
             <Editor />
           </div>

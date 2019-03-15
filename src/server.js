@@ -16,7 +16,7 @@ import { createCompressor } from './compressor';
 
 const app    = express();
 const server = http.Server(app);
-const io     = SocketIo(server);
+const io     = SocketIo(server, {path: `${process.env.ROOT_PATH || '/'}socket.io`});
 
 const _passthrough          = process.env.PASSTHROUGH === 'true';
 const _enableQuerySplitting = !_passthrough && process.env.ENABLE_QUERY_SPLITTING === 'true';
@@ -62,15 +62,19 @@ app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.text({type: 'application/sparql-query'}));
 
+app.enable('strict routing');
+
 if (config.trustProxy === 'true') {
   app.enable('trust proxy');
 }
 
-app.get('/', (req, res) => {
+const router = express.Router();
+
+router.get('/', (req, res) => {
   res.redirect(`${req.baseUrl}/sparql`);
 });
 
-app.all('/sparql', cors(), multer().array(), async (req, res) => {
+router.all('/sparql', cors(), multer().array(), async (req, res) => {
   if (req.method == 'GET' && req.accepts('html')) {
     res.sendFile('public/app/index.html', {root: `${__dirname}/..`});
   } else if (req.method === 'GET' && Object.keys(req.query).length === 0) {
@@ -205,7 +209,7 @@ async function executeQuery(req, res) {
   }
 }
 
-app.get('/jobs/:token', (req, res) => {
+router.get('/jobs/:token', (req, res) => {
   const js = queue.jobStatus(req.params.token);
   if (!js) {
     res.status(404).send('Job not found');
@@ -214,12 +218,14 @@ app.get('/jobs/:token', (req, res) => {
   res.send(js);
 });
 
-app.get('/admin', basicAuth(config.adminUser, config.adminPassword), (req, res, next) => {
+router.get('/admin', basicAuth(config.adminUser, config.adminPassword), (req, res, next) => {
   res.cookie(cookieKey, secret);
   next();
 });
 
-app.use(express.static('public'));
+router.use(express.static('public'));
+
+app.use(process.env.ROOT_PATH || '/', router);
 
 if (!config.backend) {
   console.log('you must specify backend');
