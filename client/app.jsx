@@ -8,8 +8,8 @@ import 'babel-regenerator-runtime';
 
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
-import 'sparql-support/js/sparql';
-import 'sparql-support';
+import 'sparql-support/src/sparql';
+import 'sparql-support/src/sparql-support';
 import 'sparql-support/css/base.css';
 
 class Navbar extends React.Component {
@@ -60,7 +60,7 @@ class QueryBox extends React.Component {
   render() {
     return (
       <div className="container-fluid">
-        <form action="">
+        <form action="../sparql">
           <div className="form-group">
             <Editor />
           </div>

@@ -66,8 +66,14 @@ if (config.trustProxy === 'true') {
   app.enable('trust proxy');
 }
 
+app.get('/', (req, res) => {
+  res.redirect(`${req.baseUrl}/sparql`);
+});
+
 app.all('/sparql', cors(), multer().array(), async (req, res) => {
-  if (req.method === 'GET' && Object.keys(req.query).length === 0) {
+  if (req.method == 'GET' && req.accepts('html')) {
+    res.sendFile('public/app/index.html', {root: `${__dirname}/..`});
+  } else if (req.method === 'GET' && Object.keys(req.query).length === 0) {
     await returnServiceDescription(req, res);
   } else {
     await executeQuery(req, res);
@@ -86,7 +92,7 @@ function returnServiceDescription(req, res) {
     const ext = typeToExt[matchedType];
 
     if (fs.pathExistsSync(`${__dirname}/../files/description.${ext}`)) {
-      res.type(matchedType).sendFile(`description.${ext}`, {root: `${__dirname}/../files`});
+      res.type(matchedType).sendFile(`files/description.${ext}`, {root: `${__dirname}/..`});
       return;
     }
   }

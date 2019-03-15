@@ -4,4 +4,5 @@
 /tmp/
 
 /public/*
-!/public/*.html
+!/public/app/
+!/public/admin/

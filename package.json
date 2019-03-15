@@ -27,7 +27,7 @@
     "rollup": "^1.2.2",
     "snappy": "^6.1.2",
     "socket.io": "^2.2.0",
-    "sparql-support": "^0.9.1",
+    "sparql-support": "github:ursm/sparql-support#sparql-proxy",
     "sparqljs": "^2.2.1",
     "url-loader": "^1.1.2",
     "uuid": "^3.3.2",
