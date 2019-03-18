@@ -47,6 +47,12 @@ Port to listen on.
 
 URL of the SPARQL backend.
 
+### `ROOT_PATH`
+
+(default: `/`)
+
+If you want to deploy sparql-proxy under a subdirectory (say, `/foo/`), configure `ROOT_PATH` to point the path.
+
 ### `ADMIN_USER`
 
 (default: `admin`)
