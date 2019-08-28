@@ -73,7 +73,7 @@ class QueryBox extends React.Component {
           </div>
           <button className="btn btn-primary">
             Run Query
-            <span className="ml-1 small">(Ctrl+Enter)</span>
+            <span className="ml-1 small" style={{pointerEvents: 'none'}}>(Ctrl+Enter)</span>
           </button>
         </form>
       </div>
