@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import 'bootstrap/scss/bootstrap.scss';
 import './app.scss';
 import 'font-awesome/css/font-awesome.css';
-import queryString from 'query-string';
 import 'babel-regenerator-runtime';
 
 import CodeMirror from 'codemirror';
@@ -50,10 +49,9 @@ class Editor extends React.Component {
     };
 
     this.codeMirror = CodeMirror.fromTextArea(this.textareaNode, options);
-    const params = new URLSearchParams(window.location.search);
 
-    if (params.has('query')) {
-      this.codeMirror.setValue(params.get('query'));
+    if (this.props.query !== null) {
+      this.codeMirror.setValue(this.props.query);
     }
   }
 }
@@ -69,7 +67,7 @@ class QueryBox extends React.Component {
       <div className="container-fluid">
         <form action="./sparql">
           <div className="form-group">
-            <Editor />
+            <Editor query={this.props.query} />
           </div>
           <button className="btn btn-primary">
             Run Query
@@ -84,7 +82,7 @@ class QueryBox extends React.Component {
 class MainComponent extends React.Component {
   constructor() {
     super(...arguments);
-    this.query = queryString.parse(window.location.search).query || '';
+    this.query = new URLSearchParams(window.location.search).get('query');
   }
 
   render() {
