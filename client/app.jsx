@@ -28,9 +28,11 @@ class Editor extends React.Component {
       width: "100%",
       height: "400px"
     };
-    return <div>
-      <textarea ref={ref => this.textareaNode = ref} style={textareaStyle} />
-    </div>;
+    return (
+      <div>
+        <textarea ref={ref => this.textareaNode = ref} style={textareaStyle}></textarea>
+      </div>
+    );
   }
   componentDidMount() {
     const options = {
@@ -48,6 +50,11 @@ class Editor extends React.Component {
     };
 
     this.codeMirror = CodeMirror.fromTextArea(this.textareaNode, options);
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has('query')) {
+      this.codeMirror.setValue(params.get('query'));
+    }
   }
 }
 
