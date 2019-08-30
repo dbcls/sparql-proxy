@@ -27,14 +27,16 @@ class Editor extends React.Component {
       width: "100%",
       height: "400px"
     };
+
     return (
       <div>
         <textarea ref={ref => this.textareaNode = ref} style={textareaStyle}></textarea>
       </div>
     );
   }
+
   componentDidMount() {
-    const options = {
+    const codeMirror = CodeMirror.fromTextArea(this.textareaNode, {
       mode: "application/sparql-query",
       matchBrackets: true,
       autoCloseBrackets: true,
@@ -46,13 +48,16 @@ class Editor extends React.Component {
         "Tab": () => false,
         "Ctrl-Space": () => false,
       }
-    };
+    });
 
-    this.codeMirror = CodeMirror.fromTextArea(this.textareaNode, options);
+    const query = this.props.query;
 
-    if (this.props.query !== null) {
-      this.codeMirror.setValue(this.props.query);
+    if (query !== null) {
+      codeMirror.setValue(query);
     }
+
+    // force sparql-support to synchronize query buffers
+    codeMirror.getWrapperElement().dispatchEvent(new KeyboardEvent('keydown'));
   }
 }
 
