@@ -1,6 +1,6 @@
 import uuid from 'uuid';
 import { EventEmitter } from 'events';
-import { aborted } from './job';
+import { aborted } from './job.js';
 
 class Item extends EventEmitter {
   constructor(job, token) {
