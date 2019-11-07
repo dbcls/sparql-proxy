@@ -38,6 +38,7 @@ const config = Object.freeze({
   port:                  Number(process.env.PORT || 3000),
   queryLogPath:          process.env.QUERY_LOG_PATH,
   trustProxy:            process.env.TRUST_PROXY || 'false',
+  cors:                  process.env.ALLOW_CORS || 'true',
 });
 
 const secret = `${config.adminUser}:${config.adminPassword}`;
@@ -184,6 +185,9 @@ async function executeQuery(req, res) {
 
     res.header('Content-Type', result.contentType);
     res.header('X-Cache', result.cached ? 'hit' : 'miss');
+    if (config.cors) {
+        res.header('Access-Control-Allow-Origin', '*');
+    } 
     res.send(result.body);
     log({
       query,
