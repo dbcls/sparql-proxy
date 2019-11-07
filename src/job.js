@@ -1,8 +1,10 @@
+import Sparql from 'sparqljs';
 import crypto from 'crypto';
 import request from 'request';
 import { EventEmitter } from 'events';
-import { Parser as SparqlParser, Generator as SparqlGenerator } from 'sparqljs';
-import { splitPreamble } from 'preamble';
+import { splitPreamble } from './preamble.js';
+
+const {Parser: SparqlParser, Generator: SparqlGenerator} = Sparql;
 
 export class ParseError extends Error {
   constructor(query, cause) {

@@ -1,4 +1,4 @@
-import Base from './base';
+import Base from './base.js';
 import Memcached from 'memcached';
 import { promisify } from 'util';
 
