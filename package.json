@@ -55,7 +55,7 @@
     "babel": "rm -rf lib && babel src -d lib",
     "webpack": "webpack",
     "postinstall": "npm run build",
-    "start": "NODE_PATH=src node --experimental-modules src/server.js",
+    "start": "node --experimental-modules src/server.js",
     "lint": "eslint src/**/*.js client/**/*.jsx",
     "test": "npm run lint"
   },
