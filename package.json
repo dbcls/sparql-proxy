@@ -52,7 +52,6 @@
   },
   "scripts": {
     "build": "npm run webpack",
-    "babel": "rm -rf lib && babel src -d lib",
     "webpack": "webpack",
     "postinstall": "npm run build",
     "start": "node --experimental-modules src/server.js",
