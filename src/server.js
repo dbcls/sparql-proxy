@@ -1,5 +1,3 @@
-import Job, { ParseError, QueryTypeError, BackendError } from './job.js';
-import Queue from './queue.js';
 import SocketIo from 'socket.io';
 import basicAuth from 'basic-auth-connect';
 import bodyParser from 'body-parser';
@@ -10,12 +8,15 @@ import fs from 'fs-extra';
 import http from 'http';
 import morgan from 'morgan';
 import multer from 'multer';
+import path from 'path';
 import request from 'request';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import url from 'url';
+
+import Job, { ParseError, QueryTypeError, BackendError } from './job.js';
+import Queue from './queue.js';
 
 (async () => {
-  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
   const app    = express();
   const server = http.Server(app);
