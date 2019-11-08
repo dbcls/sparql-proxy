@@ -59,6 +59,6 @@
     "test": "npm run lint"
   },
   "engines": {
-    "node": ">=12"
+    "node": "12.x"
   }
 }
