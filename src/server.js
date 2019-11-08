@@ -1,10 +1,10 @@
 import SocketIo from 'socket.io';
+import _fs from 'fs';
 import basicAuth from 'basic-auth-connect';
 import bodyParser from 'body-parser';
 import cookie from 'cookie';
 import cors from 'cors';
 import express from 'express';
-import fs from 'fs-extra';
 import http from 'http';
 import morgan from 'morgan';
 import multer from 'multer';
@@ -14,6 +14,8 @@ import url from 'url';
 
 import Job, { ParseError, QueryTypeError, BackendError } from './job.js';
 import Queue from './queue.js';
+
+const fs = _fs.promises;
 
 (async () => {
   const __dirname = path.dirname(url.fileURLToPath(import.meta.url));

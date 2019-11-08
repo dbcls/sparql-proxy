@@ -1,6 +1,9 @@
-import Base from './base';
-import fs from 'fs-extra';
+import _fs from 'fs';
 import path from 'path';
+
+import Base from './base';
+
+const fs = _fs.promises;
 
 export default class extends Base {
   constructor(compressor, env) {
