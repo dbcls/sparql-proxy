@@ -1,7 +1,7 @@
 import _fs from 'fs';
 import path from 'path';
 
-import Base from './base';
+import Base from './base.js';
 
 const fs = _fs.promises;
 
