@@ -34,7 +34,7 @@ export default class extends Base {
     const _path = this.getPath(key);
     const data  = await this.serialize(obj);
 
-    await fs.ensureDir(path.dirname(_path));
+    await fs.mkdir(path.dirname(_path), {recursive: true});
     await fs.writeFile(_path, data);
   }
 
