@@ -17,7 +17,7 @@ SPARQL-proxy is a portable Web application that works as a proxy server for any 
 
 * [Node.js](https://nodejs.org/)
 
-## Install
+## Install and Run
 
     $ git clone git@github.com:dbcls/sparql-proxy.git
     $ cd sparql-proxy
@@ -25,13 +25,32 @@ SPARQL-proxy is a portable Web application that works as a proxy server for any 
 
 (Be patient, `npm install` may take a few minutes)
 
-## Run
+Then, start SPARQL-proxy:
 
     $ PORT=3000 SPARQL_BACKEND=http://example.com/sparql ADMIN_USER=admin ADMIN_PASSWORD=password npm start
 
 Open `http://localhost:3000/` on your browser.
 
 Dashboard for administrators is at `http://localhost:3000/admin` .
+
+### Deploy under a subdirectory
+
+If you want to deploy SPARQL-proxy under a subdirectory (say, `/foo/`), pass the directory via `ROOT_PATH` to both `npm install` and `npm start`:
+
+    $ ROOT_PATH=/foo/ npm install
+    $ ROOT_PATH=/foo/ PORT=3000 SPARQL_BACKEND=http://example.com/sparql ADMIN_USER=admin ADMIN_PASSWORD=password npm start
+
+(Note that `ROOT_PATH` must end with `/`.)
+
+Set up your reverse proxy to direct requests to the SPARQL-proxy. If you're using Nginx, configure it as follows:
+
+``` nginx
+server {
+  location /foo/ {
+    proxy_pass http://localhost:3000/foo/;
+  }
+}
+```
 
 ## Configuration
 
