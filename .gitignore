@@ -4,5 +4,3 @@
 /tmp/
 
 /public/*
-!/public/app/
-!/public/admin/

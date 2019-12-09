@@ -80,9 +80,9 @@ const fs = _fs.promises;
     res.redirect(`${req.baseUrl}/sparql`);
   });
 
-  router.all('/sparql', cors(), multer().array(), async (req, res) => {
+  router.all('/sparql', cors(), multer().array(), async (req, res, next) => {
     if (req.method == 'GET' && req.accepts('html')) {
-      res.sendFile('public/app/index.html', {root: `${__dirname}/..`});
+      next();
     } else if (req.method === 'GET' && Object.keys(req.query).length === 0) {
       await returnServiceDescription(req, res);
     } else {
@@ -229,7 +229,7 @@ const fs = _fs.promises;
     next();
   });
 
-  router.use(express.static('public'));
+  router.use(express.static('public', {extensions: ['html']}));
 
   app.use(process.env.ROOT_PATH || '/', router);
 
