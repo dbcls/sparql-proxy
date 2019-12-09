@@ -35,7 +35,7 @@ Dashboard for administrators is at `http://localhost:3000/admin` .
 
 ### Deploy under a subdirectory
 
-If you want to deploy SPARQL-proxy under a subdirectory (say, `/foo/`), pass the directory via `ROOT_PATH` to `npm install` and `npm start`:
+If you want to deploy SPARQL-proxy under a subdirectory (say, `/foo/`), pass the directory via `ROOT_PATH` to both `npm install` and `npm start`:
 
     $ ROOT_PATH=/foo/ npm install
     $ ROOT_PATH=/foo/ PORT=3000 SPARQL_BACKEND=http://example.com/sparql ADMIN_USER=admin ADMIN_PASSWORD=password npm start
