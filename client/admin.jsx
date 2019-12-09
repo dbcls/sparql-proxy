@@ -1,9 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import 'bootstrap/scss/bootstrap.scss'
-import './app.scss'
+import io from 'socket.io-client';
 import moment from 'moment'
 import queryString from 'query-string';
+
+import 'bootstrap/scss/bootstrap.scss'
+import './app.scss'
 
 const jobLabelMapping = {
   waiting:  'default',
@@ -127,7 +129,6 @@ class MainComponent extends React.Component {
   }
 
   componentDidMount() {
-    /* global io */
     const socket = io.connect(location.origin, {
       path: location.pathname + "../socket.io"
     });

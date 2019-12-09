@@ -1,12 +1,15 @@
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 module.exports = {
-  mode: "development",
+  mode: 'development',
   entry: {
     app: ['whatwg-fetch', './client/app.jsx'],
     admin: ['whatwg-fetch', './client/admin.jsx'],
   },
   output: {
-    filename: '[name].js',
-    path: __dirname + '/public',
+    filename: '[name]-[contenthash].js',
+    path: `${__dirname}/public`,
+    publicPath: process.env.ROOT_PATH || '/'
   },
   module: {
     rules: [
@@ -36,5 +39,17 @@ module.exports = {
       { test: /\.eot(?:\?.*)?$/, use: 'file-loader' },
       { test: /\.svg(?:\?.*)?$/, use: 'file-loader' }
     ]
-  }
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/html/app/index.html',
+      filename: 'sparql.html',
+      chunks: ['app']
+    }),
+    new HtmlWebpackPlugin({
+      template: './src/html/admin/index.html',
+      filename: 'admin/index.html',
+      chunks: ['admin']
+    })
+  ]
 };
