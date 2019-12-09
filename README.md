@@ -42,7 +42,7 @@ If you want to deploy SPARQL-proxy under a subdirectory (say, `/foo/`), pass the
 
 (Note that `ROOT_PATH` must end with `/`.)
 
-In this case, configure the reverse proxy by Nginx as follows:
+Set up your reverse proxy to direct requests to the SPARQL-proxy. If you're using Nginx, configure it as follows:
 
 ``` nginx
 server {
