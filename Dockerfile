@@ -11,7 +11,7 @@ RUN install --owner app --group app --directory /app
 
 USER app
 WORKDIR /app
+COPY --chown=app:app . .
 
-RUN git clone https://github.com/dbcls/sparql-proxy.git .
 RUN npm install
 CMD npm start
