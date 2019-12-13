@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require 'bundler/setup'
+
 require 'linkeddata'
 require 'sparql'
 require 'sinatra'

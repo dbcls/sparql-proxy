@@ -7,16 +7,15 @@ const proxyPort = 9999;
 const backendPort = 4568;
 
 beforeAll(done => {
-  const proxyOptions = {
-    env: {
-      SPARQL_BACKEND: "http://localhost:" + backendPort + "/sparql",
-      PORT: proxyPort
-    }
-  };
   proxyProcess = childProcess.spawn(
     "node",
     ["--experimental-modules", "src/server.js"],
-    proxyOptions
+    {
+      env: {
+        SPARQL_BACKEND: `http://localhost:${backendPort}/sparql`,
+        PORT: proxyPort
+      }
+    }
   );
   proxyProcess.on("exit", () => {
     console.error("unexpected sparql-proxy exit");
@@ -36,15 +35,15 @@ beforeAll(done => {
 });
 
 beforeAll(done => {
-  const options = {
-    env: Object.assign({}, process.env, {
-      PORT: backendPort
-    })
-  };
   backendProcess = childProcess.spawn(
-    "ruby",
-    ["tests/mock-server/server.rb"],
-    options
+    'ruby',
+    ['server.rb'],
+    {
+      cwd: 'tests/mock-server',
+      env: Object.assign({}, process.env, {
+        PORT: backendPort
+      })
+    }
   );
   backendProcess.on("exit", () => {
     console.error("unexpected endpoint exit");
