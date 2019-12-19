@@ -1,48 +1,63 @@
-import childProcess from 'child_process';
 import fetch from 'node-fetch';
+import { spawn } from 'child_process';
 
-const proxyPort   = 9999;
-const backendPort = 4568;
+async function runProxy(env, cb) {
+  const port = 9999;
 
-let proxyProcess;
-let backendProcess;
-
-beforeAll(() => {
-  return new Promise((resolve, reject) => {
-    proxyProcess = childProcess.spawn(
+  const process = await new Promise((resolve, reject) => {
+    const ps = spawn(
       'node',
       ['--experimental-modules', 'src/server.js'],
       {
-        env: {
+        env: Object.assign({}, {
           SPARQL_BACKEND: `http://localhost:${backendPort}/sparql`,
-          PORT: proxyPort
-        }
+          PORT: port
+        }, env)
       }
     );
 
-    proxyProcess.on('exit', () => {
+    ps.on('exit', () => {
       reject('unexpected sparql-proxy exit');
     });
 
-    proxyProcess.on('error', code => {
+    ps.on('error', code => {
       reject(`sparql-proxy error (code ${code})`);
     });
 
-    proxyProcess.stdout.on('data', data => {
-      const str = data.toString();
-
-      console.log('PROXY', str);
-
-      if (str.includes('sparql-proxy listening at')) {
-        resolve();
+    ps.stdout.on('data', data => {
+      if (data.toString().includes('sparql-proxy listening at')) {
+        resolve(ps);
       }
     });
-  });
-});
 
-beforeAll(() => {
-  return new Promise((resolve, reject) => {
-    backendProcess = childProcess.spawn(
+    ps.stderr.on('data', data => {
+      console.error(data.toString());
+    });
+  });
+
+  const root = new URL(`http://localhost:${port}`);
+
+  try {
+    await cb({
+      root,
+      endpoint: new URL('/sparql', root)
+    });
+  } finally {
+    await new Promise((resolve) => {
+      process.removeAllListeners('exit');
+      process.on('exit', resolve);
+      process.kill();
+    });
+  }
+}
+
+const backendPort = 4568;
+
+let backendProcess;
+
+beforeAll(async () => {
+  backendProcess = await new Promise((resolve, reject) => {
+    const ps = spawn(
       'ruby',
       ['server.rb'],
       {
@@ -53,39 +68,28 @@ beforeAll(() => {
       }
     );
 
-    backendProcess.on('exit', () => {
+    ps.on('exit', () => {
       reject('unexpected endpoint exit');
     });
 
-    backendProcess.on('error', code => {
+    ps.on('error', code => {
       reject(`endpoint error (code ${code})`);
     });
 
-    backendProcess.stderr.on('data', data => {
-      const str = data.toString();
-
-      console.log('BACKEND', str);
-
-      if (str.includes('WEBrick::HTTPServer#start')) {
-        resolve();
+    ps.stderr.on('data', data => {
+      if (data.toString().includes('WEBrick::HTTPServer#start')) {
+        resolve(ps);
       }
     });
   });
 });
 
-afterAll(() => {
-  return new Promise((resolve) => {
-    if (!proxyProcess) { return; }
-
-    proxyProcess.removeAllListeners('exit');
-    proxyProcess.on('exit', resolve);
-    proxyProcess.kill();
-  });
-});
-
-afterAll(() => {
-  return new Promise((resolve) => {
-    if (!backendProcess) { return; }
+afterAll(async () => {
+  await new Promise((resolve) => {
+    if (!backendProcess) {
+      resolve();
+      return;
+    }
 
     backendProcess.removeAllListeners('exit');
     backendProcess.on('exit', resolve);
@@ -94,42 +98,48 @@ afterAll(() => {
 });
 
 test('GET / should redirect to /sparql', async () => {
-  const res = await fetch(`http://localhost:${proxyPort}`, {
-    redirect: 'manual'
+  await runProxy({}, async ({root, endpoint}) => {
+    const res = await fetch(root, {
+      redirect: 'manual'
+    });
+
+    expect(res.status).toEqual(302);
+    expect(res.headers.get('Location')).toEqual(endpoint.toString());
   });
-
-  expect(res.status).toEqual(302);
-
-  expect(res.headers.get('Location')).toEqual(
-    `http://localhost:${proxyPort}/sparql`
-  );
 });
 
-test('GET /sparql', async () => {
-  const url = new URL(`http://localhost:${proxyPort}/sparql`);
+test.each([
+  {CACHE_STORE: null},
+  {CACHE_STORE: 'file', CACHE_STORE_PATH: `tmp/test-cache-${process.pid}`},
+  {CACHE_STORE: 'memory'},
+  {CACHE_STORE: 'redis'},
+  {CACHE_STORE: 'memcache'},
+  {COMPRESSOR: 'snappy'},
+])('GET /sparql (env: %p)', async (env) => {
+  await runProxy(env, async ({endpoint}) => {
+    endpoint.searchParams.set('query', 'SELECT * { ?s ?p ?o. }');
 
-  url.searchParams.set('query', 'SELECT * { ?s ?p ?o. }');
+    const res = await fetch(endpoint, {
+      headers: {
+        Accept: 'application/sparql-results+json'
+      }
+    });
 
-  const res = await fetch(url, {
-    headers: {
-      Accept: 'application/sparql-results+json'
-    }
-  });
+    expect(res.status).toEqual(200);
 
-  expect(res.status).toEqual(200);
-
-  expect(await res.json()).toEqual({
-    head: {
-      vars: ['s', 'p', 'o']
-    },
-    results: {
-      bindings: [
-        {
-          s: {type: 'uri',     value: 'http://example.com'},
-          p: {type: 'uri',     value: 'http://purl.org/dc/terms/title'},
-          o: {type: 'literal', value: 'Hello, world!'}
-        }
-      ]
-    }
+    expect(await res.json()).toEqual({
+      head: {
+        vars: ['s', 'p', 'o']
+      },
+      results: {
+        bindings: [
+          {
+            s: {type: 'uri',     value: 'http://example.com'},
+            p: {type: 'uri',     value: 'http://purl.org/dc/terms/title'},
+            o: {type: 'literal', value: 'Hello, world!'}
+          }
+        ]
+      }
+    });
   });
 });
