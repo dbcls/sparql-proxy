@@ -9,7 +9,7 @@
     "basic-auth-connect": "^1.0.0",
     "body-parser": "^1.15.0",
     "bootstrap": "^4.3.1",
-    "codemirror": "^5.43.0",
+    "codemirror": "^5.50.2",
     "cookie": "^0.3.1",
     "cors": "^2.7.1",
     "express": "^4.13.3",
@@ -25,7 +25,7 @@
     "react-dom": "^16.8.2",
     "redis": "^2.4.2",
     "request": "^2.67.0",
-    "rollup": "^1.2.2",
+    "rollup": "^1.28.0",
     "snappy": "^6.2.3",
     "socket.io": "^2.2.0",
     "socket.io-client": "^2.3.0",
@@ -35,8 +35,8 @@
     "whatwg-fetch": "^3.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.3.3",
-    "@babel/preset-env": "^7.3.1",
+    "@babel/core": "^7.7.7",
+    "@babel/preset-env": "^7.7.7",
     "@babel/preset-react": "^7.0.0",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.5",
@@ -50,7 +50,7 @@
     "sass-loader": "^7.1.0",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2",
-    "webpack": "^4.29.5",
+    "webpack": "^4.41.5",
     "webpack-cli": "^3.2.3"
   },
   "scripts": {
