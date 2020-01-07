@@ -4,7 +4,7 @@ import { spawn } from 'child_process';
 async function runProxy(env, cb) {
   const port = 9999;
 
-  const process = await new Promise((resolve, reject) => {
+  const proxyProcess = await new Promise((resolve, reject) => {
     const ps = spawn(
       'node',
       ['--experimental-modules', 'src/server.js'],
@@ -12,7 +12,7 @@ async function runProxy(env, cb) {
         env: Object.assign({}, {
           SPARQL_BACKEND: `http://localhost:${backendPort}/sparql`,
           PORT: port
-        }, env)
+        }, env, process.env)
       }
     );
 
@@ -44,9 +44,9 @@ async function runProxy(env, cb) {
     });
   } finally {
     await new Promise((resolve) => {
-      process.removeAllListeners('exit');
-      process.on('exit', resolve);
-      process.kill();
+      proxyProcess.removeAllListeners('exit');
+      proxyProcess.on('exit', resolve);
+      proxyProcess.kill();
     });
   }
 }
@@ -62,9 +62,9 @@ beforeAll(async () => {
       ['server.rb'],
       {
         cwd: 'tests/mock-server',
-        env: Object.assign({}, process.env, {
+        env: Object.assign({}, {
           PORT: backendPort
-        })
+        }, process.env)
       }
     );
 
