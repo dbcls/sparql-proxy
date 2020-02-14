@@ -4,7 +4,6 @@
   "description": "",
   "private": true,
   "author": "",
-  "type": "module",
   "dependencies": {
     "basic-auth-connect": "^1.0.0",
     "body-parser": "^1.15.0",
@@ -56,8 +55,8 @@
   "scripts": {
     "build": "webpack",
     "postinstall": "npm run build",
-    "start": "node --experimental-modules src/server.js",
-    "lint": "eslint src/**/*.js client/**/*.jsx",
+    "start": "node --experimental-modules src/server.mjs",
+    "lint": "eslint src/**/*.mjs client/**/*.jsx",
     "test": "npm run lint && jest"
   },
   "engines": {

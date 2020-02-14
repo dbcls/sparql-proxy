@@ -1,6 +1,7 @@
-import Base from './base.js';
 import Memcached from 'memcached';
 import { promisify } from 'util';
+
+import Base from './base.mjs';
 
 export default class extends Base {
   constructor(compressor, env) {

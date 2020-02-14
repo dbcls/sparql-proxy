@@ -2,7 +2,8 @@ import Sparql from 'sparqljs';
 import crypto from 'crypto';
 import request from 'request';
 import { EventEmitter } from 'events';
-import { splitPreamble } from './preamble.js';
+
+import { splitPreamble } from './preamble.mjs';
 
 const {Parser: SparqlParser, Generator: SparqlGenerator} = Sparql;
 

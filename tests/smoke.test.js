@@ -7,7 +7,7 @@ async function runProxy(env, cb) {
   const proxyProcess = await new Promise((resolve, reject) => {
     const ps = spawn(
       'node',
-      ['--experimental-modules', 'src/server.js'],
+      ['--experimental-modules', 'src/server.mjs'],
       {
         env: Object.assign({}, {
           SPARQL_BACKEND: `http://localhost:${backendPort}/sparql`,

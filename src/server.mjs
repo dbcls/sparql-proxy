@@ -12,8 +12,8 @@ import path from 'path';
 import request from 'request';
 import url from 'url';
 
-import Job, { ParseError, QueryTypeError, BackendError } from './job.js';
-import Queue from './queue.js';
+import Job, { ParseError, QueryTypeError, BackendError } from './job.mjs';
+import Queue from './queue.mjs';
 
 const fs = _fs.promises;
 
@@ -61,8 +61,8 @@ const fs = _fs.promises;
 
   console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
 
-  const compressor = new (await import(`./compressor/${config.compressor}.js`)).default();
-  const cache      = new (await import(`./cache/${config.cacheStore}.js`)).default(compressor, process.env);
+  const compressor = new (await import(`./compressor/${config.compressor}.mjs`)).default();
+  const cache      = new (await import(`./cache/${config.cacheStore}.mjs`)).default(compressor, process.env);
 
   app.use(morgan('combined'));
   app.use(bodyParser.urlencoded({extended: false}));

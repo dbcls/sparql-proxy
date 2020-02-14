@@ -1,7 +1,7 @@
 import redis from 'redis';
 import { promisify } from 'util';
 
-import Base from './base.js';
+import Base from './base.mjs';
 
 export default class extends Base {
   constructor(compressor, env) {
