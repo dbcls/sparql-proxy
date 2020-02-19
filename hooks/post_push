@@ -1,5 +1,5 @@
 #!/bin/bash
 
-TAG="snapshot-${SOURCE_COMMIT:0:7}"
+TAG="snapshot-$SOURCE_COMMIT"
 docker tag $IMAGE_NAME $DOCKER_REPO:$TAG
 docker push $DOCKER_REPO:$TAG
