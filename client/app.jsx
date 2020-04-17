@@ -74,7 +74,8 @@ class QueryBox extends React.Component {
           <div className="form-group">
             <Editor query={this.props.query} />
           </div>
-          <button className="btn btn-primary">
+
+          <button className="btn btn-primary mt-0 mb-3">
             Run Query
             <span className="ml-1 small" style={{pointerEvents: 'none'}}>(Ctrl+Enter)</span>
           </button>
