@@ -71,11 +71,9 @@ class QueryBox extends React.Component {
     return (
       <div className="container-fluid">
         <form action="./sparql">
-          <div className="form-group">
-            <Editor query={this.props.query} />
-          </div>
+          <Editor query={this.props.query} />
 
-          <button className="btn btn-primary mt-0 mb-3">
+          <button className="btn btn-primary my-2">
             Run Query
             <span className="ml-1 small" style={{pointerEvents: 'none'}}>(Ctrl+Enter)</span>
           </button>
