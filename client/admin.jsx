@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import io from 'socket.io-client';
 import moment from 'moment'
-import queryString from 'query-string';
 
 import 'bootstrap/scss/bootstrap.scss'
 import './app.scss'
@@ -56,7 +55,9 @@ class JobList extends React.Component {
         const cancel = this.props.onCancel.bind(null, job);
         cancelButtonColumn = <td><CancelButton onClick={cancel}/></td>;
       }
-      const redoLink = "../sparql?" + queryString.stringify({query: job.data.rawQuery});
+      const redoLink = new URL('../sparql', location.href);
+      redoLink.searchParams.append('query', job.data.rawQuery);
+
       return (
         <tr key={job.id}>
           <td><JobStateLabel state={job.state} reason={job.data.reason}/></td>
