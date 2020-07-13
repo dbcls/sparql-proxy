@@ -28,7 +28,7 @@
     "snappy": "^6.2.3",
     "socket.io": "^2.2.0",
     "socket.io-client": "^2.3.0",
-    "sparql-support": "^0.13.1",
+    "sparql-support": "^0.13.2",
     "sparqljs": "^2.2.1",
     "uuid": "^3.3.2",
     "whatwg-fetch": "^3.0.0"
