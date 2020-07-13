@@ -1,5 +1,6 @@
-import uuid from 'uuid';
 import { EventEmitter } from 'events';
+
+import { v4 as uuidv4 } from 'uuid';
 
 import { aborted } from './job.mjs';
 
@@ -10,7 +11,7 @@ class Item extends EventEmitter {
     this.job       = job;
     this.token     = token;
     this.createdAt = new Date();
-    this.id        = uuid.v4();
+    this.id        = uuidv4();
     this.state     = 'waiting';
     this.userData  = {};
 
