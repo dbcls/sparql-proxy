@@ -39,7 +39,7 @@ export default class extends Base {
   }
 
   async purge() {
-    await fs.remove(this.rootDir);
+    await fs.rmdir(this.rootDir, {recursive: true});
   }
 
   getPath(key) {
