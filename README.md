@@ -52,6 +52,20 @@ server {
 }
 ```
 
+If you want to serve `/foo/sparql` as `/sparql`, configure it as follows:
+
+``` nginx
+server {
+  location /foo/ {
+    proxy_pass http://localhost:3000/foo/;
+  }
+
+  location /sparql {
+    proxy_pass http://localhost:3000/foo/sparql;
+  }
+}
+```
+
 ## Configuration
 
 Most configurations are done with environment variables:
