@@ -1,16 +1,17 @@
-import SocketIo from 'socket.io';
 import _fs from 'fs';
+import http from 'http';
+import path from 'path';
+import url from 'url';
+
 import basicAuth from 'basic-auth-connect';
 import bodyParser from 'body-parser';
 import cookie from 'cookie';
 import cors from 'cors';
 import express from 'express';
-import http from 'http';
 import morgan from 'morgan';
 import multer from 'multer';
-import path from 'path';
 import request from 'request';
-import url from 'url';
+import { Server as SocketIoServer } from 'socket.io';
 
 import Job, { ParseError, QueryTypeError, BackendError } from './job.mjs';
 import Queue from './queue.mjs';
@@ -22,7 +23,7 @@ const fs = _fs.promises;
 
   const app    = express();
   const server = http.Server(app);
-  const io     = SocketIo(server, {path: `${process.env.ROOT_PATH || '/'}socket.io`});
+  const io     = new SocketIoServer(server, {path: `${process.env.ROOT_PATH || '/'}socket.io`});
 
   const _passthrough          = process.env.PASSTHROUGH === 'true';
   const _enableQuerySplitting = !_passthrough && process.env.ENABLE_QUERY_SPLITTING === 'true';
