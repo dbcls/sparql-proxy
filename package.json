@@ -37,6 +37,7 @@
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.10",
     "@babel/preset-react": "^7.12.10",
+    "@comunica/actor-init-sparql-file": "^1.18.1",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.2",
     "babel-regenerator-runtime": "^6.5.0",

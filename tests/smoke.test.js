@@ -58,14 +58,12 @@ let backendProcess;
 beforeAll(async () => {
   backendProcess = await new Promise((resolve, reject) => {
     const ps = spawn(
-      'ruby',
-      ['server.rb'],
-      {
-        cwd: 'tests/mock-server',
-        env: Object.assign({}, {
-          PORT: backendPort
-        }, process.env)
-      }
+      'npx',
+      [
+        'comunica-sparql-file-http',
+        '-p', backendPort,
+        'tests/fixtures/hello.ttl'
+      ]
     );
 
     ps.on('exit', () => {
@@ -77,7 +75,7 @@ beforeAll(async () => {
     });
 
     ps.stderr.on('data', data => {
-      if (data.toString().includes('WEBrick::HTTPServer#start')) {
+      if (data.toString().includes(`Server running on http://localhost:${backendPort}/sparql`)) {
         resolve(ps);
       }
     });
