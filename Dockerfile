@@ -12,5 +12,5 @@ USER app
 WORKDIR /app
 COPY --chown=app:app . .
 
-RUN npm ci
+RUN npm ci && npm run build
 CMD npm start

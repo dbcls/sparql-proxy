@@ -22,8 +22,9 @@ SPARQL-proxy is a portable Web application that works as a proxy server for any 
     $ git clone git@github.com:dbcls/sparql-proxy.git
     $ cd sparql-proxy
     $ npm install
+    $ npm run build
 
-(Be patient, `npm install` may take a few minutes)
+(Be patient, `npm install` and `npm run build` may take a few minutes)
 
 Then, start SPARQL-proxy:
 
@@ -35,9 +36,9 @@ Dashboard for administrators is at `http://localhost:3000/admin` .
 
 ### Deploy under a subdirectory
 
-If you want to deploy SPARQL-proxy under a subdirectory (say, `/foo/`), pass the directory via `ROOT_PATH` to both `npm install` and `npm start`:
+If you want to deploy SPARQL-proxy under a subdirectory (say, `/foo/`), pass the directory via `ROOT_PATH` to both `npm build` and `npm start`:
 
-    $ ROOT_PATH=/foo/ npm install
+    $ ROOT_PATH=/foo/ npm run build
     $ ROOT_PATH=/foo/ PORT=3000 SPARQL_BACKEND=http://example.com/sparql ADMIN_USER=admin ADMIN_PASSWORD=password npm start
 
 (Note that `ROOT_PATH` must end with `/`.)

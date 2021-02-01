@@ -55,7 +55,6 @@
   },
   "scripts": {
     "build": "webpack",
-    "postinstall": "npm run build",
     "start": "node --experimental-modules src/server.mjs",
     "lint": "eslint src/**/*.mjs client/**/*.jsx",
     "test": "npm run lint && jest"
