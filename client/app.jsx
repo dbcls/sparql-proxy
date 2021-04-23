@@ -7,8 +7,12 @@ import 'babel-regenerator-runtime';
 
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
+import "codemirror/addon/fold/foldgutter.css";
+import "codemirror/addon/fold/foldcode";
+import "codemirror/addon/fold/foldgutter";
 import 'sparql-support/src/sparql';
 import 'sparql-support/src/sparql-support';
+import 'sparql-support/src/sparql-fold';
 import 'sparql-support/css/base.css';
 
 class Navbar extends React.Component {
@@ -47,7 +51,10 @@ class Editor extends React.Component {
       extraKeys: {
         "Tab": () => false,
         "Ctrl-Space": () => false,
-      }
+        "Ctrl-Q": (cm) => { cm.foldCode(cm.getCursor()) },
+      },
+      foldGutter: true,
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
     });
 
     const query = this.props.query;
