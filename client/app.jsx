@@ -7,9 +7,10 @@ import 'babel-regenerator-runtime';
 
 import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
-import "codemirror/addon/fold/foldgutter.css";
-import "codemirror/addon/fold/foldcode";
-import "codemirror/addon/fold/foldgutter";
+import 'codemirror/addon/fold/foldgutter.css';
+import 'codemirror/addon/fold/foldcode';
+import 'codemirror/addon/fold/foldgutter';
+import 'codemirror/addon/search/match-highlighter.js';
 import 'sparql-support/src/sparql';
 import 'sparql-support/src/sparql-support';
 import 'sparql-support/src/sparql-fold';
@@ -54,7 +55,8 @@ class Editor extends React.Component {
         "Ctrl-Q": (cm) => { cm.foldCode(cm.getCursor()) },
       },
       foldGutter: true,
-      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+      highlightSelectionMatches: {showToken: /\w/}
     });
 
     const query = this.props.query;
