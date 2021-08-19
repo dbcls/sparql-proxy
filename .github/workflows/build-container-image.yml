@@ -37,6 +37,7 @@ jobs:
             type=ref,event=tag
             type=ref,event=pr
             type=sha,prefix=snapshot-
+          flavor: latest=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
