@@ -6,6 +6,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js
@@ -15,3 +24,5 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
+        env:
+          REDIS_URL: redis://redis:6379
