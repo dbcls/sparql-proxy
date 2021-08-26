@@ -1,10 +1,12 @@
 import fetch from "node-fetch";
 import { spawn } from "child_process";
 
+let proxyProcess;
+
 async function runProxy(env, cb) {
   const port = 9999;
 
-  const proxyProcess = await new Promise((resolve, reject) => {
+  proxyProcess = await new Promise((resolve, reject) => {
     const ps = spawn("node", ["--experimental-modules", "src/server.mjs"], {
       env: Object.assign(
         {},
@@ -15,6 +17,7 @@ async function runProxy(env, cb) {
         env,
         process.env
       ),
+      detached: true,
     });
 
     ps.on("exit", () => {
@@ -38,19 +41,21 @@ async function runProxy(env, cb) {
 
   const root = new URL(`http://localhost:${port}`);
 
-  try {
-    await cb({
-      root,
-      endpoint: new URL("/sparql", root),
-    });
-  } finally {
-    await new Promise((resolve) => {
-      proxyProcess.removeAllListeners("exit");
-      proxyProcess.on("exit", resolve);
-      proxyProcess.kill();
-    });
-  }
+  await cb({
+    root,
+    endpoint: new URL("/sparql", root),
+  });
 }
+
+afterEach((done) => {
+  if (!proxyProcess) {
+    done();
+    return;
+  }
+  proxyProcess.removeAllListeners("exit");
+  proxyProcess.on("exit", done);
+  process.kill(-proxyProcess.pid, 9);
+});
 
 const backendPort = 4568;
 
