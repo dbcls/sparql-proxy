@@ -58,12 +58,16 @@ let backendProcess;
 
 beforeAll(async () => {
   backendProcess = await new Promise((resolve, reject) => {
-    const ps = spawn("npx", [
-      "comunica-sparql-file-http",
-      "-p",
-      backendPort,
-      "tests/fixtures/hello.ttl",
-    ]);
+    const ps = spawn(
+      "npx",
+      [
+        "comunica-sparql-file-http",
+        "-p",
+        backendPort,
+        "tests/fixtures/hello.ttl",
+      ],
+      { detached: true }
+    );
 
     ps.on("exit", () => {
       reject("unexpected endpoint exit");
@@ -94,7 +98,7 @@ afterAll(async () => {
 
     backendProcess.removeAllListeners("exit");
     backendProcess.on("exit", resolve);
-    backendProcess.kill();
+    process.kill(-backendProcess.pid);
   });
 });
 
