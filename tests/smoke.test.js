@@ -83,11 +83,10 @@ beforeAll(async () => {
     });
 
     ps.stderr.on("data", (data) => {
-      if (
-        data
-          .toString()
-          .includes(`Server running on http://localhost:${backendPort}/sparql`)
-      ) {
+      const re = new RegExp(
+        `Server worker \\(\\d+\\) running on http://localhost:${backendPort}/sparql`
+      );
+      if (re.test(data.toString())) {
         resolve(ps);
       }
     });
