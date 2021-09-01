@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 import "bootstrap/scss/bootstrap.scss";
 import "./app.scss";
@@ -16,17 +16,15 @@ import "sparql-support/src/sparql-support";
 import "sparql-support/src/sparql-fold";
 import "sparql-support/css/base.css";
 
-class Navbar extends React.Component {
-  render() {
-    return (
-      <nav className="navbar fixed-top navbar-dark bg-dark">
-        <div className="container-fluid">
-          <span className="navbar-brand fg-dark">SPARQL Proxy</span>
-        </div>
-      </nav>
-    );
-  }
-}
+const Navbar = () => {
+  return (
+    <nav className="navbar fixed-top navbar-dark bg-dark">
+      <div className="container-fluid">
+        <span className="navbar-brand fg-dark">SPARQL Proxy</span>
+      </div>
+    </nav>
+  );
+};
 
 class Editor extends React.Component {
   render() {
@@ -101,20 +99,18 @@ class QueryBox extends React.Component {
   }
 }
 
-class MainComponent extends React.Component {
-  constructor() {
-    super(...arguments);
-    this.query = new URLSearchParams(window.location.search).get("query");
-  }
+const App = () => {
+  const [query, setQuery] = useState(null);
+  useEffect(() => {
+    setQuery(new URLSearchParams(window.location.search).get("query"));
+  }, []);
 
-  render() {
-    return (
-      <div>
-        <Navbar />
-        <QueryBox query={this.query} />
-      </div>
-    );
-  }
-}
+  return (
+    <>
+      <Navbar />
+      <QueryBox query={query} />
+    </>
+  );
+};
 
-ReactDOM.render(<MainComponent />, document.getElementById("content"));
+ReactDOM.render(<App />, document.getElementById("content"));
