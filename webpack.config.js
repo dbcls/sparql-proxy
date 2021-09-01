@@ -1,6 +1,9 @@
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import path from 'path';
 
-module.exports = {
+const dirname = path.dirname(new URL(import.meta.url).pathname)
+
+const config = {
   mode: 'development',
   entry: {
     app: ['whatwg-fetch', './client/app.jsx'],
@@ -8,7 +11,7 @@ module.exports = {
   },
   output: {
     filename: '[name]-[contenthash].js',
-    path: `${__dirname}/public`,
+    path: `${dirname}/public`,
     publicPath: process.env.ROOT_PATH || '/'
   },
   module: {
@@ -53,3 +56,5 @@ module.exports = {
     })
   ]
 };
+
+export default config;
