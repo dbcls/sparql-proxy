@@ -17,7 +17,7 @@
     "moment": "^2.29.1",
     "morgan": "^1.10.0",
     "multer": "^1.4.2",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.0.0",
     "node-sass": "^5.0.0",
     "query-string": "^7.0.1",
     "react": "^17.0.1",
@@ -57,9 +57,10 @@
     "build": "webpack",
     "start": "node --experimental-modules src/server.mjs",
     "lint": "eslint src/**/*.mjs client/**/*.jsx",
-    "test": "npm run lint && jest"
+    "test": "npm run lint && NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "engines": {
     "node": "12.x"
-  }
+  },
+  "type": "module"
 }
