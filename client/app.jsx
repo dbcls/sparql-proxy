@@ -20,7 +20,9 @@ class Navbar extends React.Component {
   render() {
     return (
       <nav className="navbar fixed-top navbar-dark bg-dark">
-        <span className="navbar-brand fg-dark">SPARQL Proxy</span>
+        <div className="container-fluid">
+          <span className="navbar-brand fg-dark">SPARQL Proxy</span>
+        </div>
       </nav>
     );
   }
@@ -89,7 +91,7 @@ class QueryBox extends React.Component {
 
           <button className="btn btn-primary my-2">
             Run Query
-            <span className="ml-1 small" style={{ pointerEvents: "none" }}>
+            <span className="ms-1 small" style={{ pointerEvents: "none" }}>
               (Ctrl+Enter)
             </span>
           </button>
