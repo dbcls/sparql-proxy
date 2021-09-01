@@ -1,20 +1,20 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import 'bootstrap/scss/bootstrap.scss';
-import './app.scss';
-import 'font-awesome/css/font-awesome.css';
-import 'babel-regenerator-runtime';
+import React from "react";
+import ReactDOM from "react-dom";
+import "bootstrap/scss/bootstrap.scss";
+import "./app.scss";
+import "font-awesome/css/font-awesome.css";
+import "babel-regenerator-runtime";
 
-import CodeMirror from 'codemirror';
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/addon/fold/foldgutter.css';
-import 'codemirror/addon/fold/foldcode';
-import 'codemirror/addon/fold/foldgutter';
-import 'codemirror/addon/search/match-highlighter.js';
-import 'sparql-support/src/sparql';
-import 'sparql-support/src/sparql-support';
-import 'sparql-support/src/sparql-fold';
-import 'sparql-support/css/base.css';
+import CodeMirror from "codemirror";
+import "codemirror/lib/codemirror.css";
+import "codemirror/addon/fold/foldgutter.css";
+import "codemirror/addon/fold/foldcode";
+import "codemirror/addon/fold/foldgutter";
+import "codemirror/addon/search/match-highlighter.js";
+import "sparql-support/src/sparql";
+import "sparql-support/src/sparql-support";
+import "sparql-support/src/sparql-fold";
+import "sparql-support/css/base.css";
 
 class Navbar extends React.Component {
   render() {
@@ -30,12 +30,15 @@ class Editor extends React.Component {
   render() {
     const textareaStyle = {
       width: "100%",
-      height: "400px"
+      height: "400px",
     };
 
     return (
       <div>
-        <textarea ref={ref => this.textareaNode = ref} style={textareaStyle}></textarea>
+        <textarea
+          ref={(ref) => (this.textareaNode = ref)}
+          style={textareaStyle}
+        ></textarea>
       </div>
     );
   }
@@ -46,17 +49,19 @@ class Editor extends React.Component {
       matchBrackets: true,
       autoCloseBrackets: true,
       lineNumbers: true,
-      sparqlSupportQueries: 'query', // Tabbed interface
-      sparqlSupportAutoComp: 'query', // Auto completion
-      sparqlSupportInnerMode: 'query', // Inner mode
+      sparqlSupportQueries: "query", // Tabbed interface
+      sparqlSupportAutoComp: "query", // Auto completion
+      sparqlSupportInnerMode: "query", // Inner mode
       extraKeys: {
-        "Tab": () => false,
+        Tab: () => false,
         "Ctrl-Space": () => false,
-        "Ctrl-Q": (cm) => { cm.foldCode(cm.getCursor()) },
+        "Ctrl-Q": (cm) => {
+          cm.foldCode(cm.getCursor());
+        },
       },
       foldGutter: true,
       gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-      highlightSelectionMatches: {showToken: /\w/}
+      highlightSelectionMatches: { showToken: /\w/ },
     });
 
     const query = this.props.query;
@@ -66,7 +71,7 @@ class Editor extends React.Component {
     }
 
     // force sparql-support to synchronize query buffers
-    codeMirror.getWrapperElement().dispatchEvent(new KeyboardEvent('keydown'));
+    codeMirror.getWrapperElement().dispatchEvent(new KeyboardEvent("keydown"));
   }
 }
 
@@ -84,7 +89,9 @@ class QueryBox extends React.Component {
 
           <button className="btn btn-primary my-2">
             Run Query
-            <span className="ml-1 small" style={{pointerEvents: 'none'}}>(Ctrl+Enter)</span>
+            <span className="ml-1 small" style={{ pointerEvents: "none" }}>
+              (Ctrl+Enter)
+            </span>
           </button>
         </form>
       </div>
@@ -95,7 +102,7 @@ class QueryBox extends React.Component {
 class MainComponent extends React.Component {
   constructor() {
     super(...arguments);
-    this.query = new URLSearchParams(window.location.search).get('query');
+    this.query = new URLSearchParams(window.location.search).get("query");
   }
 
   render() {
@@ -108,7 +115,4 @@ class MainComponent extends React.Component {
   }
 }
 
-ReactDOM.render(
-  <MainComponent />,
-  document.getElementById('content')
-);
+ReactDOM.render(<MainComponent />, document.getElementById("content"));
