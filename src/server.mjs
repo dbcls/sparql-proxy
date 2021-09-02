@@ -1,54 +1,59 @@
-import _fs from 'fs';
-import http from 'http';
-import path from 'path';
-import url from 'url';
+import _fs from "fs";
+import http from "http";
+import path from "path";
+import url from "url";
 
-import basicAuth from 'basic-auth-connect';
-import bodyParser from 'body-parser';
-import cookie from 'cookie';
-import cors from 'cors';
-import express from 'express';
-import morgan from 'morgan';
-import multer from 'multer';
-import request from 'request';
-import { Server as SocketIoServer } from 'socket.io';
+import basicAuth from "basic-auth-connect";
+import bodyParser from "body-parser";
+import cookie from "cookie";
+import cors from "cors";
+import express from "express";
+import morgan from "morgan";
+import multer from "multer";
+import request from "request";
+import { Server as SocketIoServer } from "socket.io";
 
-import Job, { ParseError, QueryTypeError, BackendError } from './job.mjs';
-import Queue from './queue.mjs';
+import Job, { ParseError, QueryTypeError, BackendError } from "./job.mjs";
+import Queue from "./queue.mjs";
 
 const fs = _fs.promises;
 
 (async () => {
   const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
-  const app    = express();
+  const app = express();
   const server = http.Server(app);
-  const io     = new SocketIoServer(server, {path: `${process.env.ROOT_PATH || '/'}socket.io`});
+  const io = new SocketIoServer(server, {
+    path: `${process.env.ROOT_PATH || "/"}socket.io`,
+  });
 
-  const _passthrough          = process.env.PASSTHROUGH === 'true';
-  const _enableQuerySplitting = !_passthrough && process.env.ENABLE_QUERY_SPLITTING === 'true';
+  const _passthrough = process.env.PASSTHROUGH === "true";
+  const _enableQuerySplitting =
+    !_passthrough && process.env.ENABLE_QUERY_SPLITTING === "true";
 
   const config = Object.freeze({
-    adminPassword:         process.env.ADMIN_PASSWORD || 'password',
-    adminUser:             process.env.ADMIN_USER || 'admin',
-    backend:               process.env.SPARQL_BACKEND,
-    cacheStore:            process.env.CACHE_STORE || 'null',
-    compressor:            process.env.COMPRESSOR || 'raw',
-    durationToKeepOldJobs: Number(process.env.DURATION_TO_KEEP_OLD_JOBS || 5 * 60 * 1000),
-    enableQuerySplitting:  _enableQuerySplitting,
-    jobTimeout:            Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
-    maxChunkLimit:         Number(process.env.MAX_CHUNK_LIMIT || 1000),
-    maxConcurrency:        Number(process.env.MAX_CONCURRENCY || 1),
-    maxLimit:              Number(process.env.MAX_LIMIT || 10000),
-    maxWaiting:            Number(process.env.MAX_WAITING || Infinity),
-    passthrough:           _passthrough,
-    port:                  Number(process.env.PORT || 3000),
-    queryLogPath:          process.env.QUERY_LOG_PATH,
-    trustProxy:            process.env.TRUST_PROXY || 'false',
+    adminPassword: process.env.ADMIN_PASSWORD || "password",
+    adminUser: process.env.ADMIN_USER || "admin",
+    backend: process.env.SPARQL_BACKEND,
+    cacheStore: process.env.CACHE_STORE || "null",
+    compressor: process.env.COMPRESSOR || "raw",
+    durationToKeepOldJobs: Number(
+      process.env.DURATION_TO_KEEP_OLD_JOBS || 5 * 60 * 1000
+    ),
+    enableQuerySplitting: _enableQuerySplitting,
+    jobTimeout: Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
+    maxChunkLimit: Number(process.env.MAX_CHUNK_LIMIT || 1000),
+    maxConcurrency: Number(process.env.MAX_CONCURRENCY || 1),
+    maxLimit: Number(process.env.MAX_LIMIT || 10000),
+    maxWaiting: Number(process.env.MAX_WAITING || Infinity),
+    passthrough: _passthrough,
+    port: Number(process.env.PORT || 3000),
+    queryLogPath: process.env.QUERY_LOG_PATH,
+    trustProxy: process.env.TRUST_PROXY || "false",
   });
 
   const secret = `${config.adminUser}:${config.adminPassword}`;
-  const cookieKey = 'sparql-proxy-token';
+  const cookieKey = "sparql-proxy-token";
 
   const queue = new Queue(config.maxWaiting, config.maxConcurrency);
   setInterval(() => {
@@ -57,34 +62,43 @@ const fs = _fs.promises;
   }, 5 * 1000);
 
   if (config.passthrough) {
-    console.log('Passthrough mode is enabled. Query filtering and splitting are disabled.');
+    console.log(
+      "Passthrough mode is enabled. Query filtering and splitting are disabled."
+    );
   }
 
-  console.log(`cache store: ${config.cacheStore} (compressor: ${config.compressor})`);
+  console.log(
+    `cache store: ${config.cacheStore} (compressor: ${config.compressor})`
+  );
 
-  const compressor = new (await import(`./compressor/${config.compressor}.mjs`)).default();
-  const cache      = new (await import(`./cache/${config.cacheStore}.mjs`)).default(compressor, process.env);
+  const compressor = new (
+    await import(`./compressor/${config.compressor}.mjs`)
+  ).default();
+  const cache = new (await import(`./cache/${config.cacheStore}.mjs`)).default(
+    compressor,
+    process.env
+  );
 
-  app.use(morgan('combined'));
-  app.use(bodyParser.urlencoded({extended: false}));
-  app.use(bodyParser.text({type: 'application/sparql-query'}));
+  app.use(morgan("combined"));
+  app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(bodyParser.text({ type: "application/sparql-query" }));
 
-  app.enable('strict routing');
+  app.enable("strict routing");
 
-  if (config.trustProxy === 'true') {
-    app.enable('trust proxy');
+  if (config.trustProxy === "true") {
+    app.enable("trust proxy");
   }
 
   const router = express.Router();
 
-  router.get('/', (req, res) => {
+  router.get("/", (req, res) => {
     res.redirect(`${req.baseUrl}/sparql`);
   });
 
-  router.all('/sparql', cors(), multer().array(), async (req, res, next) => {
-    if (req.method == 'GET' && req.accepts('html')) {
+  router.all("/sparql", cors(), multer().array(), async (req, res, next) => {
+    if (req.method == "GET" && req.accepts("html")) {
       next();
-    } else if (req.method === 'GET' && Object.keys(req.query).length === 0) {
+    } else if (req.method === "GET" && Object.keys(req.query).length === 0) {
       await returnServiceDescription(req, res);
     } else {
       await executeQuery(req, res);
@@ -93,8 +107,8 @@ const fs = _fs.promises;
 
   function returnServiceDescription(req, res) {
     const typeToExt = {
-      'application/rdf+xml': 'rdf',
-      'text/turtle':         'ttl'
+      "application/rdf+xml": "rdf",
+      "text/turtle": "ttl",
     };
 
     const matchedType = req.accepts(Object.keys(typeToExt));
@@ -103,71 +117,77 @@ const fs = _fs.promises;
       const ext = typeToExt[matchedType];
 
       if (fs.pathExistsSync(`${__dirname}/../files/description.${ext}`)) {
-        res.type(matchedType).sendFile(`files/description.${ext}`, {root: `${__dirname}/..`});
+        res
+          .type(matchedType)
+          .sendFile(`files/description.${ext}`, { root: `${__dirname}/..` });
         return;
       }
     }
 
-    const unsafeHeaders = [
-      'authorization',
-      'cookie',
-      'host',
-    ];
+    const unsafeHeaders = ["authorization", "cookie", "host"];
 
     const headers = Object.entries(req.headers).reduce((acc, [k, v]) => {
-      return unsafeHeaders.includes(k) ? acc : Object.assign(acc, {[k]: v});
+      return unsafeHeaders.includes(k) ? acc : Object.assign(acc, { [k]: v });
     }, {});
 
     return new Promise((resolve, reject) => {
       request({
         url: config.backend,
         method: req.method,
-        headers
-      }).pipe(res).on('finish', resolve).on('error', reject);
+        headers,
+      })
+        .pipe(res)
+        .on("finish", resolve)
+        .on("error", reject);
     });
   }
 
   async function executeQuery(req, res) {
     const startedAt = new Date();
-    const log = function(log) {
-      if (!config.queryLogPath) { return; }
+    const log = function (log) {
+      if (!config.queryLogPath) {
+        return;
+      }
       const doneAt = new Date();
-      const data = Object.assign({
-        'started-at': startedAt,
-        'done-at': doneAt,
-        'elapsed': doneAt - startedAt,
-        'ip': req.ip,
-      }, log);
+      const data = Object.assign(
+        {
+          "started-at": startedAt,
+          "done-at": doneAt,
+          elapsed: doneAt - startedAt,
+          ip: req.ip,
+        },
+        log
+      );
       return fs.appendFile(config.queryLogPath, JSON.stringify(data) + "\n");
     };
 
     let query;
 
     switch (req.method) {
-      case 'GET':
+      case "GET":
         query = req.query.query;
         break;
-      case 'POST':
-        if (req.is('urlencoded')) {
+      case "POST":
+        if (req.is("urlencoded")) {
           query = req.body.query;
-        } else if (req.is('application/sparql-query')) {
+        } else if (req.is("application/sparql-query")) {
           query = req.body;
         } else {
-          res.status(415).send('Unsupported Media Type');
+          res.status(415).send("Unsupported Media Type");
           return;
         }
 
         break;
-      case 'OPTIONS':
+      case "OPTIONS":
         res.status(200);
         return;
       default:
-        res.status(405).send('Method Not Allowed');
+        res.status(405).send("Method Not Allowed");
         return;
     }
 
     if (!query) {
-      res.status(400).send({message: 'Query is required'});
+      res.status(400).send({ message: "Query is required" });
       return;
     }
 
@@ -175,7 +195,9 @@ const fs = _fs.promises;
     const job = new Job({
       backend: config.backend,
       rawQuery: query,
-      accept: config.enableQuerySplitting ? 'application/sparql-results+json' : req.headers.accept,
+      accept: config.enableQuerySplitting
+        ? "application/sparql-results+json"
+        : req.headers.accept,
       timeout: config.jobTimeout,
       ip: req.ip,
       enableQuerySplitting: config.enableQuerySplitting,
@@ -189,57 +211,72 @@ const fs = _fs.promises;
     try {
       const result = await queue.enqueue(job, token);
 
-      res.header('Content-Type', result.contentType);
-      res.header('X-Cache', result.cached ? 'hit' : 'miss');
+      if (result.headers) {
+        for (let key in result.headers) {
+          if (key.startsWith("x-sparql-")) {
+            res.header(key, result.headers[key]);
+          }
+        }
+      }
+
+      res.header("Content-Type", result.contentType);
+      res.header("X-Cache", result.cached ? "hit" : "miss");
       res.send(result.body);
       log({
         query,
-        'cache-hit': result.cached,
-        'response': { 'content-type': result.contentType, 'body': result.body }
+        "cache-hit": result.cached,
+        response: { "content-type": result.contentType, body: result.body },
       });
     } catch (e) {
-      console.log('ERROR:', e);
+      console.log("ERROR:", e);
 
       if (e instanceof ParseError) {
-        console.log('==== raw query (before splitting preamble)');
+        console.log("==== raw query (before splitting preamble)");
         console.log(e.query);
-        console.log('====');
+        console.log("====");
 
-        res.status(400).send({message: e.message});
+        res.status(400).send({ message: e.message });
       } else if (e instanceof QueryTypeError) {
-        res.status(400).send({message: e.message});
+        res.status(400).send({ message: e.message });
       } else if (e instanceof BackendError) {
-        res.status(e.response.statusCode).contentType(e.response.headers['content-type']).send(e.body);
+        res
+          .status(e.response.statusCode)
+          .contentType(e.response.headers["content-type"])
+          .send(e.body);
       } else {
-        res.status(e.statusCode || 500).send(e.data || 'ERROR');
+        res.status(e.statusCode || 500).send(e.data || "ERROR");
       }
     }
   }
 
-  router.get('/jobs/:token', (req, res) => {
+  router.get("/jobs/:token", (req, res) => {
     const js = queue.jobStatus(req.params.token);
     if (!js) {
-      res.status(404).send('Job not found');
+      res.status(404).send("Job not found");
       return;
     }
     res.send(js);
   });
 
-  router.get('/admin', basicAuth(config.adminUser, config.adminPassword), (req, res, next) => {
-    res.cookie(cookieKey, secret);
-    next();
-  });
+  router.get(
+    "/admin",
+    basicAuth(config.adminUser, config.adminPassword),
+    (req, res, next) => {
+      res.cookie(cookieKey, secret);
+      next();
+    }
+  );
 
-  router.use(express.static('public', {extensions: ['html']}));
+  router.use(express.static("public", { extensions: ["html"] }));
 
-  app.use(process.env.ROOT_PATH || '/', router);
+  app.use(process.env.ROOT_PATH || "/", router);
 
   if (!config.backend) {
-    console.log('you must specify backend');
+    console.log("you must specify backend");
     process.exit(1);
   }
 
-  console.log('backend is', config.backend);
+  console.log("backend is", config.backend);
 
   io.use((socket, next) => {
     const cookies = cookie.parse(socket.request.headers.cookie);
@@ -248,39 +285,39 @@ const fs = _fs.promises;
       next();
     } else {
       console.log(`${socket.id} socket.io authentication failed`);
-      next(new Error('Authentication error'));
+      next(new Error("Authentication error"));
     }
   });
 
-  io.on('connection', (socket) => {
+  io.on("connection", (socket) => {
     console.log(`${socket.id} connected`);
-    socket.emit('state', queue.state());
+    socket.emit("state", queue.state());
 
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
       console.log(`${socket.id} disconnected`);
     });
 
-    socket.on('purge_cache', async () => {
+    socket.on("purge_cache", async () => {
       await cache.purge();
-      console.log('purged');
+      console.log("purged");
     });
 
-    socket.on('cancel_job', (data) => {
+    socket.on("cancel_job", (data) => {
       const r = queue.cancel(data.id);
       console.log(`${data.id} cancel request; success=${r}`);
     });
 
-    socket.on('error', (error) => {
+    socket.on("error", (error) => {
       console.log(`socket error: ${error}`);
     });
   });
 
-  queue.on('state', (state) => {
-    io.emit('state', state);
+  queue.on("state", (state) => {
+    io.emit("state", state);
   });
 
   server.listen(config.port, () => {
     const port = server.address().port;
-    console.log('sparql-proxy listening at', port);
+    console.log("sparql-proxy listening at", port);
   });
 })();

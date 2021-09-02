@@ -1,15 +1,15 @@
-import Sparql from 'sparqljs';
-import crypto from 'crypto';
-import request from 'request';
-import { EventEmitter } from 'events';
+import Sparql from "sparqljs";
+import crypto from "crypto";
+import request from "request";
+import { EventEmitter } from "events";
 
-import { splitPreamble } from './preamble.mjs';
+import { splitPreamble } from "./preamble.mjs";
 
-const {Parser: SparqlParser, Generator: SparqlGenerator} = Sparql;
+const { Parser: SparqlParser, Generator: SparqlGenerator } = Sparql;
 
 export class ParseError extends Error {
   constructor(query, cause) {
-    super('query parse failed');
+    super("query parse failed");
 
     this.query = query;
     this.cause = cause;
@@ -29,7 +29,7 @@ export class BackendError extends Error {
     super(`unexpected response from backend; ${response.statusCode}`);
 
     this.response = response;
-    this.body     = body;
+    this.body = body;
   }
 }
 
@@ -48,7 +48,7 @@ function post(options) {
       }
     });
 
-    req.on('abort', () => {
+    req.on("abort", () => {
       if (userRequestedAbort) {
         reject(aborted);
       }
@@ -61,7 +61,7 @@ function post(options) {
     abort() {
       userRequestedAbort = true;
       req.abort();
-    }
+    },
   };
 }
 
@@ -70,11 +70,11 @@ function isSuccessful(response) {
 }
 
 function isSelectQuery(parsedQuery) {
-  return parsedQuery.type === 'query' && parsedQuery.queryType === 'SELECT';
+  return parsedQuery.type === "query" && parsedQuery.queryType === "SELECT";
 }
 
 function parseQuery(query) {
-  const {preamble, compatibleQuery} = splitPreamble(query);
+  const { preamble, compatibleQuery } = splitPreamble(query);
 
   const parser = new SparqlParser();
   parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
@@ -82,7 +82,7 @@ function parseQuery(query) {
   try {
     return {
       preamble,
-      parsedQuery: parser.parse(compatibleQuery)
+      parsedQuery: parser.parse(compatibleQuery),
     };
   } catch (e) {
     throw new ParseError(query, e);
@@ -93,31 +93,31 @@ export default class extends EventEmitter {
   constructor(params) {
     super();
 
-    this.backend              = params.backend;
-    this.accept               = params.accept;
-    this.timeout              = params.timeout;
-    this.rawQuery             = params.rawQuery;
+    this.backend = params.backend;
+    this.accept = params.accept;
+    this.timeout = params.timeout;
+    this.rawQuery = params.rawQuery;
     this.enableQuerySplitting = params.enableQuerySplitting;
-    this.passthrough          = params.passthrough;
-    this.maxLimit             = params.maxLimit;
-    this.maxChunkLimit        = params.maxChunkLimit;
-    this.compressorType       = params.compressorType;
-    this.cache                = params.cache;
+    this.passthrough = params.passthrough;
+    this.maxLimit = params.maxLimit;
+    this.maxChunkLimit = params.maxChunkLimit;
+    this.compressorType = params.compressorType;
+    this.cache = params.cache;
 
     this.data = {
-      ip:       params.ip,
+      ip: params.ip,
       rawQuery: params.rawQuery,
-      reason:   null
+      reason: null,
     };
   }
 
   cancel() {
-    this.emit('abort');
+    this.emit("abort");
   }
 
   setReason(reason) {
     this.data.reason = reason;
-    this.emit('update');
+    this.emit("update");
   }
 
   async run() {
@@ -127,22 +127,29 @@ export default class extends EventEmitter {
       });
     }
 
-    const {preamble, parsedQuery} = parseQuery(this.rawQuery);
+    const { preamble, parsedQuery } = parseQuery(this.rawQuery);
 
-    if (parsedQuery.type !== 'query') {
+    if (parsedQuery.type !== "query") {
       throw new QueryTypeError(parsedQuery.type);
     }
 
-    const normalizedQuery = preamble + new SparqlGenerator().stringify(parsedQuery);
+    const normalizedQuery =
+      preamble + new SparqlGenerator().stringify(parsedQuery);
 
     return await this.tryCache(this.cacheKey(normalizedQuery), async () => {
       const limit = Math.min(parsedQuery.limit || this.maxLimit, this.maxLimit);
 
       if (this.enableQuerySplitting && isSelectQuery(parsedQuery)) {
-        const chunkLimit  = Math.min(limit, this.maxChunkLimit);
+        const chunkLimit = Math.min(limit, this.maxChunkLimit);
         const chunkOffset = parsedQuery.offset || 0;
 
-        return await this._reqSplit(preamble, parsedQuery, limit, chunkLimit, chunkOffset);
+        return await this._reqSplit(
+          preamble,
+          parsedQuery,
+          limit,
+          chunkLimit,
+          chunkOffset
+        );
       } else {
         return await this._reqNormal(preamble, parsedQuery, limit);
       }
@@ -150,38 +157,53 @@ export default class extends EventEmitter {
   }
 
   async _reqPassthrough(query) {
-    const {response, body} = await this.postQuery(query);
+    const { response, body } = await this.postQuery(query);
 
     return {
-      contentType: response.headers['content-type'],
-      body
+      contentType: response.headers["content-type"],
+      headers: response.headers,
+      body,
     };
   }
 
   async _reqNormal(preamble, parsedQuery, limit) {
-    const override        = isSelectQuery(parsedQuery) ? {limit} : {};
-    const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, parsedQuery, override));
-    const query           = preamble + compatibleQuery;
+    const override = isSelectQuery(parsedQuery) ? { limit } : {};
+    const compatibleQuery = new SparqlGenerator().stringify(
+      Object.assign({}, parsedQuery, override)
+    );
+    const query = preamble + compatibleQuery;
 
-    const {response, body} = await this.postQuery(query);
+    const { response, body } = await this.postQuery(query);
 
     return {
-      contentType: response.headers['content-type'],
-      body
+      contentType: response.headers["content-type"],
+      headers: response.headers,
+      body,
     };
   }
 
-  async _reqSplit(preamble, parsedQuery, limit, chunkLimit, chunkOffset, acc = null) {
-    const compatibleQuery = new SparqlGenerator().stringify(Object.assign({}, parsedQuery, {
-      limit:  chunkLimit,
-      offset: chunkOffset
-    }));
+  async _reqSplit(
+    preamble,
+    parsedQuery,
+    limit,
+    chunkLimit,
+    chunkOffset,
+    acc = null
+  ) {
+    const compatibleQuery = new SparqlGenerator().stringify(
+      Object.assign({}, parsedQuery, {
+        limit: chunkLimit,
+        offset: chunkOffset,
+      })
+    );
 
     const query = preamble + compatibleQuery;
 
-    console.log(`REQ limit=${limit}, chunkLimit=${chunkLimit}, chunkOffset=${chunkOffset}`);
+    console.log(
+      `REQ limit=${limit}, chunkLimit=${chunkLimit}, chunkOffset=${chunkOffset}`
+    );
 
-    const {response, body} = await this.postQuery(query, {json: true});
+    const { response, body } = await this.postQuery(query, { json: true });
 
     const bindings = body.results.bindings;
 
@@ -189,44 +211,51 @@ export default class extends EventEmitter {
       acc.body.results.bindings.push(...bindings);
     } else {
       acc = {
-        contentType: response.headers['content-type'],
-        body
+        contentType: response.headers["content-type"],
+        body,
       };
     }
 
     const numReturned = bindings.length;
-    const nextOffset  = chunkOffset + chunkLimit;
+    const nextOffset = chunkOffset + chunkLimit;
 
-    console.log('RET', numReturned);
+    console.log("RET", numReturned);
 
     if (nextOffset < limit && numReturned >= chunkLimit) {
-      return await this._reqSplit(preamble, parsedQuery, limit, chunkLimit, nextOffset, acc);
+      return await this._reqSplit(
+        preamble,
+        parsedQuery,
+        limit,
+        chunkLimit,
+        nextOffset,
+        acc
+      );
     } else {
       return acc;
     }
   }
 
-  async postQuery(query, {json = false} = {}) {
-    const {promise, abort} = post({
+  async postQuery(query, { json = false } = {}) {
+    const { promise, abort } = post({
       uri: this.backend,
-      form: {query},
+      form: { query },
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept':       this.accept
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: this.accept,
       },
       json,
-      timeout: this.timeout
+      timeout: this.timeout,
     });
 
-    this.on('abort', abort);
+    this.on("abort", abort);
 
-    const {response, body} = await promise;
+    const { response, body } = await promise;
 
     if (!isSuccessful(response)) {
       throw new BackendError(response, body);
     }
 
-    return {response, body};
+    return { response, body };
   }
 
   async tryCache(key, ifnone) {
@@ -235,11 +264,11 @@ export default class extends EventEmitter {
     try {
       cached = await this.cache.get(key);
     } catch (e) {
-      console.log('ERROR: in cache get:', e);
+      console.log("ERROR: in cache get:", e);
     }
 
     if (cached) {
-      return Object.assign(cached, {cached: true});
+      return Object.assign(cached, { cached: true });
     }
 
     const obj = await ifnone();
@@ -247,14 +276,19 @@ export default class extends EventEmitter {
     try {
       await this.cache.put(key, obj);
     } catch (e) {
-      console.log('ERROR: in cache put:', e);
+      console.log("ERROR: in cache put:", e);
     }
 
-    return Object.assign(obj, {cached: false});
+    return Object.assign(obj, { cached: false });
   }
 
   cacheKey(query) {
-    const digest = crypto.createHash('md5').update(query).update("\0").update(this.accept || '').digest('hex');
+    const digest = crypto
+      .createHash("md5")
+      .update(query)
+      .update("\0")
+      .update(this.accept || "")
+      .digest("hex");
 
     return `${digest}.${this.compressorType}`;
   }
