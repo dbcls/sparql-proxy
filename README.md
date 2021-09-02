@@ -11,7 +11,7 @@ SPARQL-proxy is a portable Web application that works as a proxy server for any 
 
 ## Docker
 
-    $ docker run -p 8080:3000 -e SPARQL_BACKEND=http://example.com/sparql dbcls/sparql-proxy
+    $ docker run -p 8080:3000 -e SPARQL_BACKEND=http://example.com/sparql ghcr.io/dbcls/sparql-proxy
 
 ## Prerequisites
 
