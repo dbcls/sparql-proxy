@@ -223,3 +223,10 @@ Use `files/description.ttl` for `text/turtle` and `files/description.rdf` for `a
 NOTE: If you're running `sparql-proxy` within Docker, you may want to use `-v` option for `docker` command to make the files accessible from the inside of the container:
 
     $ docker run -p 8080:3000 -e SPARQL_BACKEND=http://example.com/sparql -v `pwd`/files:/app/files dbcls/sparql-proxy
+
+
+## Relaying `X-SPARQL-` headers
+
+sparql-proxy relays HTTP headers starting with `X-SPARQL-` received from backends. This is intended to pass through `X-SPARQL-MaxRows`, which is emitted from Virtuoso.
+
+If you enabled the query splitting mode, this feature is disabled. This is because a single request to sparql-proxy is split into multiple requests to the backend, and it is not uniquely determined which response header should be returned.
