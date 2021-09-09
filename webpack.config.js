@@ -6,8 +6,8 @@ const dirname = path.dirname(new URL(import.meta.url).pathname);
 const config = {
   mode: "development",
   entry: {
-    app: ["whatwg-fetch", "./client/app.jsx"],
-    admin: ["whatwg-fetch", "./client/admin.jsx"],
+    app: "./client/app.jsx",
+    admin: "./client/admin.jsx",
   },
   output: {
     filename: "[name]-[contenthash].js",

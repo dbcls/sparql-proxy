@@ -30,8 +30,7 @@
     "socket.io-client": "^4.2.0",
     "sparql-support": "^0.15.3",
     "sparqljs": "^3.2.0",
-    "uuid": "^8.3.2",
-    "whatwg-fetch": "^3.5.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
