@@ -108,13 +108,13 @@ afterAll(async () => {
 });
 
 test("GET / should redirect to /sparql", async () => {
-  await runProxy({}, async ({ root, endpoint }) => {
+  await runProxy({}, async ({ root }) => {
     const res = await fetch(root, {
       redirect: "manual",
     });
 
     expect(res.status).toEqual(302);
-    expect(res.headers.get("Location")).toEqual(endpoint.toString());
+    expect(res.headers.get("Location")).toEqual("/sparql");
   });
 });
 
