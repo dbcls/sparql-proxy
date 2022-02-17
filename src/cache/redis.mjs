@@ -1,23 +1,26 @@
-import redis from 'redis';
-import { promisify } from 'util';
+import { createClient } from "redis";
 
-import Base from './base.mjs';
+import Base from "./base.mjs";
 
 export default class extends Base {
   constructor(compressor, env) {
     super(compressor);
 
-    this.client = redis.createClient({url: env.REDIS_URL, return_buffers: true});
+    this.client = createClient({
+      url: env.REDIS_URL,
+      return_buffers: true,
+    });
+    this.client.connect();
 
     console.log(`redis is ${this.client.address}`);
 
-    this.client.on('error', (err) => {
+    this.client.on("error", (err) => {
       console.log(`redis ERROR: ${err}`);
     });
   }
 
   async get(key) {
-    const data = await promisify(this.client.get.bind(this.client))(key);
+    const data = await this.client.get(key);
 
     return await this.deserialize(data);
   }
@@ -25,10 +28,10 @@ export default class extends Base {
   async put(key, obj) {
     const data = await this.serialize(obj);
 
-    await promisify(this.client.set.bind(this.client))(key, data);
+    await this.client.set(key, data);
   }
 
   async purge() {
-    await promisify(this.client.flushdb.bind(this.client))();
+    await this.client.flushdb();
   }
 }
