@@ -32,6 +32,6 @@ export default class extends Base {
   }
 
   async purge() {
-    await this.client.flushdb();
+    await this.client.flushDb();
   }
 }
