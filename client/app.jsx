@@ -61,7 +61,7 @@ class Editor extends React.Component {
       },
       foldGutter: true,
       gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
-      highlightSelectionMatches: { showToken: /\w/ },
+      highlightSelectionMatches: { showToken: /[\w:]/ },
     });
 
     const query = this.props.query;
