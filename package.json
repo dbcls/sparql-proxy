@@ -28,7 +28,7 @@
     "snappy": "^7.1.1",
     "socket.io": "^4.4.1",
     "socket.io-client": "^4.4.1",
-    "sparql-support": "^0.17.3",
+    "sparql-support": "^0.17.4",
     "sparqljs": "^3.5.1",
     "uuid": "^8.3.2"
   },
