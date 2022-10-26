@@ -59,7 +59,7 @@
     "test": "npm run lint && NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "engines": {
-    "node": "14.x"
+    "node": "18.x"
   },
   "type": "module"
 }
