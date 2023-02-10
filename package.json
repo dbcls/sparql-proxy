@@ -26,7 +26,7 @@
     "rollup": "^2.67.2",
     "sass": "^1.49.7",
     "snappy": "^7.1.1",
-    "socket.io": "^4.4.1",
+    "socket.io": "^4.6.0",
     "socket.io-client": "^4.4.1",
     "sparql-support": "^0.18.5",
     "sparqljs": "^3.5.1",
