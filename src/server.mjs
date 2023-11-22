@@ -116,7 +116,7 @@ const fs = _fs.promises;
     if (matchedType) {
       const ext = typeToExt[matchedType];
 
-      if (fs.pathExistsSync(`${__dirname}/../files/description.${ext}`)) {
+      if (_fs.existsSync(`${__dirname}/../files/description.${ext}`)) {
         res
           .type(matchedType)
           .sendFile(`files/description.${ext}`, { root: `${__dirname}/..` });
