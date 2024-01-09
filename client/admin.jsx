@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
 import moment from "moment";
 import queryString from "query-string";
@@ -173,4 +173,5 @@ class Navbar extends React.Component {
   }
 }
 
-ReactDOM.render(<MainComponent />, document.getElementById("content"));
+const root = createRoot(document.getElementById("content"));
+root.render(<MainComponent />);

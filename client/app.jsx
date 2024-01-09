@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import "bootstrap/scss/bootstrap.scss";
 import "./app.scss";
 import "font-awesome/css/font-awesome.css";
@@ -113,4 +113,5 @@ const App = () => {
   );
 };
 
-ReactDOM.render(<App />, document.getElementById("content"));
+const root = createRoot(document.getElementById("content"));
+root.render(<App />);
