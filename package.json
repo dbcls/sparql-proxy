@@ -30,6 +30,7 @@
     "socket.io-client": "^4.7.3",
     "sparql-support": "^0.19.3",
     "sparqljs": "^3.7.1",
+    "tsx": "^4.7.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
@@ -54,7 +55,7 @@
   },
   "scripts": {
     "build": "webpack",
-    "start": "node --experimental-modules src/server.mjs",
+    "start": "tsx src/server.mjs",
     "lint": "eslint src/**/*.mjs client/**/*.jsx",
     "test": "npm run lint && NODE_OPTIONS=--experimental-vm-modules jest"
   },

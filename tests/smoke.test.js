@@ -8,7 +8,7 @@ async function runProxy(env, cb) {
   const port = 9999;
 
   proxyProcess = await new Promise((resolve, reject) => {
-    const ps = spawn("node", ["--experimental-modules", "src/server.mjs"], {
+    const ps = spawn("tsx", ["src/server.mjs"], {
       env: Object.assign(
         {},
         {
