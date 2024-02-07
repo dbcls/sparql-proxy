@@ -1,25 +1,25 @@
-import { EventEmitter } from 'events';
+import { EventEmitter } from "events";
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
-import { aborted } from './job.mjs';
+import { aborted } from "./job.mjs";
 
 class Item extends EventEmitter {
   constructor(job, token) {
     super();
 
-    this.job       = job;
-    this.token     = token;
+    this.job = job;
+    this.token = token;
     this.createdAt = new Date();
-    this.id        = uuidv4();
-    this.state     = 'waiting';
-    this.userData  = {};
+    this.id = uuidv4();
+    this.state = "waiting";
+    this.userData = {};
 
     this.updateUserData();
 
-    job.on('update', () => {
+    job.on("update", () => {
       this.updateUserData();
-      this.emit('update');
+      this.emit("update");
     });
   }
 
@@ -29,12 +29,12 @@ class Item extends EventEmitter {
 
   data() {
     return {
-      id:        this.id,
-      state:     this.state,
+      id: this.id,
+      state: this.state,
       createdAt: this.createdAt,
       startedAt: this.startedAt,
-      doneAt:    this.doneAt,
-      data:      this.userData
+      doneAt: this.doneAt,
+      data: this.userData,
     };
   }
 
@@ -42,36 +42,36 @@ class Item extends EventEmitter {
     try {
       const data = await this.job.run();
 
-      this.emit('success', data);
+      this.emit("success", data);
     } catch (e) {
       if (e === aborted) {
-        this.emit('cancel');
+        this.emit("cancel");
       } else {
-        this.emit('error', e);
+        this.emit("error", e);
       }
     }
   }
 
   cancel() {
     switch (this.state) {
-      case 'waiting':
-        this.emit('cancel');
+      case "waiting":
+        this.emit("cancel");
         break;
-      case 'running':
+      case "running":
         this.job.cancel();
         break;
       default:
-        // do nothing
+      // do nothing
     }
   }
 
   running() {
-    this.state     = 'running';
+    this.state = "running";
     this.startedAt = new Date();
   }
 
   done() {
-    this.state  = 'done';
+    this.state = "done";
     this.doneAt = new Date();
   }
 }
@@ -80,44 +80,46 @@ export default class extends EventEmitter {
   constructor(maxWaiting, maxConcurrency) {
     super();
 
-    this.maxWaiting     = maxWaiting;
+    this.maxWaiting = maxWaiting;
     this.maxConcurrency = maxConcurrency;
 
     this.items = {
       waiting: [],
       running: [],
-      done:    []
+      done: [],
     };
   }
 
   state() {
-    const items = this.allItems().map(item => item.data()).sort((a, b) => b.createdAt - a.createdAt);
+    const items = this.allItems()
+      .map((item) => item.data())
+      .sort((a, b) => b.createdAt - a.createdAt);
 
-    const {waiting, running} = this.items;
+    const { waiting, running } = this.items;
 
     return {
-      jobs:       items,
+      jobs: items,
       numWaiting: waiting.length,
       numRunning: running.length,
-    }
+    };
   }
 
   allItems() {
-    const {waiting, running, done} = this.items;
+    const { waiting, running, done } = this.items;
 
     return [...waiting, ...running, ...done];
   }
 
   publishState() {
-    this.emit('state', this.state());
+    this.emit("state", this.state());
   }
 
   enqueue(job, token) {
     return new Promise((resolve, reject) => {
       if (this.items.waiting.length >= this.maxWaiting) {
-        const err      = new Error('Too many waiting jobs');
+        const err = new Error("Too many waiting jobs");
         err.statusCode = 503;
-        err.data       = 'Too many waiting jobs';
+        err.data = "Too many waiting jobs";
 
         reject(err);
         return;
@@ -125,29 +127,29 @@ export default class extends EventEmitter {
 
       const item = new Item(job, token);
 
-      item.on('update', this.publishState.bind(this));
+      item.on("update", this.publishState.bind(this));
 
-      item.on('success', (data) => {
-        item.job.setReason('success');
+      item.on("success", (data) => {
+        item.job.setReason("success");
         resolve(data);
       });
 
-      item.on('error', (e) => {
-        if (e.code === 'ETIMEDOUT') {
-          item.job.setReason('timeout');
+      item.on("error", (e) => {
+        if (e.code === "ETIMEDOUT") {
+          item.job.setReason("timeout");
         } else {
-          item.job.setReason('error');
+          item.job.setReason("error");
         }
 
         reject(e);
       });
 
-      item.on('cancel', () => {
-        item.job.setReason('canceled');
+      item.on("cancel", () => {
+        item.job.setReason("canceled");
 
-        const err      = new Error('Job Canceled');
+        const err = new Error("Job Canceled");
         err.statusCode = 503;
-        err.data       = 'Job Canceled';
+        err.data = "Job Canceled";
 
         reject(err);
       });
@@ -157,11 +159,15 @@ export default class extends EventEmitter {
   }
 
   async tryDequeue() {
-    if (this.items.running.length >= this.maxConcurrency) { return; }
+    if (this.items.running.length >= this.maxConcurrency) {
+      return;
+    }
 
     const item = this.items.waiting[0];
 
-    if (!item) { return; }
+    if (!item) {
+      return;
+    }
 
     this.running(item);
 
@@ -173,9 +179,11 @@ export default class extends EventEmitter {
   }
 
   cancel(id) {
-    const item = this.allItems().find(item => item.id === id);
+    const item = this.allItems().find((item) => item.id === id);
 
-    if (!item) { return false; }
+    if (!item) {
+      return false;
+    }
 
     item.cancel();
     this.done(item);
@@ -184,7 +192,7 @@ export default class extends EventEmitter {
   }
 
   jobStatus(token) {
-    const item = this.allItems().find(item => item.token === token);
+    const item = this.allItems().find((item) => item.token === token);
 
     return item ? item.data() : null;
   }
@@ -212,7 +220,7 @@ export default class extends EventEmitter {
   }
 
   running(item) {
-    this.move(item, 'running');
+    this.move(item, "running");
     item.running();
 
     this.publishState();
@@ -220,7 +228,7 @@ export default class extends EventEmitter {
   }
 
   done(item) {
-    this.move(item, 'done');
+    this.move(item, "done");
     item.done();
 
     this.publishState();
@@ -229,7 +237,7 @@ export default class extends EventEmitter {
 
   move(item, to) {
     const from = this.items[item.state];
-    const i    = from.indexOf(item);
+    const i = from.indexOf(item);
 
     from.splice(i, 1);
     this.items[to].push(item);
