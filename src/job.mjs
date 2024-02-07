@@ -109,6 +109,7 @@ export default class extends EventEmitter {
       rawQuery: params.rawQuery,
       reason: null,
     };
+    this.plugins = params.plugins;
   }
 
   cancel() {
@@ -128,32 +129,40 @@ export default class extends EventEmitter {
     }
 
     const { preamble, parsedQuery } = parseQuery(this.rawQuery);
-
     if (parsedQuery.type !== "query") {
       throw new QueryTypeError(parsedQuery.type);
     }
 
-    const normalizedQuery =
-      preamble + new SparqlGenerator().stringify(parsedQuery);
+    const ctx = { preamble, query: parsedQuery };
+    const initial = async () => {
+      const normalizedQuery =
+        ctx.preamble + new SparqlGenerator().stringify(ctx.query);
 
-    return await this.tryCache(this.cacheKey(normalizedQuery), async () => {
-      const limit = Math.min(parsedQuery.limit || this.maxLimit, this.maxLimit);
+      return await this.tryCache(this.cacheKey(normalizedQuery), async () => {
+        const limit = Math.min(ctx.query.limit || this.maxLimit, this.maxLimit);
 
-      if (this.enableQuerySplitting && isSelectQuery(parsedQuery)) {
-        const chunkLimit = Math.min(limit, this.maxChunkLimit);
-        const chunkOffset = parsedQuery.offset || 0;
+        if (this.enableQuerySplitting && isSelectQuery(ctx.query)) {
+          const chunkLimit = Math.min(limit, this.maxChunkLimit);
+          const chunkOffset = ctx.query.offset || 0;
 
-        return await this._reqSplit(
-          preamble,
-          parsedQuery,
-          limit,
-          chunkLimit,
-          chunkOffset
-        );
-      } else {
-        return await this._reqNormal(preamble, parsedQuery, limit);
-      }
-    });
+          return await this._reqSplit(
+            ctx.preamble,
+            ctx.query,
+            limit,
+            chunkLimit,
+            chunkOffset
+          );
+        } else {
+          return await this._reqNormal(ctx.preamble, ctx.query, limit);
+        }
+      });
+    };
+
+    if (this.plugins) {
+      return await this.plugins.apply(ctx, initial);
+    } else {
+      return await initial();
+    }
   }
 
   async _reqPassthrough(query) {
@@ -173,7 +182,7 @@ export default class extends EventEmitter {
     );
     const query = preamble + compatibleQuery;
 
-    const { response, body } = await this.postQuery(query);
+    const { response, body } = await this.postQuery(query, { json: true });
 
     return {
       contentType: response.headers["content-type"],
