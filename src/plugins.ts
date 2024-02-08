@@ -30,7 +30,7 @@ export default class Plugins {
     const dirs = await fs.readdir(this.pluginsDir);
     for (const dir of dirs) {
       const resolvedPath = path.resolve(this.pluginsDir, dir);
-      const plugin = (await import(resolvedPath + "/main")).default;
+      const plugin = (await import(`${resolvedPath}/main`)).default;
       plugins.push(plugin);
       console.log(`plugin: loaded ${this.pluginsDir}/${dir}`);
     }
@@ -39,7 +39,7 @@ export default class Plugins {
 
   async apply(
     ctx: Context,
-    initial: () => Promise<Response>
+    initial: () => Promise<Response>,
   ): Promise<Response> {
     if (this.plugins.length === 0) {
       return await initial();
