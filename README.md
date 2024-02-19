@@ -214,6 +214,14 @@ Set `true` to enable passthrough mode. If enabled, queries are sent to the backe
 
 You should enable this feature only when you understand exactly what you are doing.
 
+### `PLUGINS_DIR`
+
+THIS IS AN EXPERIMENTAL FEATURE.
+
+(default: none)
+
+Set the directory to load plugins from. If specified, sparql-proxy will load all plugins under the directory.
+
 ## Serving SPARQL Service Description
 
 If you want to serve SPARQL service description, put the descriptions under `files` directory with the name `description.[format]`.
