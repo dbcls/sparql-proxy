@@ -66,7 +66,7 @@ export default class Plugins {
     }
 
     let chain = initial;
-    for (const plugin of this.plugins) {
+    for (const plugin of this.plugins.reverse()) {
       const _chain = chain;
       chain = () => {
         let func: PluginFunc | undefined = undefined;
