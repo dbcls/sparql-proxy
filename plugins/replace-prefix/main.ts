@@ -89,7 +89,7 @@ async function loadMappings() {
 
 await loadMappings();
 
-export default async function rewritePrefix(
+export async function selectPlugin(
   ctx: Context,
   next: () => Response,
 ): Promise<Response> {
@@ -114,3 +114,5 @@ export default async function rewritePrefix(
     return after;
   });
 }
+
+// TODO implement describePlugin

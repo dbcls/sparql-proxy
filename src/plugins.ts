@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { type SparqlQuery } from "sparqljs";
+import { type Query } from "sparqljs";
 
 type SPARQLResult = unknown; // TODO
 
@@ -12,10 +12,17 @@ export type Response = {
 
 export type Context = {
   preamble: string;
-  query: SparqlQuery;
+  query: Query;
 };
 
-type Plugin = (ctx: Context, next: Plugin) => Promise<Response>;
+type Plugin = {
+  selectPlugin: PluginFunc | undefined;
+  constructPlugin: PluginFunc | undefined;
+  askPlugin: PluginFunc | undefined;
+  describePlugin: PluginFunc | undefined;
+};
+
+type PluginFunc = (ctx: Context, next: PluginFunc) => Promise<Response>;
 
 export default class Plugins {
   pluginsConfPath: string;
@@ -42,7 +49,8 @@ export default class Plugins {
     const plugins: Plugin[] = [];
     for (const dir of pluginPaths) {
       const resolvedPath = path.resolve(dir);
-      const plugin = (await import(`${resolvedPath}/main`)).default;
+      console.log(`plugin: loading ${resolvedPath}`);
+      const plugin = await import(`${resolvedPath}/main`);
       plugins.push(plugin);
       console.log(`plugin: loaded ${resolvedPath}`);
     }
@@ -57,9 +65,29 @@ export default class Plugins {
       return await initial();
     }
 
-    const chain = this.plugins.reduceRight((next, plugin) => {
-      return () => plugin(ctx, next);
-    });
-    return await chain(ctx, initial);
+    let chain = initial;
+    for (const plugin of this.plugins) {
+      const _chain = chain;
+      chain = () => {
+        let func: PluginFunc | undefined = undefined;
+        switch (ctx.query.queryType) {
+          case "SELECT":
+            func = plugin.selectPlugin;
+            break;
+          case "CONSTRUCT":
+            func = plugin.constructPlugin;
+            break;
+          case "ASK":
+            func = plugin.askPlugin;
+            break;
+          case "DESCRIBE":
+            func = plugin.describePlugin;
+            break;
+        }
+        return func ? func(ctx, _chain) : _chain();
+      };
+    }
+
+    return await chain();
   }
 }
