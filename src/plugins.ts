@@ -18,21 +18,33 @@ export type Context = {
 type Plugin = (ctx: Context, next: Plugin) => Promise<Response>;
 
 export default class Plugins {
-  pluginsDir: string;
+  pluginsConfPath: string;
   plugins: Plugin[] = [];
 
-  constructor(pluginsDir: string) {
-    this.pluginsDir = pluginsDir;
+  constructor(pluginsConfPath: string) {
+    this.pluginsConfPath = pluginsConfPath;
+  }
+
+  async loadConfig(): Promise<string[]> {
+    const text = await fs.readFile(this.pluginsConfPath, "utf-8");
+    const paths: string[] = [];
+    for (const line of text.split(/\r?\n/)) {
+      if (line === "") continue;
+      if (line.startsWith("#")) continue;
+
+      paths.push(line);
+    }
+    return paths;
   }
 
   async load() {
+    const pluginPaths = await this.loadConfig();
     const plugins: Plugin[] = [];
-    const dirs = await fs.readdir(this.pluginsDir);
-    for (const dir of dirs) {
-      const resolvedPath = path.resolve(this.pluginsDir, dir);
+    for (const dir of pluginPaths) {
+      const resolvedPath = path.resolve(dir);
       const plugin = (await import(`${resolvedPath}/main`)).default;
       plugins.push(plugin);
-      console.log(`plugin: loaded ${this.pluginsDir}/${dir}`);
+      console.log(`plugin: loaded ${resolvedPath}`);
     }
     this.plugins = plugins;
   }
