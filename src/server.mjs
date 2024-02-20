@@ -39,7 +39,7 @@ const fs = _fs.promises;
     cacheStore: process.env.CACHE_STORE || "null",
     compressor: process.env.COMPRESSOR || "raw",
     durationToKeepOldJobs: Number(
-      process.env.DURATION_TO_KEEP_OLD_JOBS || 5 * 60 * 1000
+      process.env.DURATION_TO_KEEP_OLD_JOBS || 5 * 60 * 1000,
     ),
     enableQuerySplitting: _enableQuerySplitting,
     jobTimeout: Number(process.env.JOB_TIMEOUT || 5 * 60 * 1000),
@@ -51,7 +51,7 @@ const fs = _fs.promises;
     port: Number(process.env.PORT || 3000),
     queryLogPath: process.env.QUERY_LOG_PATH,
     trustProxy: process.env.TRUST_PROXY || "false",
-    pluginsDir: process.env.PLUGINS_DIR,
+    pluginsConfPath: process.env.PLUGINS,
   });
 
   const secret = `${config.adminUser}:${config.adminPassword}`;
@@ -65,12 +65,12 @@ const fs = _fs.promises;
 
   if (config.passthrough) {
     console.log(
-      "Passthrough mode is enabled. Query filtering and splitting are disabled."
+      "Passthrough mode is enabled. Query filtering and splitting are disabled.",
     );
   }
 
   console.log(
-    `cache store: ${config.cacheStore} (compressor: ${config.compressor})`
+    `cache store: ${config.cacheStore} (compressor: ${config.compressor})`,
   );
 
   const compressor = new (
@@ -78,12 +78,12 @@ const fs = _fs.promises;
   ).default();
   const cache = new (await import(`./cache/${config.cacheStore}.mjs`)).default(
     compressor,
-    process.env
+    process.env,
   );
 
   let plugins = null;
-  if (config.pluginsDir) {
-    plugins = new Plugins(config.pluginsDir);
+  if (config.pluginsConfPath) {
+    plugins = new Plugins(config.pluginsConfPath);
     await plugins.load();
   } else {
     console.log("plugin: disabled");
@@ -166,7 +166,7 @@ const fs = _fs.promises;
           elapsed: doneAt - startedAt,
           ip: req.ip,
         },
-        log
+        log,
       );
       return fs.appendFile(config.queryLogPath, JSON.stringify(data) + "\n");
     };
@@ -275,7 +275,7 @@ const fs = _fs.promises;
     (req, res, next) => {
       res.cookie(cookieKey, secret);
       next();
-    }
+    },
   );
 
   router.use(express.static("public", { extensions: ["html"] }));
