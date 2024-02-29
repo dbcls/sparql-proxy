@@ -13,8 +13,9 @@ function replaceNamedNode(
     if (typeof value === "object") {
       obj[key] = replaceNamedNode(value, replacer);
     } else {
-      const isReplaceTarget = obj.termType === "NamedNode" && key === "value";
-      obj[key] = isReplaceTarget ? replacer(value) : value;
+      if (obj.termType === "NamedNode" && key === "value") {
+        obj[key] = replacer(value);
+      }
     }
   }
   return obj;
