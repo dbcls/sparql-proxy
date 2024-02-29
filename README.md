@@ -222,6 +222,8 @@ THIS IS AN EXPERIMENTAL FEATURE.
 
 Set the path to the plugins configuration file. List the paths of the plugins to be used in this file in the order you want to apply them.
 
+This feature does not work with the query splitting mode and the passthrough mode.
+
 ## Serving SPARQL Service Description
 
 If you want to serve SPARQL service description, put the descriptions under `files` directory with the name `description.[format]`.
