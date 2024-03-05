@@ -1,6 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { type Query } from "sparqljs";
+import {
+  type Query,
+  SelectQuery,
+  ConstructQuery,
+  AskQuery,
+  DescribeQuery,
+} from "sparqljs";
 
 type SPARQLResult = unknown; // TODO
 
@@ -13,6 +19,26 @@ export type Response = {
 export type Context = {
   preamble: string;
   query: Query;
+};
+
+export type SelectContext = {
+  preamble: string;
+  query: SelectQuery;
+};
+
+export type ConstructContext = {
+  preamble: string;
+  query: ConstructQuery;
+};
+
+export type AskContext = {
+  preamble: string;
+  query: AskQuery;
+};
+
+export type DescribeContext = {
+  preamble: string;
+  query: DescribeQuery;
 };
 
 type Plugin = {
