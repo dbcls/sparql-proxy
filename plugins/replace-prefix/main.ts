@@ -115,5 +115,3 @@ export async function selectPlugin(
     return after;
   });
 }
-
-// TODO implement describePlugin
