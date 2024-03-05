@@ -8,10 +8,43 @@ import {
   DescribeQuery,
 } from "sparqljs";
 
-type SPARQLResult = unknown; // TODO
+type IRI = { type: "uri"; value: string };
+type Literal = { type: "literal"; value: string };
+type LiteralWithLanguageTag = Literal & { "xml:lang": string };
+type LiteralWithDatatypeIRI = Literal & { datatype: string };
+type BlankNode = { type: "bnode"; value: string };
+type RDFTerm =
+  | IRI
+  | Literal
+  | LiteralWithLanguageTag
+  | LiteralWithDatatypeIRI
+  | BlankNode;
+
+type Binding = Record<string, RDFTerm>;
+
+export type SPARQLJSONResults = {
+  head: {
+    vars: string[];
+    link?: string[];
+  };
+  results: {
+    bindings: Binding[];
+  };
+  boolean: never;
+};
+
+export type SPARQLBooleanResults = {
+  head: {
+    link?: string[];
+  };
+  boolean: boolean;
+  results: never;
+};
+
+export type SPARQLResults = SPARQLJSONResults | SPARQLBooleanResults;
 
 export type Response = {
-  body: SPARQLResult;
+  body: SPARQLResults;
   headers: Record<string, string>;
   contentType: string;
 };
