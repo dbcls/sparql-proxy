@@ -69,10 +69,10 @@ Here, we're going to define a plugin function that still does nothing to demonst
 ```typescript
 // plugins/noop/main.ts
 
-import { type Context, Response } from "../../src/plugins";
+import { type SelectContext, Response } from "../../src/plugins";
 
 export async function selectPlugin(
-  ctx: Context,
+  ctx: SelectContext,
   next: () => Response,
 ): Promise<Response> {
   const resp = await next();
@@ -98,10 +98,10 @@ Let's try something a bit more interesting: logging the request and response.
 ```typescript
 // plugins/noop/main.ts
 
-import { type Context, Response } from "../../src/plugins";
+import { type SelectContext, Response } from "../../src/plugins";
 
 export async function selectPlugin(
-  ctx: Context,
+  ctx: SelectContext,
   next: () => Response,
 ): Promise<Response> {
   console.log("Context", ctx);
@@ -161,5 +161,164 @@ We can see the `ctx` has two properties: `preamble` and `query`. `preamble` is t
 
 In the next section, we will write a plugin that modifies the request and response.
 
-## Modifying the request and response
+## Modifying the request
 
+Now let's implement a plugin that rewrites the request. As an example, write a plugin that sets `LIMIT` to `5` or less for any given query. This is the same as what `MAX_LIMIT` does, which is provided by SPARQL-proxy. It is important to note that MAX_LIMIT is applied after this plugin is executed. This means that if the value of `MAX_LIMIT` is smaller than `5`, it will take precedence.
+
+The `LIMIT` value is contained in the context object. It can be accessed via `ctx.query.limit`. If not specified, it is undefined. If specified, the value is stored. Let's use `Math.min` and rewrite it as follows:
+
+```typescript
+// plugins/limit/main.ts
+
+import { type SelectContext, Response } from "../../src/plugins";
+
+export async function selectPlugin(
+  ctx: SelectContext,
+  next: () => Response,
+): Promise<Response> {
+  ctx.query.limit = Math.min(ctx.query.limit || Infinity, 5);
+  const resp = await next();
+  return resp;
+}
+```
+
+This works as expected. You may want to what actual query is actually issued. We can see the query object by `console.log(ctx.query)`, but you may want to see it as a SPARQL query. To do this, we need to generate a query using `SPARQL.js`'s generator API:
+
+```typescript
+// plugins/limit/main.ts
+
+import Sparql from "sparqljs";
+
+import { type SelectContext, Response } from "../../src/plugins";
+
+function stringifyQuery(query) {
+  return new Sparql.Generator().stringify(query);
+}
+
+export async function selectPlugin(
+  ctx: SelectContext,
+  next: () => Response,
+): Promise<Response> {
+  console.log("BEFORE:");
+  console.log(stringifyQuery(ctx.query));
+  console.log();
+  ctx.query.limit = Math.min(ctx.query.limit || Infinity, 5);
+  console.log("AFTER:");
+  console.log(stringifyQuery(ctx.query));
+  console.log();
+
+  const resp = await next();
+  return resp;
+}
+```
+
+The plugin should output logs like the following:
+
+```
+BEFORE:
+SELECT * WHERE { ?s ?p ?o. }
+LIMIT 30
+
+AFTER:
+SELECT * WHERE { ?s ?p ?o. }
+LIMIT 5
+```
+
+You can see that `LIMIT` is rewritten as expected.
+
+
+## Rewriting the response
+
+Next, let us show an example of rewriting a response. As an example, which is not useful at all, implement a plugin to make all values in SPARQL result uppercase.
+
+The plugin is look like this:
+
+```typescript
+// plugins/upcase/main.ts
+
+import { type SelectContext, Response } from "../../src/plugins";
+
+export async function selectPlugin(
+  ctx: SelectContext,
+  next: () => Response,
+): Promise<Response> {
+  const resp = await next();
+
+  for (const binding of resp.body.results.bindings) {
+    for (const [k, v] of Object.entries(binding)) {
+      v.value = v.value.toUpperCase();
+    }
+  }
+
+  return resp;
+}
+```
+
+First, it executes `next()` to issue a SPARQL query to the endpoint and receive a normal SPARQL result. Second, modify the received result. This time, we iterated over `bindings` and called `toUpperCase` on the values in them. Now all values (including IRIs) will be returned in uppercase.
+
+
+## Skipping the request
+
+As a more complex example, let's write a plugin that returns an immediate value when it receives a query containing a COUNT in a specific format without actually executing the query on the endpoint.
+
+Since it is not easy to support flexible queries, we will only consider the following form:
+
+```
+SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o . }
+```
+
+To compare queries, we will consider the parsed results by `SPARQL.js` to be identical when `JSON.stringify()` is applied to them. This is obviously not robust; just adding a prefix or a limit is considered a different query. Even a change in the name of a variable is considered a different query. However, this restriction simplifies the example a lot. That said, since the query is once converted to an abstract syntax tree, it is robust against inserting and deleting white spaces.
+
+The plugin will look like this:
+
+```typescript
+// plugins/immediate-response/main.ts
+
+import Sparql from "sparqljs";
+
+import { type SelectContext, Response } from "../../src/plugins";
+
+const targetQuery = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o . }";
+const parsedQuery = new Sparql.Parser().parse(targetQuery);
+
+const precomputedCount = {
+  head: { link: [], vars: ["count"] },
+  results: {
+    distinct: false,
+    ordered: true,
+    bindings: [
+      {
+        count: {
+          type: "typed-literal",
+          datatype: "http://www.w3.org/2001/XMLSchema#integer",
+          value: "42",
+        },
+      },
+    ],
+  },
+};
+
+export async function selectPlugin(
+  ctx: SelectContext,
+  next: () => Response,
+): Promise<Response> {
+  console.log(JSON.stringify(ctx, null, 2));
+
+  const sameAsTarget =
+    JSON.stringify(ctx.query) === JSON.stringify(parsedQuery);
+  if (sameAsTarget) {
+    return {
+      contentType: "application/sparql-results+json",
+      headers: {},
+      body: precomputedCount,
+    };
+  }
+
+  const resp = await next();
+  return resp;
+}
+```
+
+If the query matches with `targetQuery`, then `sameAsTarget` becomes `true` and an early return is made, which results in no call to `next()`. In this case, the client will receive an `precomputedCount`; the count says `42`. No request will be made to the SPARQL endpoint.
+
+In all other cases, the query is dispatched to the SPARQL endpoint as usual.
