@@ -8,9 +8,7 @@ Typical use cases include, but are not limited to, rewriting prefixes to improve
 
 ## Usage
 
-List the directories of plugins to be used in `plugin.conf`. If the line starts with `#`, it is treated as a comment and ignored.
-
-Then specify the path to `plugin.conf` to `PLUGINS` environment variable when starting the SPARQL-proxy. For example, `PLUGINS=/path/to/plugin.conf`. This will activate the plugin mechanism.
+List the directories of plugins to be used in `files/plugin.conf`. If the line starts with `#`, it is treated as a comment and ignored.
 
 Note that plugins are applied in the order specified in this file. That is, the first plugin in the list receives from the request from the client, then next plugin receives the request from the previous plugin, and so on. Responses are processed in the reverse order.
 
@@ -40,17 +38,18 @@ plugins
     └── main.ts
 ```
 
-Create `plugins.conf` which contains the path to the `noop` plugin:
+Create `files/plugins.conf` which contains the path to the `noop` plugin:
 
 ```
+# files/plugins.conf
 ./plugins/noop
 ```
 
-Then start the SPARQL-proxy with `PLUGINS` environment variable:
+Then start SPARQL-proxy:
 
 
 ```
-❯ PLUGINS=./plugins.conf SPARQL_BACKEND=https://example.com/sparql npm start
+❯ SPARQL_BACKEND=https://example.com/sparql npm start
 
 > sparql-proxy@0.0.0 start
 > tsx src/server.mjs

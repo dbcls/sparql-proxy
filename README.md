@@ -214,16 +214,6 @@ Set `true` to enable passthrough mode. If enabled, queries are sent to the backe
 
 You should enable this feature only when you understand exactly what you are doing.
 
-### `PLUGINS`
-
-THIS IS AN EXPERIMENTAL FEATURE.
-
-(default: none)
-
-Set the path to the plugins configuration file. List the paths of the plugins to be used in this file in the order you want to apply them.
-
-This feature does not work with the query splitting mode and the passthrough mode.
-
 ## Serving SPARQL Service Description
 
 If you want to serve SPARQL service description, put the descriptions under `files` directory with the name `description.[format]`.
@@ -233,6 +223,15 @@ Use `files/description.ttl` for `text/turtle` and `files/description.rdf` for `a
 NOTE: If you're running `sparql-proxy` within Docker, you may want to use `-v` option for `docker` command to make the files accessible from the inside of the container:
 
     $ docker run -p 8080:3000 -e SPARQL_BACKEND=http://example.com/sparql -v `pwd`/files:/app/files dbcls/sparql-proxy
+
+
+## Plugins
+
+THIS IS AN EXPERIMENTAL FEATURE.
+
+SPARQL-proxy has a plugin system to extend its functionalities. In order to activate this feature, create `plugins.conf` file in `files` directory. The paths of the plugins to be used should be listed in this file, in the order you want to apply them. See more details in [PLUGINS.md](PLUGINS.md).
+
+This feature does not work with the query splitting mode and the passthrough mode.
 
 
 ## Relaying `X-SPARQL-` headers
