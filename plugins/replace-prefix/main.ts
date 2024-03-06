@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { type Context, Response } from "../../src/plugins";
+import { type SelectContext, Response } from "../../src/plugins";
 import { type SparqlQuery } from "sparqljs";
 
 function replaceNamedNode(
@@ -91,7 +91,7 @@ async function loadMappings() {
 await loadMappings();
 
 export async function selectPlugin(
-  ctx: Context,
+  ctx: SelectContext,
   next: () => Response,
 ): Promise<Response> {
   // rewrite query
