@@ -83,37 +83,54 @@ type Plugin = {
 
 type PluginFunc = (ctx: Context, next: PluginFunc) => Promise<Response>;
 
+async function loadPluginConf(
+  pluginsConfPath: string,
+): Promise<string[] | undefined> {
+  let text: string | undefined = undefined;
+  try {
+    text = await fs.readFile(pluginsConfPath, "utf-8");
+  } catch (e) {
+    console.log(
+      `plugin: plugin configuration ${pluginsConfPath} is not available`,
+    );
+    return undefined;
+  }
+
+  const paths: string[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (line === "") continue;
+    if (line.startsWith("#")) continue;
+
+    paths.push(line);
+  }
+  return paths;
+}
+
 export default class Plugins {
-  pluginsConfPath: string;
   plugins: Plugin[] = [];
 
-  constructor(pluginsConfPath: string) {
-    this.pluginsConfPath = pluginsConfPath;
-  }
-
-  async loadConfig(): Promise<string[]> {
-    const text = await fs.readFile(this.pluginsConfPath, "utf-8");
-    const paths: string[] = [];
-    for (const line of text.split(/\r?\n/)) {
-      if (line === "") continue;
-      if (line.startsWith("#")) continue;
-
-      paths.push(line);
+  static async load(pluginsConfPath: string): Promise<Plugins | undefined> {
+    const plugins = new Plugins();
+    const pluginPaths = await loadPluginConf(pluginsConfPath);
+    if (!pluginPaths) {
+      return undefined;
     }
-    return paths;
-  }
 
-  async load() {
-    const pluginPaths = await this.loadConfig();
-    const plugins: Plugin[] = [];
     for (const dir of pluginPaths) {
-      const resolvedPath = path.resolve(dir);
-      console.log(`plugin: loading ${resolvedPath}`);
-      const plugin = await import(`${resolvedPath}/main`);
-      plugins.push(plugin);
-      console.log(`plugin: loaded ${resolvedPath}`);
+      const plugin = await plugins.importPlugin(dir);
+      plugins.plugins.push(plugin);
     }
-    this.plugins = plugins;
+
+    return plugins;
+  }
+
+  async importPlugin(pluginPath: string): Promise<Plugin> {
+    const resolvedPath = path.resolve(pluginPath);
+    console.log(`plugin: loading ${resolvedPath}`);
+    const plugin = import(`${resolvedPath}/main`);
+    console.log(`plugin: loaded ${resolvedPath}`);
+
+    return plugin;
   }
 
   async apply(

@@ -51,7 +51,6 @@ const fs = _fs.promises;
     port: Number(process.env.PORT || 3000),
     queryLogPath: process.env.QUERY_LOG_PATH,
     trustProxy: process.env.TRUST_PROXY || "false",
-    pluginsConfPath: process.env.PLUGINS,
   });
 
   const secret = `${config.adminUser}:${config.adminPassword}`;
@@ -81,11 +80,8 @@ const fs = _fs.promises;
     process.env,
   );
 
-  let plugins = null;
-  if (config.pluginsConfPath) {
-    plugins = new Plugins(config.pluginsConfPath);
-    await plugins.load();
-  } else {
+  const plugins = await Plugins.load("./files/plugins.conf");
+  if (!plugins) {
     console.log("plugin: disabled");
   }
 
