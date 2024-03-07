@@ -139,7 +139,10 @@ test.each([
 
     expect(await res.json()).toEqual({
       head: {
-        vars: ["s", "p", "o"],
+        vars: ["o", "p", "s"],
+      },
+      metadata: {
+        httpRequests: 0
       },
       results: {
         bindings: [
