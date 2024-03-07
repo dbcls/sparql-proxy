@@ -201,9 +201,10 @@ const fs = _fs.promises;
     const job = new Job({
       backend: config.backend,
       rawQuery: query,
-      accept: config.enableQuerySplitting
-        ? "application/sparql-results+json"
-        : req.headers.accept,
+      accept:
+        config.enableQuerySplitting || plugins
+          ? "application/sparql-results+json"
+          : req.headers.accept,
       timeout: config.jobTimeout,
       ip: req.ip,
       enableQuerySplitting: config.enableQuerySplitting,
