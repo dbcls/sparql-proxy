@@ -68,7 +68,7 @@ Here, we're going to define a plugin function that still does nothing to demonst
 ```typescript
 // plugins/noop/main.ts
 
-import { type SelectContext, Response } from "../../src/plugins";
+import type { SelectContext, Response } from "../../src/plugins";
 
 export async function selectPlugin(
   ctx: SelectContext,
@@ -97,7 +97,7 @@ Let's try something a bit more interesting: logging the request and response.
 ```typescript
 // plugins/noop/main.ts
 
-import { type SelectContext, Response } from "../../src/plugins";
+import type { SelectContext, Response } from "../../src/plugins";
 
 export async function selectPlugin(
   ctx: SelectContext,
@@ -169,7 +169,7 @@ The `LIMIT` value is contained in the context object. It can be accessed via `ct
 ```typescript
 // plugins/limit/main.ts
 
-import { type SelectContext, Response } from "../../src/plugins";
+import type { SelectContext, Response } from "../../src/plugins";
 
 export async function selectPlugin(
   ctx: SelectContext,
@@ -188,7 +188,7 @@ This works as expected. You may want to what actual query is actually issued. We
 
 import Sparql from "sparqljs";
 
-import { type SelectContext, Response } from "../../src/plugins";
+import type { SelectContext, Response } from "../../src/plugins";
 
 function stringifyQuery(query) {
   return new Sparql.Generator().stringify(query);
@@ -235,7 +235,7 @@ The plugin is look like this:
 ```typescript
 // plugins/upcase/main.ts
 
-import { type SelectContext, Response } from "../../src/plugins";
+import type { SelectContext, Response } from "../../src/plugins";
 
 export async function selectPlugin(
   ctx: SelectContext,
@@ -275,7 +275,7 @@ The plugin will look like this:
 
 import Sparql from "sparqljs";
 
-import { type SelectContext, Response } from "../../src/plugins";
+import type { SelectContext, Response } from "../../src/plugins";
 
 const targetQuery = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o . }";
 const parsedQuery = new Sparql.Parser().parse(targetQuery);
@@ -332,7 +332,7 @@ Let's say we have the following two plugins, `foo` and `bar`:
 ```typescript
 // plugins/foo/main.ts
 
-import { type Context, Response } from "../../src/plugins";
+import type { Context, Response } from "../../src/plugins";
 
 export async function selectPlugin(
   ctx: SelectContext,
@@ -347,7 +347,7 @@ export async function selectPlugin(
 
 ```typescript
 // plugins/bar/main.ts
-import { type Context, Response } from "../../src/plugins";
+import type { Context, Response } from "../../src/plugins";
 
 export async function selectPlugin(
   ctx: SelectContext,
@@ -391,4 +391,84 @@ The conversion rules are specified by a configuration file described in `mapping
   const resolvedTsvPath = path.resolve(__dirname, filename);
 
   // TODO open resolvedTsvPath
+```
+
+## Plugin specification reference
+
+### Plugin functions
+
+SPARQL-proxy support these plugin functions corresponding to SPARQL query type:
+
+* `selectPlugin` for `SELECT` query
+* `constructPlugin` for `CONSTRUCT` query
+* `askPlugin` for `ASK` query
+* `describePlugin` for `DESCRIBE` query
+
+SPARQL-proxy expects the functions to be exported by plugins as follows:
+
+```typescript
+// plugins/noop/main.ts
+
+import type {
+  Response,
+  SelectContext,
+  ConstructContext,
+  AskContext,
+  DescribeContext,
+} from "../../src/plugins";
+
+export async function selectPlugin(
+  ctx: SelectContext,
+  next: () => Response
+): Promise<Response> {
+  const resp = await next();
+  return resp;
+}
+
+export async function constructPlugin(
+  ctx: ConstructContext,
+  next: () => Response
+): Promise<Response> {
+  const resp = await next();
+  return resp;
+}
+
+export async function askPlugin(
+  ctx: AskContext,
+  next: () => Response
+): Promise<Response> {
+  const resp = await next();
+  return resp;
+}
+
+export async function describePlugin(
+  ctx: DescribeContext,
+  next: () => Response
+): Promise<Response> {
+  const resp = await next();
+  return resp;
+}
+```
+
+### Context object
+
+`Context` object has `preamble` and `query`:
+
+```typescript
+export type Context = {
+  preamble: string;
+  query: Query;
+};
+```
+
+### Response object
+
+`Response` object has `body`, `headers` and `contentType`:
+
+```typescript
+export type Response = {
+  body: SPARQLResults;
+  headers: Record<string, string>;
+  contentType: string;
+};
 ```
