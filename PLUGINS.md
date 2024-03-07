@@ -321,3 +321,74 @@ export async function selectPlugin(
 If the query matches with `targetQuery`, then `sameAsTarget` becomes `true` and an early return is made, which results in no call to `next()`. In this case, the client will receive an `precomputedCount`; the count says `42`. No request will be made to the SPARQL endpoint.
 
 In all other cases, the query is dispatched to the SPARQL endpoint as usual.
+
+
+## Plugin execution order
+
+We have already mentioned that the order in which plug-ins are executed is controlled by the order listed in `plugins.conf`.　Here we will take a closer look at it with two illustrative plugins.
+
+Let's say we have the following two plugins, `foo` and `bar`:
+
+```typescript
+// plugins/foo/main.ts
+
+import { type Context, Response } from "../../src/plugins";
+
+export async function selectPlugin(
+  ctx: SelectContext,
+  next: () => Response,
+): Promise<Response> {
+  console.log("foo:before");
+  const res = await next();
+  console.log("foo:after");
+  return res;
+}
+```
+
+```typescript
+// plugins/bar/main.ts
+import { type Context, Response } from "../../src/plugins";
+
+export async function selectPlugin(
+  ctx: SelectContext,
+  next: () => Response,
+): Promise<Response> {
+  console.log("bar:before");
+  const res = await next();
+  console.log("bar:after");
+  return res;
+}
+```
+
+Then we list them in `plugins.conf` in the following order:
+
+```
+# files/plugins.conf
+./plugins/foo
+./plugins/bar
+```
+
+When a query is issued, the following log will be output:
+
+```
+foo:before
+bar:before
+bar:after
+foo:after
+```
+
+We can think of the plugins listed first in the list as wrapping the results of the plugins listed later.
+
+## Plugin configuration files
+
+Rewrite prefix plugin is shipped with SPARQL-proxy. See `./plugins/rewrite-prefix` for details. This plugin replaces prefixes of IRIs in the query according to the specified rules. It also replaces IRIs in the response in the reverse direction.
+
+The conversion rules are specified by a configuration file described in `mappings.tsv`. It is recommended that the configuration file be placed in the plugin directory. To locate the config file in the same directory as the plugin itself, do the following:
+
+```typescript
+  const filename = "mappings.tsv";
+  const __dirname = (import.meta as any).dirname;
+  const resolvedTsvPath = path.resolve(__dirname, filename);
+
+  // TODO open resolvedTsvPath
+```
