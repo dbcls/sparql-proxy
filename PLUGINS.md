@@ -154,7 +154,7 @@ Reesponse {
 }
 ```
 
-We can see the `ctx` has two properties: `preamble` and `query`. `preamble` is the part of the comments before the query. `query` is the parsed query object parsed by [SPARQL.js](https://www.npmjs.com/package/sparqljs). We can modify the request by modifying this object.
+We can see the `ctx` has two properties: `preamble` and `query`. `preamble` contains a series of `define` statements at the beginning of the query and exists to support certain triple store specific queries. `query` is the parsed query object parsed by [SPARQL.js](https://www.npmjs.com/package/sparqljs). We can modify the request by modifying this object.
 
 `resp` has four properties: `contentType`, `headers`, `body` and `cached`. `contentType` is the content type of the response. `headers` is the HTTP headers of the response. `body` is the body of the response. `cached` indicates whether the response is returned from the cache or not. We can modify the response by returning a new modified response object from `selectPlugin` function.
 
