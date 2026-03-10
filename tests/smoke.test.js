@@ -3,8 +3,6 @@ import { spawn } from "child_process";
 import http from "http";
 import net from "net";
 
-import fetch from "node-fetch";
-
 const backendPort = 4568;
 const proxyPort = 9999;
 const queryResponse = {
