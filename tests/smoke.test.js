@@ -1,46 +1,129 @@
-import { expect, test, afterAll, afterEach, beforeAll } from "@jest/globals";
-import fetch from "node-fetch";
+import { afterAll, afterEach, beforeAll, expect, test } from "@jest/globals";
 import { spawn } from "child_process";
+import http from "http";
+import net from "net";
 
+import fetch from "node-fetch";
+
+const backendPort = 4568;
+const proxyPort = 9999;
+const queryResponse = {
+  head: {
+    vars: ["o", "p", "s"],
+  },
+  metadata: {
+    httpRequests: 0,
+  },
+  results: {
+    bindings: [
+      {
+        s: { type: "uri", value: "http://example.com" },
+        p: { type: "uri", value: "http://purl.org/dc/terms/title" },
+        o: { type: "literal", value: "Hello, world!" },
+      },
+    ],
+  },
+};
+
+let backendServer;
 let proxyProcess;
+let redisAvailable = false;
+let memcacheAvailable = false;
+
+function createBackendServer() {
+  return http.createServer(async (req, res) => {
+    if (req.url !== "/sparql") {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+
+    if (req.method !== "POST") {
+      res.writeHead(405);
+      res.end();
+      return;
+    }
+
+    const body = await new Promise((resolve, reject) => {
+      const chunks = [];
+
+      req.on("data", (chunk) => {
+        chunks.push(chunk);
+      });
+      req.on("end", () => {
+        resolve(Buffer.concat(chunks).toString("utf8"));
+      });
+      req.on("error", reject);
+    });
+
+    const params = new URLSearchParams(body);
+    if (!params.get("query")) {
+      res.writeHead(400, { "content-type": "application/json" });
+      res.end(JSON.stringify({ message: "Query is required" }));
+      return;
+    }
+
+    res.writeHead(200, {
+      "content-type": "application/sparql-results+json",
+    });
+    res.end(JSON.stringify(queryResponse));
+  });
+}
+
+async function listen(server, port) {
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, "127.0.0.1", resolve);
+  });
+}
+
+async function hasTcpService(port) {
+  return await new Promise((resolve) => {
+    const socket = net.connect({ host: "127.0.0.1", port });
+
+    socket.once("connect", () => {
+      socket.end();
+      resolve(true);
+    });
+    socket.once("error", () => {
+      resolve(false);
+    });
+    socket.setTimeout(200, () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
+}
 
 async function runProxy(env, cb) {
-  const port = 9999;
-
   proxyProcess = await new Promise((resolve, reject) => {
     const ps = spawn("tsx", ["src/server.mjs"], {
-      env: Object.assign(
-        {},
-        {
-          SPARQL_BACKEND: `http://localhost:${backendPort}/sparql`,
-          PORT: port,
-        },
-        env,
-        process.env
-      ),
+      env: {
+        ...process.env,
+        SPARQL_BACKEND: `http://127.0.0.1:${backendPort}/sparql`,
+        PORT: proxyPort,
+        ...env,
+      },
       detached: true,
     });
 
     ps.on("exit", () => {
-      reject("unexpected sparql-proxy exit");
+      reject(new Error("unexpected sparql-proxy exit"));
     });
-
-    ps.on("error", (code) => {
-      reject(`sparql-proxy error (code ${code})`);
+    ps.on("error", (error) => {
+      reject(error);
     });
-
     ps.stdout.on("data", (data) => {
       if (data.toString().includes("sparql-proxy listening at")) {
         resolve(ps);
       }
     });
-
     ps.stderr.on("data", (data) => {
       console.error(data.toString());
     });
   });
 
-  const root = new URL(`http://localhost:${port}`);
+  const root = new URL(`http://127.0.0.1:${proxyPort}`);
 
   await cb({
     root,
@@ -48,62 +131,55 @@ async function runProxy(env, cb) {
   });
 }
 
+function shouldSkip(env) {
+  if (env.CACHE_STORE === "redis" && !redisAvailable) {
+    return true;
+  }
+
+  if (env.CACHE_STORE === "memcache" && !memcacheAvailable) {
+    return true;
+  }
+
+  return false;
+}
+
+beforeAll(async () => {
+  backendServer = createBackendServer();
+  await listen(backendServer, backendPort);
+  redisAvailable = await hasTcpService(6379);
+  memcacheAvailable = await hasTcpService(11211);
+});
+
 afterEach((done) => {
   if (!proxyProcess) {
     done();
     return;
   }
+
   proxyProcess.removeAllListeners("exit");
-  proxyProcess.on("exit", done);
+  proxyProcess.on("exit", () => {
+    proxyProcess = null;
+    done();
+  });
   process.kill(-proxyProcess.pid, 9);
 });
 
-const backendPort = 4568;
-
-let backendProcess;
-
-beforeAll(async () => {
-  backendProcess = await new Promise((resolve, reject) => {
-    const ps = spawn(
-      "npx",
-      [
-        "comunica-sparql-file-http",
-        "-p",
-        backendPort,
-        "tests/fixtures/hello.ttl",
-      ],
-      { detached: true }
-    );
-
-    ps.on("exit", () => {
-      reject("unexpected endpoint exit");
-    });
-
-    ps.on("error", (code) => {
-      reject(`endpoint error (code ${code})`);
-    });
-
-    ps.stderr.on("data", (data) => {
-      const re = new RegExp(
-        `Server worker \\(\\d+\\) running on http://localhost:${backendPort}/sparql`
-      );
-      if (re.test(data.toString())) {
-        resolve(ps);
-      }
-    });
-  });
-});
-
 afterAll(async () => {
-  await new Promise((resolve) => {
-    if (!backendProcess) {
+  await new Promise((resolve, reject) => {
+    if (!backendServer) {
       resolve();
       return;
     }
 
-    backendProcess.removeAllListeners("exit");
-    backendProcess.on("exit", resolve);
-    process.kill(-backendProcess.pid);
+    backendServer.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      backendServer = null;
+      resolve();
+    });
   });
 });
 
@@ -126,6 +202,10 @@ test.each([
   { CACHE_STORE: "memcache" },
   { COMPRESSOR: "snappy" },
 ])("GET /sparql (env: %p)", async (env) => {
+  if (shouldSkip(env)) {
+    return;
+  }
+
   await runProxy(env, async ({ endpoint }) => {
     endpoint.searchParams.set("query", "SELECT * { ?s ?p ?o. }");
 
@@ -136,23 +216,6 @@ test.each([
     });
 
     expect(res.status).toEqual(200);
-
-    expect(await res.json()).toEqual({
-      head: {
-        vars: ["o", "p", "s"],
-      },
-      metadata: {
-        httpRequests: 0
-      },
-      results: {
-        bindings: [
-          {
-            s: { type: "uri", value: "http://example.com" },
-            p: { type: "uri", value: "http://purl.org/dc/terms/title" },
-            o: { type: "literal", value: "Hello, world!" },
-          },
-        ],
-      },
-    });
+    expect(await res.json()).toEqual(queryResponse);
   });
 });
