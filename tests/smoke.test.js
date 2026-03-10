@@ -1,7 +1,8 @@
-import { afterAll, afterEach, beforeAll, expect, test } from "@jest/globals";
+import assert from "assert/strict";
 import { spawn } from "child_process";
 import http from "http";
 import net from "net";
+import { after, afterEach, before, test } from "node:test";
 
 const backendPort = 4568;
 const proxyPort = 9999;
@@ -24,6 +25,7 @@ const queryResponse = {
 };
 
 let backendServer;
+let backendListening = false;
 let proxyProcess;
 let redisAvailable = false;
 let memcacheAvailable = false;
@@ -141,30 +143,33 @@ function shouldSkip(env) {
   return false;
 }
 
-beforeAll(async () => {
+before(async () => {
   backendServer = createBackendServer();
   await listen(backendServer, backendPort);
+  backendListening = true;
   redisAvailable = await hasTcpService(6379);
   memcacheAvailable = await hasTcpService(11211);
 });
 
-afterEach((done) => {
+afterEach(async () => {
   if (!proxyProcess) {
-    done();
     return;
   }
 
   proxyProcess.removeAllListeners("exit");
-  proxyProcess.on("exit", () => {
-    proxyProcess = null;
-    done();
+  await new Promise((resolve) => {
+    proxyProcess.on("exit", () => {
+      proxyProcess = null;
+      resolve();
+    });
+    process.kill(-proxyProcess.pid, 9);
   });
-  process.kill(-proxyProcess.pid, 9);
 });
 
-afterAll(async () => {
+after(async () => {
   await new Promise((resolve, reject) => {
-    if (!backendServer) {
+    if (!backendServer || !backendListening) {
+      backendServer = null;
       resolve();
       return;
     }
@@ -176,6 +181,7 @@ afterAll(async () => {
       }
 
       backendServer = null;
+      backendListening = false;
       resolve();
     });
   });
@@ -187,33 +193,35 @@ test("GET / should redirect to /sparql", async () => {
       redirect: "manual",
     });
 
-    expect(res.status).toEqual(302);
-    expect(res.headers.get("Location")).toEqual("/sparql");
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get("Location"), "/sparql");
   });
 });
 
-test.each([
+for (const env of [
   { CACHE_STORE: null },
   { CACHE_STORE: "file", CACHE_STORE_PATH: `tmp/test-cache-${process.pid}` },
   { CACHE_STORE: "memory" },
   { CACHE_STORE: "redis" },
   { CACHE_STORE: "memcache" },
   { COMPRESSOR: "snappy" },
-])("GET /sparql (env: %p)", async (env) => {
-  if (shouldSkip(env)) {
-    return;
-  }
+]) {
+  test(`GET /sparql (${JSON.stringify(env)})`, async () => {
+    if (shouldSkip(env)) {
+      return;
+    }
 
-  await runProxy(env, async ({ endpoint }) => {
-    endpoint.searchParams.set("query", "SELECT * { ?s ?p ?o. }");
+    await runProxy(env, async ({ endpoint }) => {
+      endpoint.searchParams.set("query", "SELECT * { ?s ?p ?o. }");
 
-    const res = await fetch(endpoint, {
-      headers: {
-        Accept: "application/sparql-results+json",
-      },
+      const res = await fetch(endpoint, {
+        headers: {
+          Accept: "application/sparql-results+json",
+        },
+      });
+
+      assert.equal(res.status, 200);
+      assert.deepEqual(await res.json(), queryResponse);
     });
-
-    expect(res.status).toEqual(200);
-    expect(await res.json()).toEqual(queryResponse);
   });
-});
+}
