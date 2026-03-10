@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { type SelectContext, Response } from "../../src/plugins";
-import { type SparqlQuery } from "sparqljs";
+import { type SparqlQuery } from "@traqula/rules-sparql-1-1";
 
 function replaceNamedNode(
   obj: any,
@@ -13,7 +13,7 @@ function replaceNamedNode(
     if (typeof value === "object") {
       obj[key] = replaceNamedNode(value, replacer);
     } else {
-      if (obj.termType === "NamedNode" && key === "value") {
+      if (obj.type === "term" && obj.subType === "namedNode" && key === "value") {
         obj[key] = replacer(value);
       }
     }

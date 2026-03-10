@@ -154,7 +154,7 @@ Reesponse {
 }
 ```
 
-We can see the `ctx` has two properties: `preamble` and `query`. `preamble` contains a series of `define` statements at the beginning of the query and exists to support certain triple store specific queries. `query` is the parsed query object parsed by [SPARQL.js](https://www.npmjs.com/package/sparqljs). We can modify the request by modifying this object.
+We can see the `ctx` has two properties: `preamble` and `query`. `preamble` contains a series of `define` statements at the beginning of the query and exists to support certain triple store specific queries. `query` is the parsed query object parsed by Traqula. We can modify the request by modifying this object.
 
 `resp` has four properties: `contentType`, `headers`, `body` and `cached`. `contentType` is the content type of the response. `headers` is the HTTP headers of the response. `body` is the body of the response. `cached` indicates whether the response is returned from the cache or not. We can modify the response by returning a new modified response object from `selectPlugin` function.
 
@@ -181,17 +181,17 @@ export async function selectPlugin(
 }
 ```
 
-This works as expected. You may want to what actual query is actually issued. We can see the query object by `console.log(ctx.query)`, but you may want to see it as a SPARQL query. To do this, we need to generate a query using `SPARQL.js`'s generator API:
+This works as expected. You may want to what actual query is actually issued. We can see the query object by `console.log(ctx.query)`, but you may want to see it as a SPARQL query. To do this, we need to generate a query using Traqula's generator API:
 
 ```typescript
 // plugins/limit/main.ts
 
-import Sparql from "sparqljs";
+import { Generator } from "@traqula/generator-sparql-1-1";
 
 import type { SelectContext, Response } from "../../src/plugins";
 
 function stringifyQuery(query) {
-  return new Sparql.Generator().stringify(query);
+  return new Generator().generate(query);
 }
 
 export async function selectPlugin(
@@ -266,19 +266,19 @@ Since it is not easy to support flexible queries, we will only consider the foll
 SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o . }
 ```
 
-To compare queries, we will consider the parsed results by `SPARQL.js` to be identical when `JSON.stringify()` is applied to them. This is obviously not robust; just adding a prefix or a limit is considered a different query. Even a change in the name of a variable is considered a different query. However, this restriction simplifies the example a lot. That said, since the query is once converted to an abstract syntax tree, it is robust against inserting and deleting white spaces.
+To compare queries, we will consider the parsed results by Traqula to be identical when `JSON.stringify()` is applied to them. This is obviously not robust; just adding a prefix or a limit is considered a different query. Even a change in the name of a variable is considered a different query. However, this restriction simplifies the example a lot. That said, since the query is once converted to an abstract syntax tree, it is robust against inserting and deleting white spaces.
 
 The plugin will look like this:
 
 ```typescript
 // plugins/immediate-response/main.ts
 
-import Sparql from "sparqljs";
+import { Parser } from "@traqula/parser-sparql-1-1";
 
 import type { SelectContext, Response } from "../../src/plugins";
 
 const targetQuery = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o . }";
-const parsedQuery = new Sparql.Parser().parse(targetQuery);
+const parsedQuery = new Parser().parse(targetQuery);
 
 const precomputedCount = {
   head: { link: [], vars: ["count"] },

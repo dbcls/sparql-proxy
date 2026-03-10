@@ -1,10 +1,9 @@
-import Sparql from "sparqljs";
+import { Generator as SparqlGenerator } from "@traqula/generator-sparql-1-1";
+import { Parser as SparqlParser } from "@traqula/parser-sparql-1-1";
 import crypto from "crypto";
 import { EventEmitter } from "events";
 
 import { splitPreamble } from "./preamble.mjs";
-
-const { Parser: SparqlParser, Generator: SparqlGenerator } = Sparql;
 
 export class ParseError extends Error {
   constructor(query, cause) {
@@ -85,19 +84,106 @@ function isSuccessful(response) {
 }
 
 function isSelectQuery(parsedQuery) {
-  return parsedQuery.type === "query" && parsedQuery.queryType === "SELECT";
+  return parsedQuery.type === "query" && parsedQuery.subType === "select";
+}
+
+function getLimitOffset(query) {
+  return query.solutionModifiers.limitOffset || {};
+}
+
+function getQueryLimit(query) {
+  return getLimitOffset(query).limit;
+}
+
+function getQueryOffset(query) {
+  return getLimitOffset(query).offset;
+}
+
+function withLimitOffset(query, limit, offset) {
+  return {
+    ...query,
+    solutionModifiers: {
+      ...query.solutionModifiers,
+      limitOffset: {
+        type: "solutionModifier",
+        subType: "limitOffset",
+        limit,
+        offset,
+        loc: {
+          sourceLocationType: "autoGenerate",
+        },
+      },
+    },
+  };
+}
+
+function defineCompatibleProperty(obj, key, descriptor) {
+  if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+    Object.defineProperty(obj, key, descriptor);
+  }
+}
+
+function attachQueryCompatibility(query) {
+  if (query.type !== "query") {
+    return query;
+  }
+
+  defineCompatibleProperty(query, "queryType", {
+    configurable: true,
+    enumerable: false,
+    get() {
+      return this.subType.toUpperCase();
+    },
+  });
+  defineCompatibleProperty(query, "limit", {
+    configurable: true,
+    enumerable: false,
+    get() {
+      return getQueryLimit(this);
+    },
+    set(value) {
+      this.solutionModifiers.limitOffset = {
+        type: "solutionModifier",
+        subType: "limitOffset",
+        limit: value,
+        offset: getQueryOffset(this),
+        loc: {
+          sourceLocationType: "autoGenerate",
+        },
+      };
+    },
+  });
+  defineCompatibleProperty(query, "offset", {
+    configurable: true,
+    enumerable: false,
+    get() {
+      return getQueryOffset(this);
+    },
+    set(value) {
+      this.solutionModifiers.limitOffset = {
+        type: "solutionModifier",
+        subType: "limitOffset",
+        limit: getQueryLimit(this),
+        offset: value,
+        loc: {
+          sourceLocationType: "autoGenerate",
+        },
+      };
+    },
+  });
+
+  return query;
 }
 
 function parseQuery(query) {
   const { preamble, compatibleQuery } = splitPreamble(query);
 
   const parser = new SparqlParser();
-  parser._resetBlanks(); // without this, blank node ids differ for every query, that causes cache miss.
 
   try {
     return {
       preamble,
-      parsedQuery: parser.parse(compatibleQuery),
+      parsedQuery: attachQueryCompatibility(parser.parse(compatibleQuery)),
     };
   } catch (e) {
     throw new ParseError(query, e);
@@ -150,15 +236,14 @@ export default class extends EventEmitter {
 
     const ctx = { preamble, query: parsedQuery };
     const initial = async () => {
-      const normalizedQuery =
-        ctx.preamble + new SparqlGenerator().stringify(ctx.query);
+      const normalizedQuery = ctx.preamble + new SparqlGenerator().generate(ctx.query);
 
       return await this.tryCache(this.cacheKey(normalizedQuery), async () => {
-        const limit = Math.min(ctx.query.limit || this.maxLimit, this.maxLimit);
+        const limit = Math.min(getQueryLimit(ctx.query) || this.maxLimit, this.maxLimit);
 
         if (this.enableQuerySplitting && isSelectQuery(ctx.query)) {
           const chunkLimit = Math.min(limit, this.maxChunkLimit);
-          const chunkOffset = ctx.query.offset || 0;
+          const chunkOffset = getQueryOffset(ctx.query) || 0;
 
           return await this._reqSplit(
             ctx.preamble,
@@ -191,9 +276,10 @@ export default class extends EventEmitter {
   }
 
   async _reqNormal(preamble, parsedQuery, limit) {
-    const override = isSelectQuery(parsedQuery) ? { limit } : {};
-    const compatibleQuery = new SparqlGenerator().stringify(
-      Object.assign({}, parsedQuery, override)
+    const compatibleQuery = new SparqlGenerator().generate(
+      isSelectQuery(parsedQuery)
+        ? withLimitOffset(parsedQuery, limit, getQueryOffset(parsedQuery))
+        : parsedQuery
     );
     const query = preamble + compatibleQuery;
 
@@ -214,11 +300,8 @@ export default class extends EventEmitter {
     chunkOffset,
     acc = null
   ) {
-    const compatibleQuery = new SparqlGenerator().stringify(
-      Object.assign({}, parsedQuery, {
-        limit: chunkLimit,
-        offset: chunkOffset,
-      })
+    const compatibleQuery = new SparqlGenerator().generate(
+      withLimitOffset(parsedQuery, chunkLimit, chunkOffset)
     );
 
     const query = preamble + compatibleQuery;

@@ -1,12 +1,38 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
+  type QueryAsk,
+  type QueryConstruct,
+  type QueryDescribe,
+  type QuerySelect,
   type Query,
-  SelectQuery,
-  ConstructQuery,
-  AskQuery,
-  DescribeQuery,
-} from "sparqljs";
+} from "@traqula/rules-sparql-1-1";
+
+type CompatibleSelectQuery = QuerySelect & {
+  queryType: "SELECT";
+  limit?: number;
+  offset?: number;
+};
+type CompatibleConstructQuery = QueryConstruct & {
+  queryType: "CONSTRUCT";
+  limit?: number;
+  offset?: number;
+};
+type CompatibleAskQuery = QueryAsk & {
+  queryType: "ASK";
+  limit?: number;
+  offset?: number;
+};
+type CompatibleDescribeQuery = QueryDescribe & {
+  queryType: "DESCRIBE";
+  limit?: number;
+  offset?: number;
+};
+type CompatibleQuery =
+  | CompatibleSelectQuery
+  | CompatibleConstructQuery
+  | CompatibleAskQuery
+  | CompatibleDescribeQuery;
 
 type IRI = { type: "uri"; value: string };
 type Literal = { type: "literal"; value: string };
@@ -51,27 +77,27 @@ export type Response = {
 
 export type Context = {
   preamble: string;
-  query: Query;
+  query: CompatibleQuery;
 };
 
 export type SelectContext = {
   preamble: string;
-  query: SelectQuery;
+  query: CompatibleSelectQuery;
 };
 
 export type ConstructContext = {
   preamble: string;
-  query: ConstructQuery;
+  query: CompatibleConstructQuery;
 };
 
 export type AskContext = {
   preamble: string;
-  query: AskQuery;
+  query: CompatibleAskQuery;
 };
 
 export type DescribeContext = {
   preamble: string;
-  query: DescribeQuery;
+  query: CompatibleDescribeQuery;
 };
 
 type Plugin = {
@@ -146,17 +172,17 @@ export default class Plugins {
       const _chain = chain;
       chain = () => {
         let func: PluginFunc | undefined = undefined;
-        switch (ctx.query.queryType) {
-          case "SELECT":
+        switch (ctx.query.subType) {
+          case "select":
             func = plugin.selectPlugin;
             break;
-          case "CONSTRUCT":
+          case "construct":
             func = plugin.constructPlugin;
             break;
-          case "ASK":
+          case "ask":
             func = plugin.askPlugin;
             break;
-          case "DESCRIBE":
+          case "describe":
             func = plugin.describePlugin;
             break;
         }

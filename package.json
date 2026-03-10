@@ -5,6 +5,9 @@
   "private": true,
   "author": "",
   "dependencies": {
+    "@traqula/generator-sparql-1-1": "^1.0.3",
+    "@traqula/parser-sparql-1-1": "^1.0.3",
+    "@traqula/rules-sparql-1-1": "^1.0.3",
     "bootstrap": "^5.3.8",
     "codemirror": "^5.65.21",
     "cookie": "^1.1.1",
@@ -25,7 +28,6 @@
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "sparql-support": "^0.19.8",
-    "sparqljs": "^3.7.4",
     "tsx": "^4.21.0",
     "uuid": "^13.0.0"
   },
