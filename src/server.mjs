@@ -1,16 +1,14 @@
 import _fs from "fs";
 import http from "http";
 import path from "path";
+import { Readable } from "stream";
 import url from "url";
 
-import basicAuth from "basic-auth-connect";
-import bodyParser from "body-parser";
 import cookie from "cookie";
 import cors from "cors";
 import express from "express";
 import morgan from "morgan";
 import multer from "multer";
-import request from "request";
 import { Server as SocketIoServer } from "socket.io";
 
 import Job, { ParseError, QueryTypeError, BackendError } from "./job.mjs";
@@ -18,6 +16,55 @@ import Queue from "./queue.mjs";
 import Plugins from "./plugins";
 
 const fs = _fs.promises;
+
+function createBasicAuth(username, password) {
+  return (req, res, next) => {
+    const credentials = req.headers.authorization;
+
+    if (!credentials?.startsWith("Basic ")) {
+      res.set("WWW-Authenticate", 'Basic realm="admin"');
+      res.status(401).send("Authentication required");
+      return;
+    }
+
+    const decoded = Buffer.from(credentials.slice(6), "base64").toString(
+      "utf8",
+    );
+    const [providedUser, providedPassword] = decoded.split(":");
+
+    if (providedUser !== username || providedPassword !== password) {
+      res.set("WWW-Authenticate", 'Basic realm="admin"');
+      res.status(401).send("Authentication failed");
+      return;
+    }
+
+    next();
+  };
+}
+
+async function forwardResponse(response, res) {
+  res.status(response.status);
+
+  for (const [key, value] of response.headers.entries()) {
+    if (key === "content-length") {
+      continue;
+    }
+
+    res.setHeader(key, value);
+  }
+
+  if (!response.body) {
+    res.end();
+    return;
+  }
+
+  await new Promise((resolve, reject) => {
+    Readable.fromWeb(response.body)
+      .pipe(res)
+      .on("finish", resolve)
+      .on("error", reject);
+  });
+}
 
 (async () => {
   const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
@@ -86,8 +133,8 @@ const fs = _fs.promises;
   }
 
   app.use(morgan("combined"));
-  app.use(bodyParser.urlencoded({ extended: false }));
-  app.use(bodyParser.text({ type: "application/sparql-query" }));
+  app.use(express.urlencoded({ extended: false }));
+  app.use(express.text({ type: "application/sparql-query" }));
 
   app.enable("strict routing");
 
@@ -111,7 +158,7 @@ const fs = _fs.promises;
     }
   });
 
-  function returnServiceDescription(req, res) {
+  async function returnServiceDescription(req, res) {
     const typeToExt = {
       "application/rdf+xml": "rdf",
       "text/turtle": "ttl",
@@ -136,16 +183,12 @@ const fs = _fs.promises;
       return unsafeHeaders.includes(k) ? acc : Object.assign(acc, { [k]: v });
     }, {});
 
-    return new Promise((resolve, reject) => {
-      request({
-        url: config.backend,
-        method: req.method,
-        headers,
-      })
-        .pipe(res)
-        .on("finish", resolve)
-        .on("error", reject);
+    const response = await fetch(config.backend, {
+      method: req.method,
+      headers,
     });
+
+    await forwardResponse(response, res);
   }
 
   async function executeQuery(req, res) {
@@ -248,8 +291,8 @@ const fs = _fs.promises;
         res.status(400).send({ message: e.message });
       } else if (e instanceof BackendError) {
         res
-          .status(e.response.statusCode)
-          .contentType(e.response.headers["content-type"])
+          .status(e.response.status)
+          .contentType(e.response.headers.get("content-type"))
           .send(e.body);
       } else {
         res.status(e.statusCode || 500).send(e.data || "ERROR");
@@ -268,7 +311,7 @@ const fs = _fs.promises;
 
   router.get(
     "/admin",
-    basicAuth(config.adminUser, config.adminPassword),
+    createBasicAuth(config.adminUser, config.adminPassword),
     (req, res, next) => {
       res.cookie(cookieKey, secret);
       next();
@@ -287,7 +330,7 @@ const fs = _fs.promises;
   console.log("backend is", config.backend);
 
   io.use((socket, next) => {
-    const cookies = cookie.parse(socket.request.headers.cookie);
+    const cookies = cookie.parse(socket.request.headers.cookie || "");
     const secretProvided = cookies[cookieKey];
     if (secretProvided === secret) {
       next();

@@ -1,6 +1,5 @@
 import Sparql from "sparqljs";
 import crypto from "crypto";
-import request from "request";
 import { EventEmitter } from "events";
 
 import { splitPreamble } from "./preamble.mjs";
@@ -26,7 +25,7 @@ export class QueryTypeError extends Error {
 
 export class BackendError extends Error {
   constructor(response, body) {
-    super(`unexpected response from backend; ${response.statusCode}`);
+    super(`unexpected response from backend; ${response.status}`);
 
     this.response = response;
     this.body = body;
@@ -36,23 +35,39 @@ export class BackendError extends Error {
 export const aborted = Symbol();
 
 function post(options) {
-  let req;
+  const controller = new AbortController();
   let userRequestedAbort = false;
 
   const promise = new Promise((resolve, reject) => {
-    req = request.post(options, (err, response, body) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ response, body });
-      }
-    });
+    fetch(options.uri, {
+      method: "POST",
+      body: new URLSearchParams(options.form),
+      headers: options.headers,
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const body = options.json
+          ? await response.json()
+          : Buffer.from(await response.arrayBuffer());
 
-    req.on("abort", () => {
-      if (userRequestedAbort) {
-        reject(aborted);
-      }
-    });
+        resolve({ response, body });
+      })
+      .catch((error) => {
+        if (userRequestedAbort && error.name === "AbortError") {
+          reject(aborted);
+          return;
+        }
+
+        reject(error);
+      });
+  });
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, options.timeout);
+
+  promise.finally(() => {
+    clearTimeout(timeout);
   });
 
   return {
@@ -60,13 +75,13 @@ function post(options) {
 
     abort() {
       userRequestedAbort = true;
-      req.abort();
+      controller.abort();
     },
   };
 }
 
 function isSuccessful(response) {
-  return response.statusCode >= 200 && response.statusCode < 300;
+  return response.status >= 200 && response.status < 300;
 }
 
 function isSelectQuery(parsedQuery) {
@@ -169,8 +184,8 @@ export default class extends EventEmitter {
     const { response, body } = await this.postQuery(query);
 
     return {
-      contentType: response.headers["content-type"],
-      headers: response.headers,
+      contentType: response.headers.get("content-type"),
+      headers: Object.fromEntries(response.headers.entries()),
       body,
     };
   }
@@ -185,8 +200,8 @@ export default class extends EventEmitter {
     const { response, body } = await this.postQuery(query, { json: true });
 
     return {
-      contentType: response.headers["content-type"],
-      headers: response.headers,
+      contentType: response.headers.get("content-type"),
+      headers: Object.fromEntries(response.headers.entries()),
       body,
     };
   }
@@ -220,7 +235,7 @@ export default class extends EventEmitter {
       acc.body.results.bindings.push(...bindings);
     } else {
       acc = {
-        contentType: response.headers["content-type"],
+        contentType: response.headers.get("content-type"),
         body,
       };
     }

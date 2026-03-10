@@ -1,4 +1,4 @@
-import { createClient } from "redis";
+import { createClient, RESP_TYPES } from "redis";
 
 import Base from "./base.mjs";
 
@@ -8,11 +8,12 @@ export default class extends Base {
 
     this.client = createClient({
       url: env.REDIS_URL,
-      return_buffers: true,
+    }).withTypeMapping({
+      [RESP_TYPES.BLOB_STRING]: Buffer,
     });
     this.client.connect();
 
-    console.log(`redis is ${this.client.address}`);
+    console.log(`redis is ${env.REDIS_URL || "redis://localhost:6379"}`);
 
     this.client.on("error", (err) => {
       console.log(`redis ERROR: ${err}`);
