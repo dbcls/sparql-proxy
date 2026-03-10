@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "bootstrap/scss/bootstrap.scss";
 import "./app.scss";
@@ -16,35 +16,23 @@ import "sparql-support/src/sparql-support";
 import "sparql-support/src/sparql-fold";
 import "sparql-support/css/base.css";
 
-const Navbar = () => {
-  return (
-    <nav className="navbar fixed-top navbar-dark bg-dark">
-      <div className="container-fluid">
-        <span className="navbar-brand fg-dark">SPARQL Proxy</span>
-      </div>
-    </nav>
-  );
-};
+const Navbar = () => (
+  <nav className="navbar fixed-top navbar-dark bg-dark">
+    <div className="container-fluid">
+      <span className="navbar-brand fg-dark">SPARQL Proxy</span>
+    </div>
+  </nav>
+);
 
-class Editor extends React.Component {
-  render() {
-    const textareaStyle = {
-      width: "100%",
-      height: "400px",
-    };
+const Editor = ({ query }) => {
+  const textareaRef = useRef(null);
 
-    return (
-      <div>
-        <textarea
-          ref={(ref) => (this.textareaNode = ref)}
-          style={textareaStyle}
-        ></textarea>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!textareaRef.current) {
+      return undefined;
+    }
 
-  componentDidMount() {
-    const codeMirror = CodeMirror.fromTextArea(this.textareaNode, {
+    const codeMirror = CodeMirror.fromTextArea(textareaRef.current, {
       mode: "application/sparql-query",
       matchBrackets: true,
       autoCloseBrackets: true,
@@ -64,40 +52,41 @@ class Editor extends React.Component {
       highlightSelectionMatches: { showToken: /[\w:]/ },
     });
 
-    const query = this.props.query;
-
     if (query !== null) {
       codeMirror.setValue(query);
     }
 
     // force sparql-support to synchronize query buffers
     codeMirror.getWrapperElement().dispatchEvent(new KeyboardEvent("keydown"));
-  }
-}
+    return () => {
+      codeMirror.toTextArea();
+    };
+  }, [query]);
 
-class QueryBox extends React.Component {
-  constructor() {
-    super(...arguments);
-    this.state = { response: null, request: null };
-  }
+  return (
+    <div>
+      <textarea
+        ref={textareaRef}
+        style={{ width: "100%", height: "400px" }}
+      ></textarea>
+    </div>
+  );
+};
 
-  render() {
-    return (
-      <div className="container-fluid">
-        <form action="./sparql">
-          <Editor query={this.props.query} />
+const QueryBox = ({ query }) => (
+  <div className="container-fluid">
+    <form action="./sparql">
+      <Editor query={query} />
 
-          <button className="btn btn-primary my-2">
-            Run Query
-            <span className="ms-1 small" style={{ pointerEvents: "none" }}>
-              (Ctrl+Enter)
-            </span>
-          </button>
-        </form>
-      </div>
-    );
-  }
-}
+      <button className="btn btn-primary my-2">
+        Run Query
+        <span className="ms-1 small" style={{ pointerEvents: "none" }}>
+          (Ctrl+Enter)
+        </span>
+      </button>
+    </form>
+  </div>
+);
 
 const App = () => {
   const [query, setQuery] = useState(null);
