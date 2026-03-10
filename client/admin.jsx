@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
 import moment from "moment";
@@ -16,162 +16,141 @@ const jobLabelMapping = {
   canceled: "warning",
 };
 
-class JobStateLabel extends React.Component {
-  render() {
-    const state = this.props.state;
-    const reason = this.props.reason;
-    const label = state === "done" && reason ? reason : state;
-    const c = jobLabelMapping[label] || "default";
+const JobStateLabel = ({ state, reason }) => {
+  const label = state === "done" && reason ? reason : state;
+  const color = jobLabelMapping[label] || "default";
 
-    return <span className={"label label-" + c}>{label}</span>;
-  }
-}
+  return <span className={"label label-" + color}>{label}</span>;
+};
 
-class CancelButton extends React.Component {
-  render() {
-    return (
-      <button className="btn btn-danger" onClick={this.props.onClick}>
-        Cancel
-      </button>
-    );
-  }
-}
+const CancelButton = ({ onClick }) => (
+  <button className="btn btn-danger" onClick={onClick}>
+    Cancel
+  </button>
+);
 
-class JobList extends React.Component {
-  render() {
-    const jobs = this.props.jobs.map((job) => {
-      let runtime;
-      if (job.startedAt) {
-        const end = moment(job.doneAt || this.props.now);
-        if (end) {
-          const elapsed = end.diff(job.startedAt);
-          if (elapsed > 0) {
-            runtime = elapsed + "ms";
-          }
-        }
+const JobList = ({ jobs, now, onCancel }) => {
+  const rows = jobs.map((job) => {
+    let runtime;
+    if (job.startedAt) {
+      const end = moment(job.doneAt || now);
+      const elapsed = end.diff(job.startedAt);
+      if (elapsed > 0) {
+        runtime = elapsed + "ms";
       }
-      const age = moment(job.createdAt).from(this.props.now);
-      let cancelButtonColumn = <td></td>;
-      if (job.state !== "done") {
-        const cancel = this.props.onCancel.bind(null, job);
-        cancelButtonColumn = (
-          <td>
-            <CancelButton onClick={cancel} />
-          </td>
-        );
-      }
-      const redoLink =
-        "../sparql?" + queryString.stringify({ query: job.data.rawQuery });
-      return (
-        <tr key={job.id}>
-          <td>
-            <JobStateLabel state={job.state} reason={job.data.reason} />
-          </td>
-          <td>{job.data.ip}</td>
-          <td>
-            <pre>{job.data.rawQuery}</pre>
-            <a href={redoLink} target="_blank" rel="noopener noreferrer">
-              try this query
-            </a>
-          </td>
-          <td>{age}</td>
-          <td>{runtime}</td>
-          {cancelButtonColumn}
-        </tr>
-      );
-    });
-    return (
-      <table className="table my-3">
-        <thead>
-          <tr>
-            <th>status</th>
-            <th>requester</th>
-            <th>query</th>
-            <th>created</th>
-            <th>runtime</th>
-            <th>control</th>
-          </tr>
-        </thead>
-        <tbody>{jobs}</tbody>
-      </table>
-    );
-  }
-}
-
-class MainComponent extends React.Component {
-  constructor() {
-    super(...arguments);
-    this.state = { state: null };
-  }
-
-  render() {
-    const st = this.state.state;
-    if (st) {
-      return (
-        <div>
-          <Navbar waiting={st.numWaiting} running={st.numRunning} />
-          <div className="container">
-            <div className="text-xl-right m-b-1 my-3">
-              <button
-                className="btn btn-danger"
-                onClick={this.purgeCache.bind(this)}
-              >
-                Purge cache
-              </button>
-            </div>
-            <JobList
-              jobs={st.jobs}
-              now={this.state.now}
-              onCancel={this.cancelJob.bind(this)}
-            />
-          </div>
-        </div>
-      );
-    } else {
-      return <div />;
     }
-  }
 
-  purgeCache() {
-    this.socket.emit("purge_cache");
-  }
+    const age = moment(job.createdAt).from(now);
+    const redoLink =
+      "../sparql?" + queryString.stringify({ query: job.data.rawQuery });
 
-  cancelJob(job) {
-    this.socket.emit("cancel_job", { id: job.id });
-  }
+    return (
+      <tr key={job.id}>
+        <td>
+          <JobStateLabel state={job.state} reason={job.data.reason} />
+        </td>
+        <td>{job.data.ip}</td>
+        <td>
+          <pre>{job.data.rawQuery}</pre>
+          <a href={redoLink} target="_blank" rel="noopener noreferrer">
+            try this query
+          </a>
+        </td>
+        <td>{age}</td>
+        <td>{runtime}</td>
+        <td>
+          {job.state !== "done" ? (
+            <CancelButton onClick={() => onCancel(job)} />
+          ) : null}
+        </td>
+      </tr>
+    );
+  });
 
-  componentDidMount() {
-    const socket = io.connect(location.origin, {
+  return (
+    <table className="table my-3">
+      <thead>
+        <tr>
+          <th>status</th>
+          <th>requester</th>
+          <th>query</th>
+          <th>created</th>
+          <th>runtime</th>
+          <th>control</th>
+        </tr>
+      </thead>
+      <tbody>{rows}</tbody>
+    </table>
+  );
+};
+
+const Navbar = ({ waiting, running }) => (
+  <nav className="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
+    <div className="container-fluid">
+      <a className="navbar-brand" href="#">
+        SPARQL Proxy
+      </a>
+      <div className="me-auto"></div>
+      <div className="navbar-text">
+        {running} running, {waiting} waiting
+      </div>
+    </div>
+  </nav>
+);
+
+const MainComponent = () => {
+  const [state, setState] = useState(null);
+  const [now, setNow] = useState(() => moment());
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    const socket = io(location.origin, {
       path: location.pathname + "../socket.io",
     });
-    this.socket = socket;
-    socket.on("state", (state) => {
-      console.log("state received", state);
-      this.setState({ state: state });
-    });
-    setInterval(() => {
-      this.setState({ now: moment() });
-    }, 1000);
-  }
-}
+    socketRef.current = socket;
 
-class Navbar extends React.Component {
-  render() {
-    return (
-      <nav className="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
-        <div className="container-fluid">
-          <a className="navbar-brand" href="#">
-            SPARQL Proxy
-          </a>
-          <div className="me-auto"></div>
-          <div className="navbar-text">
-            {this.props.running} running, {this.props.waiting} waiting
-          </div>
-        </div>
-      </nav>
-    );
+    socket.on("state", (nextState) => {
+      console.log("state received", nextState);
+      setState(nextState);
+    });
+
+    const timerId = window.setInterval(() => {
+      setNow(moment());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+      socketRef.current = null;
+      socket.disconnect();
+    };
+  }, []);
+
+  if (!state) {
+    return <div />;
   }
-}
+
+  const handlePurgeCache = () => {
+    socketRef.current?.emit("purge_cache");
+  };
+
+  const handleCancelJob = (job) => {
+    socketRef.current?.emit("cancel_job", { id: job.id });
+  };
+
+  return (
+    <div>
+      <Navbar waiting={state.numWaiting} running={state.numRunning} />
+      <div className="container">
+        <div className="text-xl-right m-b-1 my-3">
+          <button className="btn btn-danger" onClick={handlePurgeCache}>
+            Purge cache
+          </button>
+        </div>
+        <JobList jobs={state.jobs} now={now} onCancel={handleCancelJob} />
+      </div>
+    </div>
+  );
+};
 
 const root = createRoot(document.getElementById("content"));
 root.render(<MainComponent />);
