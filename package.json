@@ -43,7 +43,6 @@
     "file-loader": "^6.2.0",
     "globals": "^17.4.0",
     "html-webpack-plugin": "^5.6.6",
-    "jest": "^30.3.0",
     "sass-loader": "^16.0.7",
     "style-loader": "^4.0.0",
     "url-loader": "^4.1.1",
@@ -53,8 +52,8 @@
   "scripts": {
     "build": "webpack",
     "start": "tsx src/server.mjs",
-    "lint": "eslint src/**/*.mjs client/**/*.jsx",
-    "test": "npm run lint && NODE_OPTIONS=--experimental-vm-modules jest"
+    "lint": "eslint src/**/*.mjs client/**/*.jsx tests/**/*.js",
+    "test": "npm run lint && node --test tests/*.test.js"
   },
   "engines": {
     "node": "24.x"
