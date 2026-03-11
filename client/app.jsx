@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import "bootstrap/scss/bootstrap.scss";
+import "bootstrap/dist/css/bootstrap.css";
 import "./app.scss";
 import "font-awesome/css/font-awesome.css";
 import "babel-regenerator-runtime";

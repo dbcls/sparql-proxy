@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import moment from "moment";
 import queryString from "query-string";
 
-import "bootstrap/scss/bootstrap.scss";
+import "bootstrap/dist/css/bootstrap.css";
 import "./app.scss";
 
 const jobLabelMapping = {
