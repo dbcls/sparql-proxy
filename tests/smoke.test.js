@@ -225,3 +225,36 @@ for (const env of [
     });
   });
 }
+
+test("GET /sparql passthrough with file cache", async () => {
+  await runProxy(
+    {
+      CACHE_STORE: "file",
+      CACHE_STORE_PATH: `tmp/test-cache-passthrough-${process.pid}`,
+      PASSTHROUGH: "true",
+    },
+    async ({ endpoint }) => {
+      endpoint.searchParams.set("query", "SELECT * { ?s ?p ?o. }");
+
+      const fetchQuery = async () => {
+        return await fetch(endpoint, {
+          headers: {
+            Accept: "application/sparql-results+json",
+          },
+        });
+      };
+
+      const first = await fetchQuery();
+
+      assert.equal(first.status, 200);
+      assert.equal(first.headers.get("X-Cache"), "miss");
+      assert.deepEqual(await first.json(), queryResponse);
+
+      const second = await fetchQuery();
+
+      assert.equal(second.status, 200);
+      assert.equal(second.headers.get("X-Cache"), "hit");
+      assert.deepEqual(await second.json(), queryResponse);
+    }
+  );
+});
