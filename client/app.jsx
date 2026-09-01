@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import "bootstrap/dist/css/bootstrap.css";
 import "./app.scss";
@@ -88,18 +88,13 @@ const QueryBox = ({ query }) => (
   </div>
 );
 
-const App = () => {
-  const [query] = useState(() =>
-    new URLSearchParams(window.location.search).get("query"),
-  );
+const App = ({ initialQuery }) => (
+  <>
+    <Navbar />
+    <QueryBox query={initialQuery} />
+  </>
+);
 
-  return (
-    <>
-      <Navbar />
-      <QueryBox query={query} />
-    </>
-  );
-};
-
+const initialQuery = new URLSearchParams(window.location.search).get("query");
 const root = createRoot(document.getElementById("content"));
-root.render(<App />);
+root.render(<App initialQuery={initialQuery} />);
