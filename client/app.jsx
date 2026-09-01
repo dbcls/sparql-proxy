@@ -89,10 +89,9 @@ const QueryBox = ({ query }) => (
 );
 
 const App = () => {
-  const [query, setQuery] = useState(null);
-  useEffect(() => {
-    setQuery(new URLSearchParams(window.location.search).get("query"));
-  }, []);
+  const [query] = useState(() =>
+    new URLSearchParams(window.location.search).get("query"),
+  );
 
   return (
     <>
