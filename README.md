@@ -15,7 +15,7 @@ SPARQL-proxy is a portable Web application that works as a proxy server for any 
 
 ## Prerequisites
 
-* [Node.js](https://nodejs.org/) 24.x
+* [Node.js](https://nodejs.org/) 24.22.1 or later in the 24.x release line
 
 ## Install and Run
 
